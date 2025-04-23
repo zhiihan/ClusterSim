@@ -7,6 +7,7 @@ cycler==0.12.1
 dash==2.16.1
 dash-core-components==2.0.0
 dash-html-components==2.0.0
+dash_resizable_panels==0.1.0
 dash-table==5.0.0
 Flask==3.0.3
 fonttools==4.51.0
