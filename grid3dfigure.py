@@ -12,6 +12,7 @@ import time
 import random
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
+from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 
 jsonpickle_numpy.register_handlers()
 
@@ -29,26 +30,118 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(
     [
-        dcc.Graph(id="basic-interactions", figure=f),
-        dcc.Store(id="draw-plot"),
-        html.Div(
-            className="row",
+        PanelGroup(
+            id="main_app",
             children=[
-                html.Div(
-                    [
-                        dcc.Markdown(
-                            d(
-                                """
+                Panel(
+                    id="resize_figure",
+                    children=[
+                        dcc.Graph(
+                            id="basic-interactions",
+                            figure=f,
+                            responsive=True,
+                            style={"width": "100%", "height": "100%"},
+                        )
+                    ],
+                ),
+                PanelResizeHandle(
+                    html.Div(
+                        style={
+                            "backgroundColor": "grey",
+                            "height": "100%",
+                            "width": "5px",
+                        }
+                    )
+                ),
+                Panel(
+                    id="resize_info",
+                    children=[
+                        html.Div(
+                            [
+                                dcc.Markdown(
+                                    d(
+                                        """
+                                **Algorithms**
+
+                                Click on points in the graph.
+                            """
+                                    )
+                                ),
+                                html.Button("RHG Lattice", id="alg1"),
+                                html.Button("Find Lattice", id="findlattice"),
+                                html.Button("Find Cluster", id="alg2"),
+                                html.Button("Repair Grid", id="repair"),
+                                html.Button("Find Percolation", id="alg3"),
+                                dcc.Markdown(
+                                    d(
+                                        """
+                                **Move Log**
+
+                                Click on points in the graph.
+                            """
+                                    )
+                                ),
+                                html.Div(
+                                    [
+                                        dcc.Clipboard(
+                                            target_id="click-data",
+                                            style={
+                                                "fontSize": 20,
+                                            },
+                                        ),
+                                        html.Pre(id="click-data", style=styles["pre"]),
+                                    ],
+                                    style={
+                                        "height": "400px",
+                                        "overflowY": "scroll",
+                                    },
+                                ),
+                            ],
+                            className="four columns",
+                        ),
+                        html.Div(
+                            [
+                                html.Div(id="ui"),
+                                dcc.Markdown(
+                                    d(
+                                        """
+        **Select Measurement Basis**
+
+        Click to select the type of measurement. Click points in the graph to apply measurement.
+        """
+                                    )
+                                ),
+                                dcc.RadioItems(
+                                    ["Z", "Y", "X", "Z:Hole"],
+                                    "Z",
+                                    id="radio-items",
+                                    inline=True,
+                                ),
+                                dcc.Markdown(
+                                    d(
+                                        """
+        **Select display options**
+        """
+                                    )
+                                ),
+                                dcc.Checklist(
+                                    ["Qubits", "Holes", "Lattice"],
+                                    ["Qubits", "Holes", "Lattice"],
+                                    id="plotoptions",
+                                ),
+                                dcc.Markdown(
+                                    d(
+                                        """
                 **Hover Data**
 
                 Mouse over values in the graph.
             """
-                            )
-                        ),
-                        html.Pre(id="hover-data", style=styles["pre"]),
-                        dcc.Markdown(
-                            d(
-                                """
+                                    )
+                                ),
+                                html.Pre(id="hover-data", style=styles["pre"]),
+                                dcc.Markdown(
+                                    d(
+                                        """
                 **Zoom and Relayout Data**
 
                 Click and drag on the graph to zoom or click on the zoom
@@ -56,191 +149,133 @@ app.layout = html.Div(
                 Clicking on legend items will also fire
                 this event.
             """
-                            )
-                        ),
-                        html.Pre(id="relayout-data", style=styles["pre"]),
-                    ],
-                    className="three columns",
-                ),
-                html.Div(
-                    [
-                        dcc.Markdown(
-                            d(
-                                """
-                                **Algorithms**
-
-                                Click on points in the graph.
-                            """
-                            )
-                        ),
-                        html.Button("RHG Lattice", id="alg1"),
-                        html.Button("Find Lattice", id="findlattice"),
-                        html.Button("Find Cluster", id="alg2"),
-                        html.Button("Repair Grid", id="repair"),
-                        html.Button("Find Percolation", id="alg3"),
-                        dcc.Markdown(
-                            d(
-                                """
-                                **Move Log**
-
-                                Click on points in the graph.
-                            """
-                            )
-                        ),
-                        html.Div(
-                            [
-                                dcc.Clipboard(
-                                    target_id="click-data",
-                                    style={
-                                        "fontSize": 20,
-                                    },
+                                    )
                                 ),
-                                html.Pre(id="click-data", style=styles["pre"]),
+                                html.Pre(id="relayout-data", style=styles["pre"]),
                             ],
-                            style={"height": "400px", "overflowY": "scroll"},
+                            className="four columns",
                         ),
-                    ],
-                    className="three columns",
-                ),
-                html.Div(
-                    [
-                        html.Div(id="ui"),
-                        dcc.Markdown(
-                            d(
-                                """
-        **Select Measurement Basis**
-
-        Click to select the type of measurement. Click points in the graph to apply measurement.
-        """
-                            )
-                        ),
-                        dcc.RadioItems(
-                            ["Z", "Y", "X", "Z:Hole"],
-                            "Z",
-                            id="radio-items",
-                            inline=True,
-                        ),
-                        dcc.Markdown(
-                            d(
-                                """
-        **Select display options**
-        """
-                            )
-                        ),
-                        dcc.Checklist(
-                            ["Qubits", "Holes", "Lattice"],
-                            ["Qubits", "Holes", "Lattice"],
-                            id="plotoptions",
-                        ),
-                    ],
-                    className="three columns",
-                ),
-                html.Div(
-                    [
                         html.Div(
                             [
-                                dcc.Markdown(
-                                    d(
-                                        """
+                                html.Div(
+                                    [
+                                        dcc.Markdown(
+                                            d(
+                                                """
             **Reset Graph State.**
 
             Choose cube dimensions as well as a seed. If no seed, will use a random seed.
             """
-                                    )
+                                            )
+                                        ),
+                                        dcc.Slider(
+                                            1,
+                                            15,
+                                            step=1,
+                                            value=s.xmax,
+                                            tooltip={
+                                                "placement": "bottom",
+                                                "always_visible": True,
+                                            },
+                                            id="xmax",
+                                        ),
+                                        dcc.Slider(
+                                            1,
+                                            15,
+                                            step=1,
+                                            value=s.ymax,
+                                            tooltip={
+                                                "placement": "bottom",
+                                                "always_visible": True,
+                                            },
+                                            id="ymax",
+                                        ),
+                                        dcc.Slider(
+                                            1,
+                                            15,
+                                            step=1,
+                                            value=s.zmax,
+                                            tooltip={
+                                                "placement": "bottom",
+                                                "always_visible": True,
+                                            },
+                                            id="zmax",
+                                        ),
+                                        html.Button("Reset Grid", id="reset"),
+                                        html.Button("Undo", id="undo"),
+                                    ]
                                 ),
-                                dcc.Slider(
-                                    1,
-                                    15,
-                                    step=1,
-                                    value=s.xmax,
-                                    tooltip={
-                                        "placement": "bottom",
-                                        "always_visible": True,
-                                    },
-                                    id="xmax",
-                                ),
-                                dcc.Slider(
-                                    1,
-                                    15,
-                                    step=1,
-                                    value=s.ymax,
-                                    tooltip={
-                                        "placement": "bottom",
-                                        "always_visible": True,
-                                    },
-                                    id="ymax",
-                                ),
-                                dcc.Slider(
-                                    1,
-                                    15,
-                                    step=1,
-                                    value=s.zmax,
-                                    tooltip={
-                                        "placement": "bottom",
-                                        "always_visible": True,
-                                    },
-                                    id="zmax",
-                                ),
-                                html.Button("Reset Grid", id="reset"),
-                                html.Button("Undo", id="undo"),
-                            ]
-                        ),
-                        dcc.Markdown(
-                            d(
-                                """
+                                dcc.Markdown(
+                                    d(
+                                        """
             **Damage the Grid.**
 
             Select a probability p to randomly remove nodes.
             """
-                            )
-                        ),
-                        dcc.Slider(
-                            0,
-                            0.3,
-                            step=0.03,
-                            value=s.p,
-                            tooltip={"placement": "bottom", "always_visible": True},
-                            id="prob",
-                        ),
-                        html.Div(
-                            [
-                                html.Button("Damage Grid", id="reset-seed"),
-                                dcc.Input(
-                                    id="load-graph-seed",
-                                    type="number",
-                                    placeholder="Seed",
+                                    )
                                 ),
-                            ]
-                        ),
-                        html.Div(
-                            [
-                                dcc.Markdown(
-                                    d(
-                                        """
+                                dcc.Slider(
+                                    0,
+                                    0.3,
+                                    step=0.03,
+                                    value=s.p,
+                                    tooltip={
+                                        "placement": "bottom",
+                                        "always_visible": True,
+                                    },
+                                    id="prob",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Button("Damage Grid", id="reset-seed"),
+                                        dcc.Input(
+                                            id="load-graph-seed",
+                                            type="number",
+                                            placeholder="Seed",
+                                        ),
+                                    ]
+                                ),
+                                html.Div(
+                                    [
+                                        dcc.Markdown(
+                                            d(
+                                                """
                 **Load Graph State**
 
                 Paste data to load a graph state.
                 """
-                                    )
+                                            )
+                                        ),
+                                        dcc.Input(
+                                            id="load-graph-input",
+                                            type="text",
+                                            placeholder="Load Graph State",
+                                        ),
+                                        html.Button(
+                                            "Load Graph", id="load-graph-button"
+                                        ),
+                                        # dcc.Store stores the intermediate value
+                                        dcc.Store(id="browser-data"),
+                                        dcc.Store(id="graph-data"),
+                                        dcc.Store(id="holes-data"),
+                                        dcc.Store(id="draw-plot"),
+                                        html.Div(
+                                            id="none",
+                                            children=[],
+                                            style={"display": "none"},
+                                        ),
+                                    ]
                                 ),
-                                dcc.Input(
-                                    id="load-graph-input",
-                                    type="text",
-                                    placeholder="Load Graph State",
-                                ),
-                                html.Button("Load Graph", id="load-graph-button"),
-                            ]
+                            ],
+                            className="four columns",
                         ),
                     ],
-                    className="three columns",
+                    style={"overflow": "scroll", "width": "95%"},
                 ),
             ],
-        ),
-        # dcc.Store stores the intermediate value
-        dcc.Store(id="browser-data"),
-        dcc.Store(id="graph-data"),
-        dcc.Store(id="holes-data"),
-        html.Div(id="none", children=[], style={"display": "none"}),
+            direction="horizontal",
+            style={"height": "95vh"},
+        )
     ]
 )
 
