@@ -12,3 +12,8 @@ dependencies = [
     "numpy",
     "matplotlib",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+]
