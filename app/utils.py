@@ -215,9 +215,10 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
         data.append(lattice_edges)
 
     fig = go.Figure(data=data)
-    fig.layout.height = 600
+    # fig.layout.height = 600
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
+        # autosize=True,
         scene_camera=s.camera_state["scene.camera"],
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
     )
