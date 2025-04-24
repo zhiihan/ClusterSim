@@ -6,7 +6,11 @@ A cluster state simulator for measurement-based quantum computation, in browser.
 
 ## Installation
 
-To install with pip, use:
+To install, use:
+
+`pip install .`
+
+Alternatively, using `requirements.txt`:
 
 `pip install -r requirements.txt`
 
