@@ -1,6 +1,5 @@
-from graph_state import GraphState
+from cluster_sim.graph_state import GraphState
 import networkx as nx
-from app.utils import *
 
 
 class Grid(GraphState):

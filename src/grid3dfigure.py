@@ -1,8 +1,14 @@
 import plotly.graph_objects as go
-from app.utils import *
-from app.grid import *
-from app.state import *
-from app.holes import *
+from cluster_sim.app.grid import Grid
+from cluster_sim.app.holes import Holes
+from cluster_sim.app.state import BrowserState
+from cluster_sim.app.utils import (
+    update_plot,
+    get_node_index,
+    get_node_coords,
+    path_to_plot,
+    nx_to_plot,
+)
 import json
 from textwrap import dedent as d
 import dash

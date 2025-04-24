@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from app.utils import *
+from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
 
 
 class Holes:
@@ -72,7 +72,8 @@ class Holes:
             for z in range(self.shape[2])
             for y in range(self.shape[1])
             for x in range(self.shape[0])
-            if ((x + xoffset) % 2 == (z + zoffset) % 2) and ((y + yoffset) % 2 == (z + zoffset) % 2)
+            if ((x + xoffset) % 2 == (z + zoffset) % 2)
+            and ((y + yoffset) % 2 == (z + zoffset) % 2)
         ]
 
         n_cubes = np.zeros((self.shape[0] // 2))
@@ -151,7 +152,9 @@ class Holes:
         Input: A connected cube: networkx Graph object that is a graph of centers
         Each node is a tuple (x, y, z)
         """
-        X = nx.Graph()  # X is the same object as C but it contains the actual verticies.
+        X = (
+            nx.Graph()
+        )  # X is the same object as C but it contains the actual verticies.
 
         for node in connected_cube.nodes():
             for cube_vec in self.cube:
@@ -186,7 +189,9 @@ class Holes:
             for n in subgraph.nodes:  # Loop over all nodes in a subgraph
                 for (
                     boxvec
-                ) in self.box:  # For each node, find the vector up/down/left/right/front/back
+                ) in (
+                    self.box
+                ):  # For each node, find the vector up/down/left/right/front/back
                     arr = np.array(n) + boxvec
                     if np.any((arr < 0) | np.greater_equal(arr, self.shape)):
                         continue
