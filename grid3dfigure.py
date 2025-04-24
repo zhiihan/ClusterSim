@@ -19,6 +19,8 @@ import random
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
+import numpy as np
+import networkx as nx
 
 jsonpickle_numpy.register_handlers()
 
