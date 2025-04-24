@@ -1,0 +1,14 @@
+[project]
+name = "cluster_sim"
+version = "0.1.0"
+description = "A measurement based quantum computing simulator."
+authors = [{name = "Zhihua Han", email = "zhihuahan72@gmail.com"}]
+license = "MIT"
+dependencies = [
+    "dash",
+    "dash_resizable_panels",
+    "jsonpickle",
+    "networkx",
+    "numpy",
+    "matplotlib",
+]

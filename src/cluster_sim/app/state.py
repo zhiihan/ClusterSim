@@ -1,5 +1,4 @@
 import numpy as np
-from app.utils import *
 
 
 class BrowserState:
