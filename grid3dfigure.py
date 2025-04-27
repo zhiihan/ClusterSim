@@ -767,6 +767,9 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
     prevent_initial_call=True,
 )
 def find_cluster(nclicks, browser_data, graphData, holeData):
+    """
+    Find a cluster of connected cubes in the lattice.
+    """
     s = jsonpickle.decode(browser_data)
     G = Grid(s.shape, json=graphData)
     D = Holes(s.shape, json=holeData)
