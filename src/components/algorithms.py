@@ -12,6 +12,7 @@ from cluster_sim.app.utils import (
 import plotly.graph_objects as go
 import networkx as nx
 import itertools
+from dash_bootstrap_components import Button
 
 algorithms = html.Div(
     [

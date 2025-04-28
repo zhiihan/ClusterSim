@@ -10,6 +10,7 @@ import dash
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import numpy as np
+from dash_bootstrap_components import Checklist
 
 
 # Initialize the state of the user's browsing section
@@ -40,10 +41,16 @@ display_options = html.Div(
         """
             )
         ),
-        dcc.Checklist(
-            ["Qubits", "Holes", "Lattice"],
-            ["Qubits", "Holes", "Lattice"],
+        Checklist(
+            options=[
+                {"label": "Qubits", "value": "Qubits"},
+                {"label": "Erasures", "value": "Holes"},
+                {"label": "Lattice", "value": "Lattice"},
+            ],
+            value=["Qubits", "Holes", "Lattice"],
             id="plotoptions",
+            inline=True,
+            switch=True,
         ),
     ]
 )

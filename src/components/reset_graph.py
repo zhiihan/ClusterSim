@@ -6,6 +6,7 @@ from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 import numpy as np
+from dash_bootstrap_components import Button
 
 reset_graph = html.Div(
     [
@@ -16,7 +17,8 @@ reset_graph = html.Div(
 
             Choose cube dimensions as well as a seed. If no seed, will use a random seed.
             """
-            )
+            ),
+            className="dbc",
         ),
         dcc.Slider(
             min=1,
@@ -50,9 +52,10 @@ reset_graph = html.Div(
                 "always_visible": True,
             },
             id="zmax",
+            className="mb-4",
         ),
-        html.Button("Reset Grid", id="reset"),
-        html.Button("Undo", id="undo"),
+        Button("Reset Grid", id="reset"),
+        Button("Undo", id="undo"),
     ]
 )
 

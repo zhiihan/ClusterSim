@@ -23,11 +23,14 @@ from components import (
     figure,
     error_channel,
 )
+import dash_bootstrap_components as dbc
 
 jsonpickle_numpy.register_handlers()
 
 app = dash.Dash(
-    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    # external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 )
 app.title = "Cluster Sim"
 server = app.server  # For deployment

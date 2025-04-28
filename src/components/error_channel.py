@@ -5,6 +5,7 @@ import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
+from dash_bootstrap_components import Button
 
 error_channel = html.Div(
     [
