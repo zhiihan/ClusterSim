@@ -1,15 +1,13 @@
 from textwrap import dedent as d
-from dash import dcc, html
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 from cluster_sim.app.utils import (
     update_plot,
 )
-from textwrap import dedent as d
+
 import dash
-from dash import dcc, html, callback
-from dash.dependencies import Input, Output, State
+from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import numpy as np
 
@@ -68,8 +66,8 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
         return dash.no_update
 
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
-    D = Holes(s.shape, json=holeData)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
 
     fig = update_plot(s, G, D, plotoptions=plotoptions)
     # Make sure the view/angle stays the same when updating the figure

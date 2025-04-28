@@ -8,12 +8,12 @@ class Holes:
     Create a Grid object as a NetworkX representation.
     """
 
-    def __init__(self, shape, json=None):
+    def __init__(self, shape, json_data=None):
 
         self.shape = shape
 
-        if json:
-            self.graph = nx.node_link_graph(json)
+        if json_data:
+            self.graph = nx.node_link_graph(json_data, edges="edges")
         elif shape:
             self.graph = nx.Graph()
         else:
@@ -292,4 +292,4 @@ class Holes:
         ]
 
     def encode(self):
-        return nx.node_link_data(self.graph)
+        return nx.node_link_data(self.graph, edges="edges")

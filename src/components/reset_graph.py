@@ -74,7 +74,7 @@ def reset_seed(nclicks, seed_input, prob, browser_data, graphData):
     Randomly measure qubits.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
+    G = Grid(s.shape, json_data=graphData)
     s.p = prob
     D = Holes(s.shape)
     if seed_input:

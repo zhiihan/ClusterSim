@@ -150,8 +150,8 @@ def display_click_data(
         )
     else:
         s = jsonpickle.decode(browser_data)
-        G = Grid(s.shape, json=graphData)
-        D = Holes(s.shape, json=holeData)
+        G = Grid(s.shape, json_data=graphData)
+        D = Holes(s.shape, json_data=holeData)
 
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)
         # Update the plot based on the node clicked
@@ -189,8 +189,8 @@ def algorithm1(nclicks, browser_data, graphData, holeData):
     Create a RHG lattice from a square lattice.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
-    D = Holes(s.shape, json=holeData)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
 
     holes = D.graph.nodes
     hole_locations = np.zeros(8)
@@ -255,8 +255,8 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
     Returns:
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
-    D = Holes(s.shape, json=holeData)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
 
     try:
         if s.offset[0] == None:
@@ -331,8 +331,8 @@ def find_cluster(nclicks, browser_data, graphData, holeData):
     Find a cluster of connected cubes in the lattice.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
-    D = Holes(s.shape, json=holeData)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
 
     try:
         if s.offset[0] == None:
@@ -399,8 +399,8 @@ def find_percolation(nclicks, browser_data, graphData, holeData):
     Find a path from the top of the grid to the bottom of the grid.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json=graphData)
-    D = Holes(s.shape, json=holeData)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
 
     gnx = G.to_networkx()
 
@@ -469,7 +469,7 @@ def find_percolation(nclicks, browser_data, graphData, holeData):
 )
 def repair_grid(nclicks, browser_data, holeData):
     s = jsonpickle.decode(browser_data)
-    D = Holes(s.shape, json=holeData)
+    D = Holes(s.shape, json_data=holeData)
 
     repairs, failures = D.repair_grid(s.p)
 
