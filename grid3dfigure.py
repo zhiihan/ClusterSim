@@ -3,7 +3,6 @@ from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 from cluster_sim.app.utils import (
-    update_plot,
     get_node_index,
     get_node_coords,
     path_to_plot,
@@ -13,7 +12,6 @@ import json
 import dash
 from dash import html, Input, Output, State
 import time
-import random
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
@@ -174,37 +172,6 @@ def display_click_data(
         # This solves the double click issue
         time.sleep(0.1)
         return html.P(s.log), i, ui, jsonpickle.encode(s), G.encode(), D.encode()
-
-
-@app.callback(
-    Output("relayout-data", "children"),
-    Output("browser-data", "data", allow_duplicate=True),
-    Input("basic-interactions", "relayoutData"),
-    State("relayout-data", "children"),
-    State("browser-data", "data"),
-    prevent_initial_call=True,
-)
-def display_relayout_data(relayoutData, camera, browser_data):
-    """
-    Updates zoom and camera information.
-    """
-    if browser_data is not None:
-        s = jsonpickle.decode(browser_data)
-
-    if relayoutData and "scene.camera" in relayoutData:
-        s.camera_state = relayoutData
-        return json.dumps(relayoutData, indent=2), jsonpickle.encode(s)
-    else:
-        return camera, jsonpickle.encode(s)
-
-
-@app.callback(
-    Output("ui", "children", allow_duplicate=True),
-    Input("radio-items", "value"),
-    prevent_initial_call=True,
-)
-def update_output(value):
-    return 'You have selected "{}" basis'.format(value)
 
 
 @app.callback(

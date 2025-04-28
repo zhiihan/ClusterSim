@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html
+from dash import dcc, html, callback, Input, Output
 
 measurementbasis = html.Div(
     [
@@ -20,3 +20,12 @@ measurementbasis = html.Div(
         ),
     ]
 )
+
+
+@callback(
+    Output("ui", "children", allow_duplicate=True),
+    Input("radio-items", "value"),
+    prevent_initial_call=True,
+)
+def update_output(value):
+    return 'You have selected "{}" basis'.format(value)
