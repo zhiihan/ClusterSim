@@ -1,5 +1,6 @@
 from textwrap import dedent as d
-from dash import dcc, html
+from dash import dcc, html, callback, Output, Input
+import json
 
 hover_data = html.Div(
     [
@@ -18,3 +19,8 @@ hover_data = html.Div(
         ),
     ]
 )
+
+
+@callback(Output("hover-data", "children"), [Input("basic-interactions", "hoverData")])
+def display_hover_data(hoverData):
+    return json.dumps(hoverData, indent=2)
