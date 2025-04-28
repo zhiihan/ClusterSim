@@ -6,10 +6,10 @@ algorithms = html.Div(
         dcc.Markdown(
             d(
                 """
-                                **Algorithms**
+                    **Algorithms**
 
-                                Click on points in the graph.
-                            """
+                    Click on points in the graph.
+                """
             )
         ),
         html.Button("RHG Lattice", id="alg1"),

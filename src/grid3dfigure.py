@@ -8,7 +8,6 @@ from cluster_sim.app.utils import (
     path_to_plot,
     nx_to_plot,
 )
-import json
 import dash
 from dash import html, Input, Output, State
 import time
@@ -30,10 +29,12 @@ from components import (
     error_channel,
 )
 
-
 jsonpickle_numpy.register_handlers()
 
-external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+
+external_stylesheets = [
+    "https://codepen.io/chriddyp/pen/bWLwgP.css",
+]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server  # For deployment
 
@@ -172,133 +173,6 @@ def display_click_data(
         # This solves the double click issue
         time.sleep(0.1)
         return html.P(s.log), i, ui, jsonpickle.encode(s), G.encode(), D.encode()
-
-
-@app.callback(
-    Output("draw-plot", "data", allow_duplicate=True),
-    Output("click-data", "children", allow_duplicate=True),
-    Output("ui", "children", allow_duplicate=True),
-    Output("browser-data", "data", allow_duplicate=True),
-    Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
-    Input("reset", "n_clicks"),
-    State("xmax", "value"),
-    State("ymax", "value"),
-    State("zmax", "value"),
-    prevent_initial_call=True,
-)
-def reset_grid(input, xslider, yslider, zslider):
-    """
-    Reset the grid.
-    """
-    s = BrowserState()
-    s.xmax = int(xslider)
-    s.ymax = int(yslider)
-    s.zmax = int(zslider)
-    s.shape = [s.xmax, s.ymax, s.zmax]
-    s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-    G = Grid(s.shape)
-    D = Holes(s.shape)
-    # Make sure the view/angle stays the same when updating the figure
-    return (
-        1,
-        s.log,
-        "Created grid of shape {}".format(s.shape),
-        jsonpickle.encode(s),
-        G.encode(),
-        D.encode(),
-    )
-
-
-@app.callback(
-    Output("click-data", "children", allow_duplicate=True),
-    Output("draw-plot", "data", allow_duplicate=True),
-    Output("ui", "children", allow_duplicate=True),
-    Output("browser-data", "data", allow_duplicate=True),
-    Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
-    Input("load-graph-button", "n_clicks"),
-    State("load-graph-input", "value"),
-    State("browser-data", "data"),
-    prevent_initial_call=True,
-)
-def load_graph_from_string(n_clicks, input_string, browser_data):
-    s = jsonpickle.decode(browser_data)
-    shape = s.shape
-
-    s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
-
-    s.xmax, s.ymax, s.zmax = shape[0], shape[1], shape[2]
-    s.shape = shape
-
-    result = process_string(input_string)
-
-    for i, measurementChoice in result:
-        s.removed_nodes[i] = True
-        G.handle_measurements(i, measurementChoice)
-        s.log.append(f"{i}, {measurementChoice}; ")
-        s.log.append(html.Br())
-        s.move_list.append([i, measurementChoice])
-    return s.log, 1, "Graph loaded!", jsonpickle.encode(s), G.encode(), D.encode()
-
-
-def process_string(input_string):
-    input_string = input_string.replace(" ", "")
-    input_string = input_string[:-1]
-
-    # Split the string into outer lists
-    outer_list = input_string.split(";")
-
-    # Split each inner string into individual elements
-    result = [inner.split(",") for inner in outer_list]
-    for inner in result:
-        inner[0] = int(inner[0])
-    return result
-
-
-@app.callback(
-    Output("click-data", "children", allow_duplicate=True),
-    Output("draw-plot", "data", allow_duplicate=True),
-    Output("ui", "children", allow_duplicate=True),
-    Output("browser-data", "data", allow_duplicate=True),
-    Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
-    Input("undo", "n_clicks"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
-    State("holes-data", "data"),
-    prevent_initial_call=True,
-)
-def undo_move(n_clicks, browser_data, graphData, holeData):
-    s = jsonpickle.decode(browser_data)
-
-    if s.move_list:
-        # Soft reset
-        G = Grid(s.shape)
-        D = Holes(s.shape, json=holeData)
-        s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-        s.log = []
-
-        undo = s.move_list.pop(-1)
-        print(f"Undo: {undo}")
-        for move in s.move_list:
-            i, measurementChoice = move
-            s.removed_nodes[i] = True
-            G.handle_measurements(i, measurementChoice)
-            s.log.append(f"{i}, {measurementChoice}; ")
-            s.log.append(html.Br())
-        return s.log, 1, f"Undo: {undo}", jsonpickle.encode(s), G.encode(), D.encode()
-    else:
-        return (
-            dash.no_update,
-            dash.no_update,
-            "Undo: No move to undo.",
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-        )
 
 
 @app.callback(
