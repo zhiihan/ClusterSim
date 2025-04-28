@@ -21,6 +21,8 @@ import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 import numpy as np
 import networkx as nx
+from components import move_log
+
 
 jsonpickle_numpy.register_handlers()
 
@@ -81,30 +83,7 @@ app.layout = html.Div(
                                 html.Button("Find Cluster", id="alg2"),
                                 html.Button("Repair Grid", id="repair"),
                                 html.Button("Find Percolation", id="alg3"),
-                                dcc.Markdown(
-                                    d(
-                                        """
-                                **Move Log**
-
-                                Click on points in the graph.
-                            """
-                                    )
-                                ),
-                                html.Div(
-                                    [
-                                        dcc.Clipboard(
-                                            target_id="click-data",
-                                            style={
-                                                "fontSize": 20,
-                                            },
-                                        ),
-                                        html.Pre(id="click-data", style=styles["pre"]),
-                                    ],
-                                    style={
-                                        "height": "400px",
-                                        "overflowY": "scroll",
-                                    },
-                                ),
+                                move_log,
                             ],
                             className="four columns",
                         ),
