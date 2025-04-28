@@ -368,10 +368,12 @@ def undo_move(n_clicks, browser_data, graphData, holeData):
     if s.move_list:
         # Soft reset
         G = Grid(s.shape)
+        D = Holes(s.shape, json=holeData)
         s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
         s.log = []
 
         undo = s.move_list.pop(-1)
+        print(f"Undo: {undo}")
         for move in s.move_list:
             i, measurementChoice = move
             s.removed_nodes[i] = True
