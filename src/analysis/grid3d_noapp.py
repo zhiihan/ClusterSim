@@ -1,15 +1,19 @@
-from cluster_sim.app.holes import Holes
 import random
 import numpy as np
-from cluster_sim.app.utils import get_node_index
 import networkx as nx
+from cluster_sim.app.utils import get_node_index
+from cluster_sim.app.holes import Holes
 from cluster_sim.app.grid import Grid
+import os
 
 cpu_cores = 2
 
 shape = [20, 20, 200]
 samples = 2
 p_vec = np.linspace(0.0, 0.35, 50)
+
+
+os.makedirs("./data", exist_ok=True)
 
 
 def reset_seed(p, seed, shape, removed_nodes, G):
@@ -98,14 +102,14 @@ def percolation1(G, removed_nodes):
     return percolates
 
 
-def main(input):
+def main(input_params):
     """
     input = list containing [probability, seed]
     """
     start = time.time()
 
     percol = []
-    p, seed = input
+    p, seed = input_params
     pindex = np.argwhere(p_vec == p)[0][0]
     for s in range(seed):
         removed_nodes = np.zeros(shape[0] * shape[1] * shape[2], dtype=bool)
@@ -119,7 +123,7 @@ def main(input):
         print(f"percolates {percol1} p = {p}, samples={s}/{samples}")
         percol.append(percol1)
 
-        with open(f"./datakero/percol{pindex}shape{shape[2]}sample{s}c", "wb") as f:
+        with open(f"./data/percol{pindex}shape{shape[2]}sample{s}c", "wb") as f:
             pickle.dump(percol, f)
 
     for s in range(seed):
@@ -134,7 +138,7 @@ def main(input):
         print(f"percolates {percol1} p = {p}, samples={s}/{samples}")
         percol.append(percol1)
 
-        with open(f"./datakero/percol{pindex}shape{shape[2]}sample{s}s", "wb") as f:
+        with open(f"./data/percol{pindex}shape{shape[2]}sample{s}s", "wb") as f:
             pickle.dump(percol, f)
 
     end1loop = time.time()
@@ -160,6 +164,7 @@ if __name__ == "__main__":
     connected_cubes_len = np.array([results])
 
     print((time.time() - start) / 60)
+
     """
     np.save('data_connected_cubes.npy', connected_cubes_len)
     print(connected_cubes_len.shape, p_vec.shape)

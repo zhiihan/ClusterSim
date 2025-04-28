@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 shape = [20, 20, 200]
-samples = 9
+samples = 2
 p_vec = np.linspace(0.0, 0.35, 50)
 plot_data = np.empty((len(p_vec), 3))
 
@@ -18,9 +18,9 @@ for pindex, p in enumerate(p_vec):
     s = []
     c = []
     for seed in range(samples):
-        with open(f"./datakero/percol{pindex}shape{shape[2]}sample{seed}s", "rb") as f:
+        with open(f"./data/percol{pindex}shape{shape[2]}sample{seed}s", "rb") as f:
             s.append(pickle.load(f)[0])
-        with open(f"./datakero/percol{pindex}shape{shape[2]}sample{seed}c", "rb") as f:
+        with open(f"./data/percol{pindex}shape{shape[2]}sample{seed}c", "rb") as f:
             c.append(pickle.load(f)[0])
     print(p, s, c)
 
