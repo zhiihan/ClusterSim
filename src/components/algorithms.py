@@ -18,5 +18,4 @@ algorithms = html.Div(
         html.Button("Repair Grid", id="repair"),
         html.Button("Find Percolation", id="alg3"),
     ],
-    className="four columns",
 )

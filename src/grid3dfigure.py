@@ -57,8 +57,13 @@ app.layout = html.Div(
                 Panel(
                     id="resize_info",
                     children=[
-                        algorithms,
-                        move_log,
+                        html.Div(
+                            [
+                                algorithms,
+                                move_log,
+                            ],
+                            className="four columns",
+                        ),
                         html.Div(
                             [
                                 html.Div(id="ui"),
