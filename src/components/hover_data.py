@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Output, Input, State, callback
+from dash import dcc, html, callback, Output, Input, State, callback, no_update
 import json
 import jsonpickle
 
@@ -39,8 +39,10 @@ def display_relayout_data(relayoutData, camera, browser_data):
     """
     Updates zoom and camera information.
     """
-    if browser_data is not None:
-        s = jsonpickle.decode(browser_data)
+    if browser_data is None:
+        return no_update, no_update
+
+    s = jsonpickle.decode(browser_data)
 
     if relayoutData and "scene.camera" in relayoutData:
         s.camera_state = relayoutData
