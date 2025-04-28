@@ -31,11 +31,7 @@ from components import (
 
 jsonpickle_numpy.register_handlers()
 
-
-external_stylesheets = [
-    "https://codepen.io/chriddyp/pen/bWLwgP.css",
-]
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 server = app.server  # For deployment
 
 app.layout = html.Div(
