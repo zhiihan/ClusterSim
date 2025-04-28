@@ -7,10 +7,10 @@ class Grid(GraphState):
     Create a Grid object from a GraphState object.
     """
 
-    def __init__(self, shape, json=None):
+    def __init__(self, shape, json_data=None):
         # Decoding from nx_object:
-        if json:
-            self.graph = nx.node_link_graph(json)
+        if json_data:
+            self.graph = nx.node_link_graph(json_data, edges="edges")
         elif shape:
             self.shape = shape
             edges = self.generate_cube_edges()
@@ -54,4 +54,4 @@ class Grid(GraphState):
         self.measure(i, basis=basis)
 
     def encode(self):
-        return nx.node_link_data(self.to_networkx())
+        return nx.node_link_data(self.to_networkx(), edges="edges")
