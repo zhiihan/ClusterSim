@@ -3,10 +3,13 @@ import numpy as np
 
 class BrowserState:
     """
-    This class contains a local state of the web app, representing the state on the user's local browsing section.
+    This class contains a local state of the web app, representing a persistent state on the user's local browsing section.
     """
 
     def __init__(self) -> None:
+
+        # TODO: This should be a dataclass
+
         self.xmax = 5
         self.ymax = 5
         self.zmax = 5
