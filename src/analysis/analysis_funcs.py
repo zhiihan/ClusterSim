@@ -8,39 +8,39 @@ import tqdm
 from joblib import Parallel
 
 
-def path_percolation(G, removed_nodes, shape, xoffset, yoffset):
-    """
-    Check if there is a path from the bottom to the top of the lattice.
+# def path_percolation(G, removed_nodes, shape, xoffset, yoffset):
+#     """
+#     Check if there is a path from the bottom to the top of the lattice.
 
-    Returns:
-        percolates: 1 if there is a path, 0 otherwise
-    """
-    gnx = G.to_networkx()
+#     Returns:
+#         percolates: 1 if there is a path, 0 otherwise
+#     """
+#     gnx = G.to_networkx()
 
-    removed_nodes_reshape = removed_nodes.reshape(shape)
+#     removed_nodes_reshape = removed_nodes.reshape(shape)
 
-    zmax = shape[2]
+#     zmax = shape[2]
 
-    zeroplane = removed_nodes_reshape[:, :, 0]
-    zmaxplane = removed_nodes_reshape[:, :, zmax - 1]
+#     zeroplane = removed_nodes_reshape[:, :, 0]
+#     zmaxplane = removed_nodes_reshape[:, :, zmax - 1]
 
-    start = np.argwhere(
-        zeroplane == 0
-    )  # This is the coordinates of all valid node in z = 0
-    end = np.argwhere(
-        zmaxplane == 0
-    )  # This is the coordinates of all valid node in z = L
+#     start = np.argwhere(
+#         zeroplane == 0
+#     )  # This is the coordinates of all valid node in z = 0
+#     end = np.argwhere(
+#         zmaxplane == 0
+#     )  # This is the coordinates of all valid node in z = L
 
-    for index in range(len(end)):
-        i = get_node_index(0 + xoffset, 1 + yoffset, 0, shape)
-        j = get_node_index(*end[index], zmax - 1, shape)
-        if nx.has_path(gnx, i, j):
-            percolates = 1
-            break
-    else:
-        percolates = 0
+#     for index in range(len(end)):
+#         i = get_node_index(0 + xoffset, 1 + yoffset, 0, shape)
+#         j = get_node_index(*end[index], zmax - 1, shape)
+#         if nx.has_path(gnx, i, j):
+#             percolates = 1
+#             break
+#     else:
+#         percolates = 0
 
-    return percolates
+#     return percolates
 
 
 def apply_error_channel(p, seed, shape, removed_nodes, G):
