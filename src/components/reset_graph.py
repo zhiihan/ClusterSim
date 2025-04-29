@@ -69,7 +69,7 @@ reset_graph = html.Div(
     State("graph-data", "data"),
     prevent_initial_call=True,
 )
-def reset_seed(nclicks, seed_input, prob, browser_data, graphData):
+def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     """
     Randomly measure qubits.
     """

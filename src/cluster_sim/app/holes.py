@@ -19,6 +19,7 @@ class Holes:
         else:
             raise NotImplementedError
 
+        self.add_edges()
         self.big_arrays()
 
     def add_node(self, i):
@@ -34,7 +35,6 @@ class Holes:
             self.double_hole()
 
     def to_networkx(self):
-        self.add_edges()
         return self.graph
 
     def double_hole(self):
