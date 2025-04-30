@@ -77,6 +77,8 @@ def algorithm1(G, D, removed_nodes, shape):
                     ):
                         hole_locations[xoffset + yoffset * 2 + zoffset * 4] += 1
 
+    print("hole locations", hole_locations)
+
     xoffset = int(np.argmax(hole_locations) % 2)
     yoffset = int(np.argmax(hole_locations) // 2)
     zoffset = int(np.argmax(hole_locations) // 4)
