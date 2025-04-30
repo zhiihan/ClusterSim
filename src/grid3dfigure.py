@@ -31,7 +31,10 @@ from components import (
 
 jsonpickle_numpy.register_handlers()
 
-app = dash.Dash(__name__)
+app = dash.Dash(
+    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+)
+app.title = "Cluster Sim"
 server = app.server  # For deployment
 
 app.layout = html.Div(
