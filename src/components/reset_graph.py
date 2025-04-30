@@ -4,6 +4,8 @@ import jsonpickle
 import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
+from cluster_sim.app.state import BrowserState
+import numpy as np
 
 reset_graph = html.Div(
     [
@@ -20,7 +22,7 @@ reset_graph = html.Div(
             1,
             15,
             step=1,
-            value=5,
+            value=4,
             tooltip={
                 "placement": "bottom",
                 "always_visible": True,
@@ -31,7 +33,7 @@ reset_graph = html.Div(
             1,
             15,
             step=1,
-            value=5,
+            value=4,
             tooltip={
                 "placement": "bottom",
                 "always_visible": True,
@@ -42,7 +44,7 @@ reset_graph = html.Div(
             1,
             15,
             step=1,
-            value=5,
+            value=4,
             tooltip={
                 "placement": "bottom",
                 "always_visible": True,
@@ -56,49 +58,36 @@ reset_graph = html.Div(
 
 
 @callback(
-    Output("click-data", "children", allow_duplicate=True),
     Output("draw-plot", "data", allow_duplicate=True),
+    Output("click-data", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
     Output("holes-data", "data", allow_duplicate=True),
-    Input("reset-seed", "n_clicks"),
-    State("load-graph-seed", "value"),
-    State("prob", "value"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
+    Input("reset", "n_clicks"),
+    State("xmax", "value"),
+    State("ymax", "value"),
+    State("zmax", "value"),
     prevent_initial_call=True,
 )
-def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
+def reset_grid(n_clicks, xslider, yslider, zslider):
     """
-    Randomly measure qubits.
+    Reset the grid.
     """
-    s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    s.p = prob
+    s = BrowserState()
+    s.xmax = int(xslider)
+    s.ymax = int(yslider)
+    s.zmax = int(zslider)
+    s.shape = [s.xmax, s.ymax, s.zmax]
+    s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
+    G = Grid(s.shape)
     D = Holes(s.shape)
-    if seed_input:
-        # The user has inputted a seed
-        random.seed(int(seed_input))
-        print(f"Loaded seed : {seed_input}, p = {s.p}")
-        ui = "Loaded seed : {}, p = {}".format(seed_input, s.p)
-    else:
-        # Use a random seed.
-        random.seed()
-        print(f"Loaded seed : {s.seed}, p = {s.p}")
-        ui = "Loaded seed : None, p = {}, shape = {}".format(s.p, s.shape)
-    # p is the probability of losing a qubit
-
-    measurementChoice = "Z"
-
-    for i in range(s.xmax * s.ymax * s.zmax):
-        if random.random() < s.p:
-            if s.removed_nodes[i] == False:
-                s.removed_nodes[i] = True
-                G.handle_measurements(i, measurementChoice)
-                s.log.append(f"{i}, {measurementChoice}; ")
-                s.log.append(html.Br())
-                s.move_list.append([i, measurementChoice])
-                D.add_node(i)
-    D.add_edges()
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    # Make sure the view/angle stays the same when updating the figure
+    return (
+        1,
+        s.log,
+        "Created grid of shape {}".format(s.shape),
+        jsonpickle.encode(s),
+        G.encode(),
+        D.encode(),
+    )

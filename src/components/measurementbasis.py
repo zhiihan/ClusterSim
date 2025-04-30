@@ -13,7 +13,7 @@ measurementbasis = html.Div(
             )
         ),
         dcc.RadioItems(
-            ["Z", "Y", "X", "Z:Hole"],
+            ["Z", "Y", "X", "Erasure"],
             "Z",
             id="radio-items",
             inline=True,
