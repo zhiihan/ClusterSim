@@ -77,10 +77,8 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     D = Holes(s.shape, json_data=holeData)
 
     holes = D.graph.nodes
-    hole_locations = np.zeros((scale_factor + 1) ** 3)
-    xoffset, yoffset, zoffset = s.offset
 
-    unit_cells_bound = np.array(s.shape) % (scale_factor + 1)
+    hole_locations = np.zeros((scale_factor + 1) ** 3, dtype=int)
 
     # counting where the holes are
     for h in holes:
@@ -90,15 +88,17 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
         for xoffset, yoffset, zoffset in itertools.product(
             range(scale_factor + 1), repeat=3
         ):
-            test_cond = (x_vec + np.array([xoffset, yoffset, zoffset])) % (
-                scale_factor + 1
-            )
-            if np.all(test_cond == 0) or np.all(test_cond != 0):
+            test_cond = x_vec % (scale_factor + 1)
+            offset = np.array([xoffset, yoffset, zoffset])
+
+            if np.all(test_cond == offset) or np.all(test_cond != offset):
                 hole_locations[
                     xoffset
                     + yoffset * (scale_factor + 1)
                     + zoffset * (scale_factor + 1) ** 2
                 ] += 1
+
+    print("hole locations", hole_locations)
 
     xoffset = np.argmax(hole_locations) % (scale_factor + 1)
     yoffset = np.argmax(hole_locations) // (scale_factor + 1)
@@ -109,11 +109,9 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     for z in range(s.shape[2]):
         for y in range(s.shape[1]):
             for x in range(s.shape[0]):
-                x_vec = (
-                    np.array([x, y, z]) + np.array([xoffset, yoffset, zoffset])
-                ) % (scale_factor + 1)
-
-                if np.all(x_vec == 0) or np.all(x_vec != 0):
+                x_vec = (np.array([x, y, z])) % (scale_factor + 1)
+                offset = np.array([xoffset, yoffset, zoffset])
+                if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, s.shape)
                     if s.removed_nodes[i] == False:
                         G.handle_measurements(i, "Z")
@@ -482,7 +480,9 @@ def find_cluster2(nclicks, browser_data, graphData, holeData):
 
     xoffset, yoffset, zoffset = s.offset
 
-    H = check_graph_xy(G)
+    print(f"offset = {s.offset}")
+
+    H = check_graph_xy(G, xoffset=xoffset, yoffset=yoffset, zoffset=zoffset)
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 
@@ -511,9 +511,15 @@ def find_cluster2(nclicks, browser_data, graphData, holeData):
 
 
 def check_graph_xy(G, xoffset=0, yoffset=0, zoffset=0):
+    """
+    Check if a unit cell is a valid Raussendorf unit cell.
+    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
+
+    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
+    """
 
     # fmt: off
-    face1 = [[(xoffset + j, yoffset + 0, zoffset + d) for j in range(0, 4)] for d in range(1, 3)] #noqa
+    face1 = [[(xoffset + j, yoffset + 0, zoffset + d) for j in range(0, 4)] for d in range(1, 3)] 
     face2 = [[(xoffset + j, yoffset + d, zoffset + 0) for j in range(0, 4)] for d in range(1, 3)]
     face3 = [[(xoffset + j, yoffset + 3, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
     face4 = [[(xoffset + j, yoffset + d, zoffset + 3) for j in range(0, 4)] for d in range(1, 3)]
@@ -550,6 +556,9 @@ def check_graph_xy(G, xoffset=0, yoffset=0, zoffset=0):
                 break
         else:
             print("No face found")
+
+            return G.graph.subgraph([node for l in face for node in l])  # debug
+
             return None
 
     joined_faces = [node for l in joined_faces for node in l]
