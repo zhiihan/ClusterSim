@@ -80,7 +80,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     hole_locations = np.zeros((scale_factor + 1) ** 3, dtype=int)
 
-    # counting where the holes are
+    # Finding the offset that maximizes holes placed in hole locations
     for h in holes:
         x, y, z = h
 
@@ -98,19 +98,20 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
                     + zoffset * (scale_factor + 1) ** 2
                 ] += 1
 
-    print("hole locations", hole_locations)
-
     xoffset = np.argmax(hole_locations) % (scale_factor + 1)
     yoffset = np.argmax(hole_locations) // (scale_factor + 1)
     zoffset = np.argmax(hole_locations) // (scale_factor + 1) ** 2
 
     s.offset = [int(xoffset), int(yoffset), int(zoffset)]
 
+    # Measuring the qubits based on the offset
     for z in range(s.shape[2]):
         for y in range(s.shape[1]):
             for x in range(s.shape[0]):
                 x_vec = (np.array([x, y, z])) % (scale_factor + 1)
+
                 offset = np.array([xoffset, yoffset, zoffset])
+
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, s.shape)
                     if s.removed_nodes[i] == False:
@@ -478,11 +479,9 @@ def find_cluster2(nclicks, browser_data, graphData, holeData):
 
     ui = "wip"
 
-    xoffset, yoffset, zoffset = s.offset
-
     print(f"offset = {s.offset}")
 
-    H = check_graph_xy(G, xoffset=xoffset, yoffset=yoffset, zoffset=zoffset)
+    H = check_unit_cell(G, offset=s.offset, scale_factor=s.scale_factor)
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 
@@ -510,7 +509,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData):
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
-def check_graph_xy(G, xoffset=0, yoffset=0, zoffset=0):
+def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     """
     Check if a unit cell is a valid Raussendorf unit cell.
     A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
@@ -518,22 +517,37 @@ def check_graph_xy(G, xoffset=0, yoffset=0, zoffset=0):
     If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
     """
 
-    # fmt: off
-    face1 = [[(xoffset + j, yoffset + 0, zoffset + d) for j in range(0, 4)] for d in range(1, 3)] 
-    face2 = [[(xoffset + j, yoffset + d, zoffset + 0) for j in range(0, 4)] for d in range(1, 3)]
-    face3 = [[(xoffset + j, yoffset + 3, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
-    face4 = [[(xoffset + j, yoffset + d, zoffset + 3) for j in range(0, 4)] for d in range(1, 3)]
-    face5 = [[(xoffset + d, yoffset + j, zoffset + 0) for j in range(0, 4)] for d in range(1, 3)]
-    face6 = [[(xoffset + 0, yoffset + j, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
-    face7 = [[(xoffset + d, yoffset + j, zoffset + 3) for j in range(0, 4)] for d in range(1, 3)]
-    face8 = [[(xoffset + 3, yoffset + j, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
-    face9 = [[(xoffset + d, yoffset + 3, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
-    face10 = [[(xoffset + 3, yoffset + d, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
-    face11 = [[(xoffset + d, yoffset + 0, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
-    face12 = [[(xoffset + 0, yoffset + d, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
+    unit_cell_coord = np.array(unit_cell_coord)
 
-    all_faces = [face1, face2, face3, face4, face5, face6, face7, face8, face9, face10, face11, face12]
-    # fmt: on
+    global_coordinate_offset = np.array(offset) + np.array(unit_cell_coord)
+
+    face_specs = [
+        lambda d, j: (j, 0, d),  # face1
+        lambda d, j: (j, d, 0),  # face2
+        lambda d, j: (j, scale_factor + 1, d),  # face3
+        lambda d, j: (j, d, scale_factor + 1),  # face4
+        lambda d, j: (d, j, 0),  # face5
+        lambda d, j: (0, j, d),  # face6
+        lambda d, j: (d, j, scale_factor + 1),  # face7
+        lambda d, j: (scale_factor + 1, j, d),  # face8
+        lambda d, j: (d, scale_factor + 1, j),  # face9
+        lambda d, j: (scale_factor + 1, d, j),  # face10
+        lambda d, j: (d, 0, j),  # face11
+        lambda d, j: (0, d, j),  # face12
+    ]
+
+    all_faces = []
+
+    for f in range(12):
+        face = []
+        for d in range(1, scale_factor + 1):
+            face.append(
+                [
+                    tuple(global_coordinate_offset + np.array(face_specs[f](d, j)))
+                    for j in range(0, scale_factor + 2)
+                ]
+            )
+        all_faces.append(face)
 
     all_faces_unzipped = [
         node for face in all_faces for checks in face for node in checks
