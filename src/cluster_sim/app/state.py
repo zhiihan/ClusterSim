@@ -39,6 +39,6 @@ class BrowserState:
             }
         }
 
-        self.offset = [None, None, None]
+        self.offset = [0, 0, 0]
         self.xoffset, self.yoffset, self.zoffset = self.offset
         self.ncubes = None

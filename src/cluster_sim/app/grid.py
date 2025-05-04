@@ -1,5 +1,6 @@
 from cluster_sim.graph_state import GraphState
 import networkx as nx
+from cluster_sim.app.utils import get_node_coords
 
 
 class Grid(GraphState):
@@ -11,6 +12,7 @@ class Grid(GraphState):
         # Decoding from nx_object:
         if json_data:
             self.graph = nx.node_link_graph(json_data, edges="edges")
+            self.shape = shape
         elif shape:
             self.shape = shape
             edges = self.generate_cube_edges()
@@ -25,6 +27,8 @@ class Grid(GraphState):
 
         for e in self.graph.edges:
             self.add_edge(*e)
+
+        self.relabel_nodes()
 
     def generate_cube_edges(self):
         edges = []
@@ -55,3 +59,13 @@ class Grid(GraphState):
 
     def encode(self):
         return nx.node_link_data(self.to_networkx(), edges="edges")
+
+    def relabel_nodes(self):
+        """
+        Relabel the nodes of the graph to match the coordinates in the grid.
+        """
+        mapping = {
+            i: get_node_coords(i, self.shape)
+            for i in range(self.graph.number_of_nodes())
+        }
+        self.graph = nx.relabel_nodes(self.graph, mapping)

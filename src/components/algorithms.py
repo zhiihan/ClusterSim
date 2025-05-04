@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Input, Output, State
+from dash import dcc, html, callback, Input, Output, State, no_update
 import jsonpickle
 import numpy as np
 from cluster_sim.app.utils import get_node_index
@@ -30,7 +30,7 @@ algorithms = html.Div(
         html.Button("Find Lattice", id="findlattice"),
         html.Button("Find Cluster", id="alg2"),
         html.Button("Repair Grid", id="repair"),
-        html.Button("Find Percolation", id="alg3"),
+        html.Button("Find Cluster v2", id="findlattice2"),
         html.P("Scale Factor"),
         dcc.Slider(
             id="rhg-slider",
@@ -45,6 +45,7 @@ algorithms = html.Div(
         ),
     ],
 )
+
 
 @callback(
     Output("click-data", "children", allow_duplicate=True),
@@ -76,8 +77,10 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     D = Holes(s.shape, json_data=holeData)
 
     holes = D.graph.nodes
-    hole_locations = np.zeros((scale_factor + 1)**3)
+    hole_locations = np.zeros((scale_factor + 1) ** 3)
     xoffset, yoffset, zoffset = s.offset
+
+    unit_cells_bound = np.array(s.shape) % (scale_factor + 1)
 
     # counting where the holes are
     for h in holes:
@@ -87,19 +90,21 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
         for xoffset, yoffset, zoffset in itertools.product(
             range(scale_factor + 1), repeat=3
         ):
-            test_cond = (x_vec + np.array([xoffset, yoffset, zoffset])) % (scale_factor + 1)
+            test_cond = (x_vec + np.array([xoffset, yoffset, zoffset])) % (
+                scale_factor + 1
+            )
             if np.all(test_cond == 0) or np.all(test_cond != 0):
                 hole_locations[
-                    xoffset + yoffset * (scale_factor + 1) + zoffset * (scale_factor + 1)**2
+                    xoffset
+                    + yoffset * (scale_factor + 1)
+                    + zoffset * (scale_factor + 1) ** 2
                 ] += 1
 
     xoffset = np.argmax(hole_locations) % (scale_factor + 1)
     yoffset = np.argmax(hole_locations) // (scale_factor + 1)
-    zoffset = np.argmax(hole_locations) // (scale_factor + 1)**2
+    zoffset = np.argmax(hole_locations) // (scale_factor + 1) ** 2
 
-    s.offset = [xoffset, yoffset, zoffset]
-
-    print(hole_locations)
+    s.offset = [int(xoffset), int(yoffset), int(zoffset)]
 
     for z in range(s.shape[2]):
         for y in range(s.shape[1]):
@@ -120,7 +125,10 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, xoffset, yoffset, zoffset)
     ui = f"Applied Algorithm: RHG Lattice, scale_factor = {scale_factor}, offset = {s.offset}"
 
+    s.scale_factor = scale_factor
+
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+
 
 # @callback(
 #     Output("click-data", "children", allow_duplicate=True),
@@ -208,6 +216,9 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
     s = jsonpickle.decode(browser_data)
     G = Grid(s.shape, json_data=graphData)
     D = Holes(s.shape, json_data=holeData)
+
+    if getattr(s, "cubes", None) is None:
+        return no_update, no_update, no_update, no_update, no_update, no_update
 
     try:
         if s.offset[0] == None:
@@ -332,78 +343,78 @@ def find_cluster(nclicks, browser_data, graphData, holeData):
     return s.log, 2, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
-@callback(
-    Output("click-data", "children", allow_duplicate=True),
-    Output("draw-plot", "data", allow_duplicate=True),
-    Output("ui", "children", allow_duplicate=True),
-    Output("browser-data", "data", allow_duplicate=True),
-    Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
-    Input("alg3", "n_clicks"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
-    State("holes-data", "data"),
-    prevent_initial_call=True,
-)
-def find_percolation(nclicks, browser_data, graphData, holeData):
-    """
-    Find a path from the top of the grid to the bottom of the grid.
-    """
-    s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    D = Holes(s.shape, json_data=holeData)
+# @callback(
+#     Output("click-data", "children", allow_duplicate=True),
+#     Output("draw-plot", "data", allow_duplicate=True),
+#     Output("ui", "children", allow_duplicate=True),
+#     Output("browser-data", "data", allow_duplicate=True),
+#     Output("graph-data", "data", allow_duplicate=True),
+#     Output("holes-data", "data", allow_duplicate=True),
+#     Input("alg3", "n_clicks"),
+#     State("browser-data", "data"),
+#     State("graph-data", "data"),
+#     State("holes-data", "data"),
+#     prevent_initial_call=True,
+# )
+# def find_percolation(nclicks, browser_data, graphData, holeData):
+#     """
+#     Find a path from the top of the grid to the bottom of the grid.
+#     """
+#     s = jsonpickle.decode(browser_data)
+#     G = Grid(s.shape, json_data=graphData)
+#     D = Holes(s.shape, json_data=holeData)
 
-    gnx = G.to_networkx()
+#     gnx = G.to_networkx()
 
-    removed_nodes_reshape = s.removed_nodes.reshape((s.xmax, s.ymax, s.zmax))
+#     removed_nodes_reshape = s.removed_nodes.reshape((s.xmax, s.ymax, s.zmax))
 
-    zeroplane = removed_nodes_reshape[:, :, 0]
-    zmaxplane = removed_nodes_reshape[:, :, s.zmax - 1]
+#     zeroplane = removed_nodes_reshape[:, :, 0]
+#     zmaxplane = removed_nodes_reshape[:, :, s.zmax - 1]
 
-    x = np.argwhere(
-        zeroplane == 0
-    )  # This is the coordinates of all valid node in z = 0
-    y = np.argwhere(
-        zmaxplane == 0
-    )  # This is the coordinates of all valid node in z = L
+#     x = np.argwhere(
+#         zeroplane == 0
+#     )  # This is the coordinates of all valid node in z = 0
+#     y = np.argwhere(
+#         zmaxplane == 0
+#     )  # This is the coordinates of all valid node in z = L
 
-    path = None
-    while path is None:
-        try:
-            i = get_node_index(*x[s.path_clicks % len(x)], 0, s.shape)
-            j = get_node_index(*y[s.path_clicks // len(x)], s.zmax - 1, s.shape)
-            path = nx.shortest_path(gnx, i, j)
-        except nx.exception.NetworkXNoPath:
-            ui = "No path."
-            print(f"no path, {i}, {j}")
-        finally:
-            s.path_clicks += 1
+#     path = None
+#     while path is None:
+#         try:
+#             i = get_node_index(*x[s.path_clicks % len(x)], 0, s.shape)
+#             j = get_node_index(*y[s.path_clicks // len(x)], s.zmax - 1, s.shape)
+#             path = nx.shortest_path(gnx, i, j)
+#         except nx.exception.NetworkXNoPath:
+#             ui = "No path."
+#             print(f"no path, {i}, {j}")
+#         finally:
+#             s.path_clicks += 1
 
-    nodes, edges = path_to_plot(path, s.shape)
+#     nodes, edges = path_to_plot(path, s.shape)
 
-    lattice = go.Scatter3d(
-        x=nodes[0],
-        y=nodes[1],
-        z=nodes[2],
-        mode="markers",
-        line=dict(color="blue", width=2),
-        hoverinfo="none",
-    )
+#     lattice = go.Scatter3d(
+#         x=nodes[0],
+#         y=nodes[1],
+#         z=nodes[2],
+#         mode="markers",
+#         line=dict(color="blue", width=2),
+#         hoverinfo="none",
+#     )
 
-    lattice_edges = go.Scatter3d(
-        x=edges[0],
-        y=edges[1],
-        z=edges[2],
-        mode="lines",
-        line=dict(color="blue", width=2),
-        hoverinfo="none",
-    )
+#     lattice_edges = go.Scatter3d(
+#         x=edges[0],
+#         y=edges[1],
+#         z=edges[2],
+#         mode="lines",
+#         line=dict(color="blue", width=2),
+#         hoverinfo="none",
+#     )
 
-    s.lattice = lattice.to_json()
-    s.lattice_edges = lattice_edges.to_json()
+#     s.lattice = lattice.to_json()
+#     s.lattice_edges = lattice_edges.to_json()
 
-    ui = f"Found percolation from z = 0, {get_node_coords(i, shape=s.shape)} to z = {s.zmax}, {get_node_coords(j, shape=s.shape)}"
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+#     ui = f"Found percolation from z = 0, {get_node_coords(i, shape=s.shape)} to z = {s.zmax}, {get_node_coords(j, shape=s.shape)}"
+#     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
 @callback(
@@ -442,3 +453,105 @@ def repair_grid(nclicks, browser_data, holeData):
         ui = "All qubits repaired!"
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
+
+@callback(
+    Output("click-data", "children", allow_duplicate=True),
+    Output("draw-plot", "data", allow_duplicate=True),
+    Output("ui", "children", allow_duplicate=True),
+    Output("browser-data", "data", allow_duplicate=True),
+    Output("graph-data", "data", allow_duplicate=True),
+    Output("holes-data", "data", allow_duplicate=True),
+    Input("findlattice2", "n_clicks"),
+    State("browser-data", "data"),
+    State("graph-data", "data"),
+    State("holes-data", "data"),
+    prevent_initial_call=True,
+)
+def find_cluster2(nclicks, browser_data, graphData, holeData):
+    """
+    Find a cluster of connected cubes in the lattice.
+    """
+    s = jsonpickle.decode(browser_data)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
+
+    if getattr(s, "scale_factor", None) is None:
+        return no_update, no_update, no_update, no_update, no_update, no_update
+
+    ui = "wip"
+
+    xoffset, yoffset, zoffset = s.offset
+
+    H = check_graph_xy(G)
+
+    nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
+
+    lattice = go.Scatter3d(
+        x=nodes[0],
+        y=nodes[1],
+        z=nodes[2],
+        mode="markers",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
+
+    lattice_edges = go.Scatter3d(
+        x=edges[0],
+        y=edges[1],
+        z=edges[2],
+        mode="lines",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
+
+    s.lattice = lattice.to_json()
+    s.lattice_edges = lattice_edges.to_json()
+
+    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+
+
+def check_graph_xy(G, xoffset=0, yoffset=0, zoffset=0):
+
+    # fmt: off
+    face1 = [[(xoffset + j, yoffset + 0, zoffset + d) for j in range(0, 4)] for d in range(1, 3)] #noqa
+    face2 = [[(xoffset + j, yoffset + d, zoffset + 0) for j in range(0, 4)] for d in range(1, 3)]
+    face3 = [[(xoffset + j, yoffset + 3, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
+    face4 = [[(xoffset + j, yoffset + d, zoffset + 3) for j in range(0, 4)] for d in range(1, 3)]
+    face5 = [[(xoffset + d, yoffset + j, zoffset + 0) for j in range(0, 4)] for d in range(1, 3)]
+    face6 = [[(xoffset + 0, yoffset + j, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
+    face7 = [[(xoffset + d, yoffset + j, zoffset + 3) for j in range(0, 4)] for d in range(1, 3)]
+    face8 = [[(xoffset + 3, yoffset + j, zoffset + d) for j in range(0, 4)] for d in range(1, 3)]
+    face9 = [[(xoffset + d, yoffset + 3, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
+    face10 = [[(xoffset + 3, yoffset + d, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
+    face11 = [[(xoffset + d, yoffset + 0, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
+    face12 = [[(xoffset + 0, yoffset + d, zoffset + j) for j in range(0, 4)] for d in range(1, 3)]
+
+    all_faces = [face1, face2, face3, face4, face5, face6, face7, face8, face9, face10, face11, face12]
+    # fmt: on
+
+    all_faces_unzipped = [
+        node for face in all_faces for checks in face for node in checks
+    ]
+
+    print(all_faces)
+
+    H = G.graph.subgraph(all_faces_unzipped).copy()
+    H.remove_nodes_from(list(nx.isolates(H)))
+
+    print(H)
+
+    joined_faces = []
+
+    for face in all_faces:
+        for checks in face:
+            print(checks)
+            if all(H.has_node(i) for i in checks):
+                joined_faces.append(checks)
+                break
+        else:
+            print("No face found")
+            return None
+
+    joined_faces = [node for l in joined_faces for node in l]
+
+    return G.graph.subgraph(joined_faces)
