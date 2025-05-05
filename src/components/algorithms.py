@@ -33,7 +33,7 @@ algorithms = html.Div(
         dcc.Slider(
             id="rhg-slider",
             min=1,
-            max=3,
+            max=5,
             step=1,
             value=1,
             tooltip={
@@ -41,7 +41,7 @@ algorithms = html.Div(
                 "always_visible": True,
             },
         ),
-        dcc.Dropdown(["Select One", "Select All"], "Select One", id="select-cubes"),
+        dcc.Dropdown(["Select One", "Select All"], "Select All", id="select-cubes"),
     ],
 )
 
@@ -412,14 +412,14 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
     print(f"offset = {s.offset}")
 
     if getattr(s, "valid_unit_cells", None) is None:
-        possible_unit_cells = generate_unit_cell_coords(s.shape, s.scale_factor)
+        possible_unit_cells = generate_unit_cell_global_coords(s.shape, s.scale_factor)
         click_number = nclicks % (len(possible_unit_cells))
         unit_cell_coord = possible_unit_cells[click_number]
 
         valid_unit_cells = []
         for possible_unit in possible_unit_cells:
             if (
-                check_unit_cell(
+                check_unit_cell_path(
                     G, s.scale_factor, s.offset, unit_cell_coord=possible_unit
                 )
                 is not None
@@ -436,7 +436,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
 
         ui = f"FindLattice2: Displaying {click_number+1}/{len(s.valid_unit_cells)} unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
 
-        H = check_unit_cell(
+        H = check_unit_cell_path(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
     if select_cubes == "Select All":
@@ -444,7 +444,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
         graphs = []
         for unit_cell_coord in s.valid_unit_cells:
             graphs.append(
-                check_unit_cell(
+                check_unit_cell_path(
                     G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
                 )
             )
@@ -477,19 +477,15 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
-def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
+def generate_unit_cell_faces(scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     """
-    Check if a unit cell is a valid Raussendorf unit cell.
-    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
-
-    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
+    Generate face slices for a unit cell.
     """
-
     unit_cell_coord = np.array(unit_cell_coord)
 
     global_coordinate_offset = np.array(offset) + np.array(unit_cell_coord)
 
-    face_specs = [
+    face_gen_func = [
         lambda d, j: (j, 0, d),  # face1
         lambda d, j: (j, d, 0),  # face2
         lambda d, j: (j, scale_factor + 1, d),  # face3
@@ -511,7 +507,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
         for d in range(1, scale_factor + 1):
             face.append(
                 [
-                    tuple(global_coordinate_offset + np.array(face_specs[f](d, j)))
+                    tuple(global_coordinate_offset + np.array(face_gen_func[f](d, j)))
                     for j in range(0, scale_factor + 2)
                 ]
             )
@@ -520,6 +516,20 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     all_faces_unzipped = [
         node for face in all_faces for checks in face for node in checks
     ]
+    return all_faces, all_faces_unzipped, face_gen_func, global_coordinate_offset
+
+
+def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
+    """
+    Check if a unit cell is a valid Raussendorf unit cell.
+    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
+
+    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
+    """
+
+    all_faces, all_faces_unzipped, _, _ = generate_unit_cell_faces(
+        scale_factor, offset, unit_cell_coord=unit_cell_coord
+    )
 
     H = G.graph.subgraph(all_faces_unzipped).copy()
     H.remove_nodes_from(list(nx.isolates(H)))
@@ -540,7 +550,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     return G.graph.subgraph(joined_faces)
 
 
-def generate_unit_cell_coords(shape, scale_factor):
+def generate_unit_cell_global_coords(shape, scale_factor):
     """
     Find the bottom left corner of each unit cell in a 3D grid.
     """
@@ -555,3 +565,58 @@ def generate_unit_cell_coords(shape, scale_factor):
         unit_cell_locations.append(np.array(i) * (scale_factor + 1))
 
     return unit_cell_locations
+
+
+def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
+    """
+    Check if a unit cell is a valid Raussendorf unit cell.
+    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
+
+    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
+
+    This is the path version of the function, which may run slower.
+    """
+
+    all_faces, all_faces_unzipped, face_gen_func, global_coordinate_offset = (
+        generate_unit_cell_faces(scale_factor, offset, unit_cell_coord=unit_cell_coord)
+    )
+
+    H = G.graph.subgraph(all_faces_unzipped).copy()
+    H.remove_nodes_from(list(nx.isolates(H)))
+
+    joined_faces = []
+
+    for face, gen_func in zip(all_faces, face_gen_func):
+        face_unzipped = [node for checks in face for node in checks]
+
+        F = H.subgraph(face_unzipped).copy()
+
+        edges1 = [
+            tuple(global_coordinate_offset + np.array(gen_func(d, 0)))
+            for d in range(1, scale_factor + 1)
+        ]
+        edges2 = [
+            tuple(global_coordinate_offset + np.array(gen_func(d, scale_factor + 1)))
+            for d in range(1, scale_factor + 1)
+        ]
+
+        for i, j in itertools.product(edges1, edges2):
+
+            # Edge cases for when the unit cell is at the edge of the grid
+            if i not in F.nodes:
+                continue
+            if j not in F.nodes:
+                continue
+
+            if nx.has_path(F, i, j):
+                path = nx.shortest_path(F, i, j)
+                joined_faces.append(path)
+                # should append path
+                break
+        else:
+            print("No face found")
+            return None
+
+    joined_faces = [node for l in joined_faces for node in l]
+
+    return G.graph.subgraph(joined_faces)

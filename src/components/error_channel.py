@@ -26,6 +26,7 @@ error_channel = html.Div(
                 "placement": "bottom",
                 "always_visible": True,
             },
+            marks={i / 100: str(i) for i in range(0, 31, 3)},
             id="prob",
         ),
         html.Div(
@@ -40,6 +41,7 @@ error_channel = html.Div(
         ),
     ]
 )
+
 
 @callback(
     Output("click-data", "children", allow_duplicate=True),

@@ -19,8 +19,8 @@ reset_graph = html.Div(
             )
         ),
         dcc.Slider(
-            1,
-            15,
+            min=1,
+            max=16,
             step=1,
             value=4,
             tooltip={
@@ -30,8 +30,8 @@ reset_graph = html.Div(
             id="xmax",
         ),
         dcc.Slider(
-            1,
-            15,
+            min=1,
+            max=16,
             step=1,
             value=4,
             tooltip={
@@ -41,8 +41,8 @@ reset_graph = html.Div(
             id="ymax",
         ),
         dcc.Slider(
-            1,
-            15,
+            min=1,
+            max=16,
             step=1,
             value=4,
             tooltip={
