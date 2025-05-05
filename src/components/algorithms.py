@@ -43,6 +43,7 @@ algorithms = html.Div(
                 "always_visible": True,
             },
         ),
+        dcc.Dropdown(["Select One", "Select All"], "Select One", id="select-cubes"),
     ],
 )
 
@@ -78,7 +79,9 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     holes = D.graph.nodes
 
-    hole_locations = np.zeros((scale_factor + 1) ** 3, dtype=int)
+    hole_locations = np.zeros(
+        (scale_factor + 1, scale_factor + 1, scale_factor + 1), dtype=int
+    )
 
     # Finding the offset that maximizes holes placed in hole locations
     for h in holes:
@@ -92,25 +95,19 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
             offset = np.array([xoffset, yoffset, zoffset])
 
             if np.all(test_cond == offset) or np.all(test_cond != offset):
-                hole_locations[
-                    xoffset
-                    + yoffset * (scale_factor + 1)
-                    + zoffset * (scale_factor + 1) ** 2
-                ] += 1
+                hole_locations[offset] += 1
 
-    xoffset = np.argmax(hole_locations) % (scale_factor + 1)
-    yoffset = np.argmax(hole_locations) // (scale_factor + 1)
-    zoffset = np.argmax(hole_locations) // (scale_factor + 1) ** 2
-
-    s.offset = [int(xoffset), int(yoffset), int(zoffset)]
+    # Finding the offset that maximizes holes placed in hole locations
+    # Can use other indices to find other maximizing offsets
+    s.offset = np.argwhere(hole_locations == np.max(hole_locations))[0]
 
     # Measuring the qubits based on the offset
     for z in range(s.shape[2]):
         for y in range(s.shape[1]):
             for x in range(s.shape[0]):
-                x_vec = (np.array([x, y, z])) % (scale_factor + 1)
+                x_vec = np.array([x, y, z]) % (scale_factor + 1)
 
-                offset = np.array([xoffset, yoffset, zoffset])
+                offset = np.array(s.offset)
 
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, s.shape)
@@ -121,7 +118,9 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
                         s.removed_nodes[i] = True
                         s.move_list.append([i, "Z"])
 
-    s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, xoffset, yoffset, zoffset)
+    xoffset, yoffset, zoffset = s.offset
+
+    s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
     ui = f"Applied Algorithm: RHG Lattice, scale_factor = {scale_factor}, offset = {s.offset}"
 
     s.scale_factor = scale_factor
@@ -226,9 +225,7 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
         if s.n_cubes is None:
-            s.cubes, s.n_cubes = D.find_lattice(
-                s.removed_nodes, s.xoffset, s.yoffset, s.zoffset
-            )
+            s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
 
         click_number = nclicks % (len(s.cubes))
 
@@ -464,9 +461,10 @@ def repair_grid(nclicks, browser_data, holeData):
     State("browser-data", "data"),
     State("graph-data", "data"),
     State("holes-data", "data"),
+    State("select-cubes", "value"),
     prevent_initial_call=True,
 )
-def find_cluster2(nclicks, browser_data, graphData, holeData):
+def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
     """
     Find a cluster of connected cubes in the lattice.
     """
@@ -481,7 +479,16 @@ def find_cluster2(nclicks, browser_data, graphData, holeData):
 
     print(f"offset = {s.offset}")
 
-    H = check_unit_cell(G, offset=s.offset, scale_factor=s.scale_factor)
+    if select_cubes == "Select One":
+        possible_unit_cells = generate_unit_cell_coords(s.shape, s.scale_factor)
+        click_number = nclicks % (len(possible_unit_cells))
+        unit_cell_coord = possible_unit_cells[click_number]
+        H = check_unit_cell(
+            G,
+            offset=s.offset,
+            scale_factor=s.scale_factor,
+            unit_cell_coord=unit_cell_coord,
+        )
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 
@@ -578,3 +585,20 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     joined_faces = [node for l in joined_faces for node in l]
 
     return G.graph.subgraph(joined_faces)
+
+
+def generate_unit_cell_coords(shape, scale_factor):
+    """
+    Find the bottom left corner of each unit cell in a 3D grid.
+    """
+
+    # Calculate the number of cubes in each dimension
+    num_cubes = np.array(shape) // (scale_factor + 1)
+
+    unit_cell_locations = []
+    for i in itertools.product(
+        range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
+    ):
+        unit_cell_locations.append(np.array(i) * (scale_factor + 1))
+
+    return unit_cell_locations

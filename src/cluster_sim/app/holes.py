@@ -52,7 +52,7 @@ class Holes:
                     if not ((x_diff[0] == 2) or (x_diff[1] == 2) or (x_diff[2] == 2)):
                         self.graph.add_edge(i, j)
 
-    def find_lattice(self, removed_nodes, xoffset, yoffset, zoffset, max_scale=1):
+    def find_lattice(self, removed_nodes, offset, max_scale=1):
         """
         Find a raussendorf lattice.
 
@@ -64,6 +64,8 @@ class Holes:
             n_cubes = the number of cubes found per dimension
 
         """
+
+        xoffset, yoffset, zoffset = offset
 
         scale = 1
         cubes = []
