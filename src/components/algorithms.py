@@ -7,8 +7,6 @@ from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.utils import (
     get_node_index,
-    get_node_coords,
-    path_to_plot,
     nx_to_plot,
 )
 import plotly.graph_objects as go
@@ -95,7 +93,9 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
             offset = np.array([xoffset, yoffset, zoffset])
 
             if np.all(test_cond == offset) or np.all(test_cond != offset):
-                hole_locations[offset] += 1
+                hole_locations[tuple(offset)] += 1
+
+    print("hole locations", hole_locations)
 
     # Finding the offset that maximizes holes placed in hole locations
     # Can use other indices to find other maximizing offsets
@@ -126,72 +126,6 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     s.scale_factor = scale_factor
 
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
-
-
-# @callback(
-#     Output("click-data", "children", allow_duplicate=True),
-#     Output("draw-plot", "data", allow_duplicate=True),
-#     Output("ui", "children", allow_duplicate=True),
-#     Output("browser-data", "data", allow_duplicate=True),
-#     Output("graph-data", "data", allow_duplicate=True),
-#     Output("holes-data", "data", allow_duplicate=True),
-#     Input("alg1", "n_clicks"),
-#     State("browser-data", "data"),
-#     State("graph-data", "data"),
-#     State("holes-data", "data"),
-#     prevent_initial_call=True,
-# )
-# def algorithm1(nclicks, browser_data, graphData, holeData):
-#     """
-#     Create a RHG lattice from a square lattice.
-#     """
-#     s = jsonpickle.decode(browser_data)
-#     G = Grid(s.shape, json_data=graphData)
-#     D = Holes(s.shape, json_data=holeData)
-
-#     holes = D.graph.nodes
-#     hole_locations = np.zeros(8)
-#     xoffset, yoffset, zoffset = s.offset
-
-#     # counting where the holes are
-#     for h in holes:
-#         x, y, z = h
-#         for zoffset in range(2):
-#             for yoffset in range(2):
-#                 for xoffset in range(2):
-#                     if ((x + xoffset) % 2 == (z + zoffset) % 2) and (
-#                         (y + yoffset) % 2 == (z + zoffset) % 2
-#                     ):
-#                         hole_locations[xoffset + yoffset * 2 + zoffset * 4] += 1
-
-#     print(hole_locations)
-
-#     xoffset = np.argmax(hole_locations) % 2
-#     yoffset = np.argmax(hole_locations) // 2
-#     zoffset = np.argmax(hole_locations) // 4
-
-#     s.offset = [xoffset, yoffset, zoffset]
-
-#     print(f"xoffset, yoffset, zoffset = {(xoffset, yoffset, zoffset)}")
-
-#     for z in range(s.shape[2]):
-#         for y in range(s.shape[1]):
-#             for x in range(s.shape[0]):
-#                 if ((x + xoffset) % 2 == (z + zoffset) % 2) and (
-#                     (y + yoffset) % 2 == (z + zoffset) % 2
-#                 ):
-#                     i = get_node_index(x, y, z, s.shape)
-#                     if s.removed_nodes[i] == False:
-#                         G.handle_measurements(i, "Z")
-#                         s.log.append(f"{i}, Z; ")
-#                         s.log.append(html.Br())
-#                         s.removed_nodes[i] = True
-#                         s.move_list.append([i, "Z"])
-
-#     s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, xoffset, yoffset, zoffset)
-#     ui = f"RHG: Created RHG Lattice."
-
-#     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
 @callback(
@@ -475,8 +409,6 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
     if getattr(s, "scale_factor", None) is None:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
-    ui = "wip"
-
     print(f"offset = {s.offset}")
 
     if getattr(s, "valid_unit_cells", None) is None:
@@ -493,16 +425,31 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
                 is not None
             ):
                 valid_unit_cells.append(possible_unit)
-
         s.valid_unit_cells = valid_unit_cells
+        if valid_unit_cells == []:
+            ui = "FindLattice2: No valid unit cells found."
+            return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
     if select_cubes == "Select One":
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
+        ui = f"FindLattice2: Displaying {click_number+1}/{len(s.valid_unit_cells)} unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
+
         H = check_unit_cell(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
+    if select_cubes == "Select All":
+
+        graphs = []
+        for unit_cell_coord in s.valid_unit_cells:
+            graphs.append(
+                check_unit_cell(
+                    G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
+                )
+            )
+        H = nx.compose_all(graphs)
+        ui = f"FindLattice2: Displaying all unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 
@@ -574,24 +521,18 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
         node for face in all_faces for checks in face for node in checks
     ]
 
-    print(all_faces)
-
     H = G.graph.subgraph(all_faces_unzipped).copy()
     H.remove_nodes_from(list(nx.isolates(H)))
-
-    print(H)
 
     joined_faces = []
 
     for face in all_faces:
         for checks in face:
-            print(checks)
             if all(H.has_node(i) for i in checks):
                 joined_faces.append(checks)
                 break
         else:
             print("No face found")
-
             return None
 
     joined_faces = [node for l in joined_faces for node in l]
