@@ -479,15 +479,29 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
 
     print(f"offset = {s.offset}")
 
-    if select_cubes == "Select One":
+    if getattr(s, "valid_unit_cells", None) is None:
         possible_unit_cells = generate_unit_cell_coords(s.shape, s.scale_factor)
         click_number = nclicks % (len(possible_unit_cells))
         unit_cell_coord = possible_unit_cells[click_number]
+
+        valid_unit_cells = []
+        for possible_unit in possible_unit_cells:
+            if (
+                check_unit_cell(
+                    G, s.scale_factor, s.offset, unit_cell_coord=possible_unit
+                )
+                is not None
+            ):
+                valid_unit_cells.append(possible_unit)
+
+        s.valid_unit_cells = valid_unit_cells
+
+    if select_cubes == "Select One":
+        click_number = nclicks % (len(s.valid_unit_cells))
+        unit_cell_coord = s.valid_unit_cells[click_number]
+
         H = check_unit_cell(
-            G,
-            offset=s.offset,
-            scale_factor=s.scale_factor,
-            unit_cell_coord=unit_cell_coord,
+            G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
@@ -577,8 +591,6 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
                 break
         else:
             print("No face found")
-
-            return G.graph.subgraph([node for l in face for node in l])  # debug
 
             return None
 
