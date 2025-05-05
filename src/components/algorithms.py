@@ -29,6 +29,7 @@ algorithms = html.Div(
         html.Button("Find Cluster", id="alg2"),
         html.Button("Repair Grid", id="repair"),
         html.Button("Find Cluster v2", id="findlattice2"),
+        html.Button("Find Cluster v3 (slow)", id="findlattice3"),
         html.P("Scale Factor"),
         dcc.Slider(
             id="rhg-slider",
@@ -399,6 +400,99 @@ def repair_grid(nclicks, browser_data, holeData):
     prevent_initial_call=True,
 )
 def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
+    """
+    Find a cluster of connected cubes in the lattice.
+    """
+    s = jsonpickle.decode(browser_data)
+    G = Grid(s.shape, json_data=graphData)
+    D = Holes(s.shape, json_data=holeData)
+
+    if getattr(s, "scale_factor", None) is None:
+        return no_update, no_update, no_update, no_update, no_update, no_update
+
+    print(f"offset = {s.offset}")
+
+    if getattr(s, "valid_unit_cells", None) is None:
+        possible_unit_cells = generate_unit_cell_global_coords(s.shape, s.scale_factor)
+        click_number = nclicks % (len(possible_unit_cells))
+        unit_cell_coord = possible_unit_cells[click_number]
+
+        valid_unit_cells = []
+        for possible_unit in possible_unit_cells:
+            if (
+                check_unit_cell(
+                    G, s.scale_factor, s.offset, unit_cell_coord=possible_unit
+                )
+                is not None
+            ):
+                valid_unit_cells.append(possible_unit)
+        s.valid_unit_cells = valid_unit_cells
+        if valid_unit_cells == []:
+            ui = "FindLattice2: No valid unit cells found."
+            return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+
+    if select_cubes == "Select One":
+        click_number = nclicks % (len(s.valid_unit_cells))
+        unit_cell_coord = s.valid_unit_cells[click_number]
+
+        ui = f"FindLattice2: Displaying {click_number+1}/{len(s.valid_unit_cells)} unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
+
+        H = check_unit_cell_path(
+            G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
+        )
+    if select_cubes == "Select All":
+
+        graphs = []
+        for unit_cell_coord in s.valid_unit_cells:
+            graphs.append(
+                check_unit_cell(
+                    G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
+                )
+            )
+        H = nx.compose_all(graphs)
+        ui = f"FindLattice2: Displaying all unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
+
+    nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
+
+    lattice = go.Scatter3d(
+        x=nodes[0],
+        y=nodes[1],
+        z=nodes[2],
+        mode="markers",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
+
+    lattice_edges = go.Scatter3d(
+        x=edges[0],
+        y=edges[1],
+        z=edges[2],
+        mode="lines",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
+
+    s.lattice = lattice.to_json()
+    s.lattice_edges = lattice_edges.to_json()
+
+    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+
+
+@callback(
+    Output("click-data", "children", allow_duplicate=True),
+    Output("draw-plot", "data", allow_duplicate=True),
+    Output("ui", "children", allow_duplicate=True),
+    Output("browser-data", "data", allow_duplicate=True),
+    Output("graph-data", "data", allow_duplicate=True),
+    Output("holes-data", "data", allow_duplicate=True),
+    Input("findlattice3", "n_clicks"),
+    State("browser-data", "data"),
+    State("graph-data", "data"),
+    State("holes-data", "data"),
+    State("select-cubes", "value"),
+    prevent_initial_call=True,
+)
+def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
     """
     Find a cluster of connected cubes in the lattice.
     """
