@@ -1,6 +1,7 @@
 import numpy as np
 import plotly.graph_objects as go
 from plotly.io import from_json
+import networkx as nx
 
 
 def get_node_index(x, y, z, shape):
@@ -11,7 +12,7 @@ def get_node_coords(i, shape):
     index_x = i % shape[0]
     index_y = (i // shape[0]) % shape[1]
     index_z = (i // (shape[0] * shape[1])) % shape[2]
-    return [index_x, index_y, index_z]
+    return (index_x, index_y, index_z)
 
 
 def nx_to_plot(graph, shape, index=True):

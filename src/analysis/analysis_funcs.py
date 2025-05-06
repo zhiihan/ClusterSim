@@ -6,6 +6,7 @@ from cluster_sim.app.holes import Holes
 from cluster_sim.app.grid import Grid
 import tqdm
 from joblib import Parallel
+import itertools
 
 
 # def path_percolation(G, removed_nodes, shape, xoffset, yoffset):
@@ -77,7 +78,7 @@ def algorithm1(G, D, removed_nodes, shape):
                     ):
                         hole_locations[xoffset + yoffset * 2 + zoffset * 4] += 1
 
-    print("hole locations", hole_locations)
+    # print("hole locations", hole_locations)
 
     xoffset = int(np.argmax(hole_locations) % 2)
     yoffset = int(np.argmax(hole_locations) // 2)
@@ -192,3 +193,48 @@ class ParallelTqdm(Parallel):
             self.progress_bar.refresh()
         # update progressbar
         self.progress_bar.update(self.n_completed_tasks - self.progress_bar.n)
+
+
+def rhgrules_extended(G, D, removed_nodes, shape, dim=3):
+    """
+    Create a RHG lattice from a square lattice.
+
+    Params:
+        G: Graph object
+        D: Holes object
+        removed_nodes: list of removed nodes
+        shape: shape of the lattice
+        dim: dimension of the reconstructed lattice
+    """
+    holes = D.graph.nodes
+    hole_locations = np.zeros(27)
+
+    # counting where the holes are
+    for h in holes:
+        x, y, z = h
+
+        x_vec = np.array([x, y, z])
+        for xoffset, yoffset, zoffset in itertools.product(range(dim), repeat=3):
+            test_cond = (x_vec + np.array([xoffset, yoffset, zoffset])) % dim
+            if np.all(test_cond == 0) or np.all(test_cond != 0):
+                hole_locations[xoffset + yoffset * dim + zoffset * dim**2] += 1
+
+    print("hole locations", hole_locations)
+
+    xoffset = np.argmax(hole_locations) % dim
+    yoffset = np.argmax(hole_locations) // dim
+    zoffset = np.argmax(hole_locations) // dim**2
+
+    for z in range(shape[2]):
+        for y in range(shape[1]):
+            for x in range(shape[0]):
+                x_vec = (
+                    np.array([x, y, z]) + np.array([xoffset, yoffset, zoffset])
+                ) % dim
+
+                if np.all(x_vec == 0) or np.all(x_vec != 0):
+                    i = get_node_index(x, y, z, shape)
+                    G.handle_measurements(i, "Z")
+                    removed_nodes[i] = True
+
+    return G, removed_nodes, [xoffset, yoffset, zoffset]
