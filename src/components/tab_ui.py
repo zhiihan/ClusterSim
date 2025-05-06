@@ -32,28 +32,26 @@ tab_2 = dbc.Col(
 
 tab_3 = dbc.Col(
     [
+        load_graph,
+        move_log,
         hover_data,
         zoom_data,
-        move_log,
-        load_graph,
     ]
 )
 
 
 tab_ui = html.Div(
     [
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H2("Cluster Sim"),
-                    dbc.Alert(
-                        "This is a primary alert",
-                        color="primary",
-                        id="ui",
-                        dismissable=True,
-                    ),
-                ]
-            )
+        dbc.CardBody(
+            [
+                html.H2("Cluster Sim"),
+                dbc.Alert(
+                    "Click on the graph to measure nodes. Dismiss this message to hide alerts.",
+                    color="primary",
+                    id="ui",
+                    dismissable=True,
+                ),
+            ]
         ),
         html.Hr(),
         dbc.Tabs(

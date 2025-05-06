@@ -38,7 +38,7 @@ display_options = dbc.Card(
             dcc.Markdown(
                 d(
                     """
-        **Select display options**
+        **Select graph display options**
         """
                 )
             ),

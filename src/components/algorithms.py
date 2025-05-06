@@ -26,12 +26,18 @@ algorithms = dbc.Card(
                 """
                 )
             ),
-            dbc.Button("RHG Lattice", id="alg1"),
-            dbc.Button("Find Lattice", id="findlattice"),
-            dbc.Button("Find Cluster", id="alg2"),
-            dbc.Button("Repair Grid", id="repair"),
-            dbc.Button("Find Cluster v2", id="findlattice2"),
-            dbc.Button("Find Cluster v3 (slow)", id="findlattice3"),
+            dbc.Stack(
+                [
+                    dbc.Button("RHG Lattice", id="alg1"),
+                    dbc.Button("Find Lattice", id="findlattice"),
+                    dbc.Button("Find Cluster", id="alg2"),
+                    dbc.Button("Repair Grid", id="repair"),
+                    dbc.Button("Find Cluster v2", id="findlattice2"),
+                    dbc.Button("Find Cluster v3 (slow)", id="findlattice3"),
+                ],
+                direction="horizontal",
+                gap=3,
+            ),
             html.Hr(),
             html.B("Scale Factor"),
             dcc.Slider(
@@ -42,14 +48,13 @@ algorithms = dbc.Card(
                 value=1,
                 tooltip={
                     "placement": "bottom",
-                    "always_visible": True,
                 },
                 className="dash-bootstrap",
             ),
             html.Hr(),
             dcc.Dropdown(
-                ["Select One", "Select All"],
-                "Select All",
+                ["Select One Cube", "Select All Cubes"],
+                "Select All Cubes",
                 id="select-cubes",
                 className="dash-bootstrap",
             ),
@@ -442,7 +447,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
             ui = "FindLattice2: No valid unit cells found."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-    if select_cubes == "Select One":
+    if select_cubes == "Select One Cube":
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
@@ -451,7 +456,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
         H = check_unit_cell_path(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
-    if select_cubes == "Select All":
+    if select_cubes == "Select All Cubes":
 
         graphs = []
         for unit_cell_coord in s.valid_unit_cells:
@@ -535,7 +540,7 @@ def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
             ui = "FindLattice2: No valid unit cells found."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-    if select_cubes == "Select One":
+    if select_cubes == "Select One Cube":
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
@@ -544,7 +549,7 @@ def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
         H = check_unit_cell_path(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
-    if select_cubes == "Select All":
+    if select_cubes == "Select All Cubes":
 
         graphs = []
         for unit_cell_coord in s.valid_unit_cells:

@@ -26,19 +26,25 @@ error_channel = dbc.Card(
                 value=0.06,
                 tooltip={
                     "placement": "bottom",
-                    "always_visible": True,
                 },
                 marks={i / 100: str(i) for i in range(0, 31, 3)},
                 id="prob",
                 className="dash-bootstrap",
             ),
-            html.Div(
+            html.Hr(),
+            dbc.Row(
                 [
-                    dbc.Button("Erasure Channel", id="reset-seed"),
-                    dbc.Input(
-                        id="load-graph-seed",
-                        type="number",
-                        placeholder="Seed",
+                    dbc.Col(
+                        dbc.Button("Erasure Channel", id="reset-seed"),
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Input(
+                                id="load-graph-seed",
+                                type="number",
+                                placeholder="Seed",
+                            ),
+                        ]
                     ),
                 ]
             ),

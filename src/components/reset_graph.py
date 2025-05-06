@@ -28,7 +28,6 @@ reset_graph = dbc.Card(
                 value=4,
                 tooltip={
                     "placement": "bottom",
-                    "always_visible": True,
                 },
                 id="xmax",
                 className="dash-bootstrap",
@@ -41,7 +40,6 @@ reset_graph = dbc.Card(
                 value=4,
                 tooltip={
                     "placement": "bottom",
-                    "always_visible": True,
                 },
                 id="ymax",
                 className="dash-bootstrap",
@@ -54,14 +52,19 @@ reset_graph = dbc.Card(
                 value=4,
                 tooltip={
                     "placement": "bottom",
-                    "always_visible": True,
                 },
                 id="zmax",
                 className="dash-bootstrap",
             ),
             html.Hr(),
-            dbc.Button("Reset Grid", id="reset"),
-            dbc.Button("Undo", id="undo"),
+            dbc.Stack(
+                [
+                    dbc.Button("Reset Grid", id="reset"),
+                    dbc.Button("Undo", id="undo"),
+                ],
+                gap=3,
+                direction="horizontal",
+            ),
         ]
     )
 )

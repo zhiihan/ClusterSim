@@ -26,6 +26,7 @@ load_graph = dbc.Card(
                 type="text",
                 placeholder="Load Graph State",
             ),
+            html.Hr(),
             dbc.Button("Load Graph", id="load-graph-button"),
             # dcc.Store stores the intermediate value
             dcc.Store(id="browser-data"),
