@@ -42,6 +42,7 @@ algorithms = html.Div(
                 "placement": "bottom",
                 "always_visible": True,
             },
+            className="dash-bootstrap",
         ),
         dcc.Dropdown(["Select One", "Select All"], "Select All", id="select-cubes"),
     ],

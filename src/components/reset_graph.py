@@ -30,6 +30,7 @@ reset_graph = html.Div(
                 "always_visible": True,
             },
             id="xmax",
+            className="dash-bootstrap",
         ),
         dcc.Slider(
             min=1,
@@ -41,6 +42,7 @@ reset_graph = html.Div(
                 "always_visible": True,
             },
             id="ymax",
+            className="dash-bootstrap",
         ),
         dcc.Slider(
             min=1,
@@ -52,7 +54,7 @@ reset_graph = html.Div(
                 "always_visible": True,
             },
             id="zmax",
-            className="mb-4",
+            className="dash-bootstrap",
         ),
         Button("Reset Grid", id="reset"),
         Button("Undo", id="undo"),
