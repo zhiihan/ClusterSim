@@ -5,7 +5,7 @@ import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
-from dash_bootstrap_components import Button
+import dash_bootstrap_components as dbc
 
 error_channel = html.Div(
     [
@@ -29,11 +29,12 @@ error_channel = html.Div(
             },
             marks={i / 100: str(i) for i in range(0, 31, 3)},
             id="prob",
+            className="dash-bootstrap",
         ),
         html.Div(
             [
-                html.Button("Erasure Channel", id="reset-seed"),
-                dcc.Input(
+                dbc.Button("Erasure Channel", id="reset-seed"),
+                dbc.Input(
                     id="load-graph-seed",
                     type="number",
                     placeholder="Seed",

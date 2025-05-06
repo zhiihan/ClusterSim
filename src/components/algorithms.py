@@ -25,12 +25,12 @@ algorithms = html.Div(
                 """
             )
         ),
-        html.Button("RHG Lattice", id="alg1"),
-        html.Button("Find Lattice", id="findlattice"),
-        html.Button("Find Cluster", id="alg2"),
-        html.Button("Repair Grid", id="repair"),
-        html.Button("Find Cluster v2", id="findlattice2"),
-        html.Button("Find Cluster v3 (slow)", id="findlattice3"),
+        Button("RHG Lattice", id="alg1"),
+        Button("Find Lattice", id="findlattice"),
+        Button("Find Cluster", id="alg2"),
+        Button("Repair Grid", id="repair"),
+        Button("Find Cluster v2", id="findlattice2"),
+        Button("Find Cluster v3 (slow)", id="findlattice3"),
         html.P("Scale Factor"),
         dcc.Slider(
             id="rhg-slider",
@@ -638,7 +638,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
                 joined_faces.append(checks)
                 break
         else:
-            print("No face found")
+            # print("No face found")
             return None
 
     joined_faces = [node for l in joined_faces for node in l]
@@ -710,7 +710,7 @@ def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
                 # should append path
                 break
         else:
-            print("No face found")
+            # print("No face found")
             return None
 
     joined_faces = [node for l in joined_faces for node in l]
