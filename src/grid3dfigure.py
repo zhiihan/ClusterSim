@@ -1,12 +1,9 @@
-
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 from cluster_sim.app.utils import (
     get_node_index,
     get_node_coords,
-    path_to_plot,
-    nx_to_plot,
 )
 import dash
 from dash import html, Input, Output, State
@@ -14,8 +11,6 @@ import time
 import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
-import numpy as np
-import networkx as nx
 from components import (
     move_log,
     reset_graph,
