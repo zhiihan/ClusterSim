@@ -10,7 +10,7 @@ import dash
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import numpy as np
-from dash_bootstrap_components import Checklist
+import dash_bootstrap_components as dbc
 
 
 # Initialize the state of the user's browsing section
@@ -32,27 +32,29 @@ figure = dcc.Graph(
     style={"width": "100%", "height": "100%"},
 )
 
-display_options = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+display_options = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
         **Select display options**
         """
-            )
-        ),
-        Checklist(
-            options=[
-                {"label": "Qubits", "value": "Qubits"},
-                {"label": "Erasures", "value": "Holes"},
-                {"label": "Lattice", "value": "Lattice"},
-            ],
-            value=["Qubits", "Holes", "Lattice"],
-            id="plotoptions",
-            inline=True,
-            switch=True,
-        ),
-    ]
+                )
+            ),
+            dbc.Checklist(
+                options=[
+                    {"label": "Qubits", "value": "Qubits"},
+                    {"label": "Erasures", "value": "Holes"},
+                    {"label": "Lattice", "value": "Lattice"},
+                ],
+                value=["Qubits", "Holes", "Lattice"],
+                id="plotoptions",
+                inline=True,
+                switch=True,
+            ),
+        ]
+    )
 )
 
 
@@ -81,6 +83,3 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
     if "scene.camera" in relayoutData:
         fig.update_layout(scene_camera=s.camera_state["scene.camera"])
     return fig
-
-
-

@@ -9,34 +9,36 @@ import jsonpickle
 from dash import no_update
 import numpy as np
 
-load_graph = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+load_graph = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
                 **Load Graph State**
 
                 Paste data to load a graph state.
                 """
-            )
-        ),
-        dbc.Input(
-            id="load-graph-input",
-            type="text",
-            placeholder="Load Graph State",
-        ),
-        dbc.Button("Load Graph", id="load-graph-button"),
-        # dcc.Store stores the intermediate value
-        dcc.Store(id="browser-data"),
-        dcc.Store(id="graph-data"),
-        dcc.Store(id="holes-data"),
-        dcc.Store(id="draw-plot"),
-        html.Div(
-            id="none",
-            children=[],
-            style={"display": "none"},
-        ),
-    ]
+                )
+            ),
+            dbc.Input(
+                id="load-graph-input",
+                type="text",
+                placeholder="Load Graph State",
+            ),
+            dbc.Button("Load Graph", id="load-graph-button"),
+            # dcc.Store stores the intermediate value
+            dcc.Store(id="browser-data"),
+            dcc.Store(id="graph-data"),
+            dcc.Store(id="holes-data"),
+            dcc.Store(id="draw-plot"),
+            html.Div(
+                id="none",
+                children=[],
+                style={"display": "none"},
+            ),
+        ]
+    )
 )
 
 

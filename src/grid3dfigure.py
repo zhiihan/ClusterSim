@@ -22,6 +22,7 @@ from components import (
     display_options,
     figure,
     error_channel,
+    tab_ui,
 )
 import dash_bootstrap_components as dbc
 
@@ -57,33 +58,7 @@ app.layout = html.Div(
                 ),
                 Panel(
                     id="resize_info",
-                    children=[
-                        html.Div(
-                            [
-                                algorithms,
-                                move_log,
-                            ],
-                            className="four columns",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(id="ui"),
-                                measurementbasis,
-                                display_options,
-                                hover_data,
-                                zoom_data,
-                            ],
-                            className="four columns",
-                        ),
-                        html.Div(
-                            [
-                                reset_graph,
-                                error_channel,
-                                load_graph,
-                            ],
-                            className="four columns",
-                        ),
-                    ],
+                    children=tab_ui,
                     style={"overflow": "scroll", "width": "95%"},
                 ),
             ],

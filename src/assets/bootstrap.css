@@ -10050,3 +10050,19 @@ a.text-dark:hover, a.text-dark:focus {
 .dash-bootstrap .rc-slider-mark-text.rc-slider-mark-text-active {
   color: #343a40;
 }
+
+/* restyle radio items */
+.radio-group .form-check {
+  padding-left: 0;
+}
+
+.radio-group .btn-group > .form-check:not(:last-child) > .btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.radio-group .btn-group > .form-check:not(:first-child) > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+}

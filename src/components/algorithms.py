@@ -12,40 +12,49 @@ from cluster_sim.app.utils import (
 import plotly.graph_objects as go
 import networkx as nx
 import itertools
-from dash_bootstrap_components import Button
+import dash_bootstrap_components as dbc
 
-algorithms = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+algorithms = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
                     **Algorithms**
 
                     Click on points in the graph.
                 """
-            )
-        ),
-        Button("RHG Lattice", id="alg1"),
-        Button("Find Lattice", id="findlattice"),
-        Button("Find Cluster", id="alg2"),
-        Button("Repair Grid", id="repair"),
-        Button("Find Cluster v2", id="findlattice2"),
-        Button("Find Cluster v3 (slow)", id="findlattice3"),
-        html.P("Scale Factor"),
-        dcc.Slider(
-            id="rhg-slider",
-            min=1,
-            max=5,
-            step=1,
-            value=1,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-            className="dash-bootstrap",
-        ),
-        dcc.Dropdown(["Select One", "Select All"], "Select All", id="select-cubes"),
-    ],
+                )
+            ),
+            dbc.Button("RHG Lattice", id="alg1"),
+            dbc.Button("Find Lattice", id="findlattice"),
+            dbc.Button("Find Cluster", id="alg2"),
+            dbc.Button("Repair Grid", id="repair"),
+            dbc.Button("Find Cluster v2", id="findlattice2"),
+            dbc.Button("Find Cluster v3 (slow)", id="findlattice3"),
+            html.Hr(),
+            html.B("Scale Factor"),
+            dcc.Slider(
+                id="rhg-slider",
+                min=1,
+                max=5,
+                step=1,
+                value=1,
+                tooltip={
+                    "placement": "bottom",
+                    "always_visible": True,
+                },
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dcc.Dropdown(
+                ["Select One", "Select All"],
+                "Select All",
+                id="select-cubes",
+                className="dash-bootstrap",
+            ),
+        ],
+    )
 )
 
 
@@ -161,7 +170,7 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
             ui = "FindLattice: Run RHG Lattice first."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-        if s.n_cubes is None:
+        if s.cubes is None:
             s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
 
         click_number = nclicks % (len(s.cubes))
