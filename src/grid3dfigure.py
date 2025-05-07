@@ -23,7 +23,7 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
-        "https://cdn.jsdelivr.net/gh/tcbegley/dash-bootstrap-css/dist/bootstrap/bootstrap.min.css",
+        "https://cdn.jsdelivr.net/gh/zhiihan/cluster-sim/src/assets/bootstrap.min.css",
     ],
 )
 
