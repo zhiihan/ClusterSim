@@ -13,6 +13,7 @@ from components import (
     figure,
     error_channel,
 )
+from dash import dcc
 
 
 tab_1 = dbc.Col(
@@ -45,11 +46,15 @@ tab_ui = html.Div(
         dbc.CardBody(
             [
                 html.H2("Cluster Sim"),
-                dbc.Alert(
-                    "Click on the graph to measure nodes. Dismiss this message to hide alerts.",
-                    color="primary",
-                    id="ui",
-                    dismissable=True,
+                dcc.Loading(
+                    dbc.Alert(
+                        "Click on the graph to measure nodes.",
+                        color="primary",
+                        id="ui",
+                    ),
+                    delay_show=100,
+                    delay_hide=100,
+                    custom_spinner=dbc.Spinner(color="primary"),
                 ),
             ]
         ),
