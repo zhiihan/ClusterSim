@@ -7,9 +7,8 @@ from cluster_sim.app.utils import (
 )
 
 import dash
-from dash import dcc, html, callback, Input, Output, State
+from dash import dcc, callback, Input, Output, State
 import jsonpickle
-import numpy as np
 import dash_bootstrap_components as dbc
 
 

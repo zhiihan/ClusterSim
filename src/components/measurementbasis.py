@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Input, Output
+from dash import dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 
 measurementbasis = dbc.Card(

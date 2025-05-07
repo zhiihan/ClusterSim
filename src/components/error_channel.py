@@ -4,7 +4,6 @@ import jsonpickle
 import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
 import dash_bootstrap_components as dbc
 
 error_channel = dbc.Card(

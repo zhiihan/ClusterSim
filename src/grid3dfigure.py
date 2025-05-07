@@ -12,16 +12,7 @@ import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
-    move_log,
-    reset_graph,
-    algorithms,
-    hover_data,
-    zoom_data,
-    load_graph,
-    measurementbasis,
-    display_options,
     figure,
-    error_channel,
     tab_ui,
 )
 import dash_bootstrap_components as dbc
