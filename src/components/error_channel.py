@@ -4,42 +4,51 @@ import jsonpickle
 import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+import dash_bootstrap_components as dbc
 
-error_channel = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+error_channel = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
             **Apply Erasure Channel.**
 
             Select a probability p to randomly remove nodes.
             """
-            )
-        ),
-        dcc.Slider(
-            0,
-            0.3,
-            step=0.03,
-            value=0.06,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-            marks={i / 100: str(i) for i in range(0, 31, 3)},
-            id="prob",
-        ),
-        html.Div(
-            [
-                html.Button("Erasure Channel", id="reset-seed"),
-                dcc.Input(
-                    id="load-graph-seed",
-                    type="number",
-                    placeholder="Seed",
-                ),
-            ]
-        ),
-    ]
+                )
+            ),
+            dcc.Slider(
+                0,
+                0.3,
+                step=0.03,
+                value=0.06,
+                tooltip={
+                    "placement": "bottom",
+                },
+                marks={i / 100: str(i) for i in range(0, 31, 3)},
+                id="prob",
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Button("Erasure Channel", id="reset-seed"),
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Input(
+                                id="load-graph-seed",
+                                type="number",
+                                placeholder="Seed",
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+        ]
+    ),
 )
 
 

@@ -12,38 +12,54 @@ from cluster_sim.app.utils import (
 import plotly.graph_objects as go
 import networkx as nx
 import itertools
+import dash_bootstrap_components as dbc
 
-algorithms = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+algorithms = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
                     **Algorithms**
 
                     Click on points in the graph.
                 """
-            )
-        ),
-        html.Button("RHG Lattice", id="alg1"),
-        html.Button("Find Lattice", id="findlattice"),
-        html.Button("Find Cluster", id="alg2"),
-        html.Button("Repair Grid", id="repair"),
-        html.Button("Find Cluster v2", id="findlattice2"),
-        html.Button("Find Cluster v3 (slow)", id="findlattice3"),
-        html.P("Scale Factor"),
-        dcc.Slider(
-            id="rhg-slider",
-            min=1,
-            max=5,
-            step=1,
-            value=1,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-        ),
-        dcc.Dropdown(["Select One", "Select All"], "Select All", id="select-cubes"),
-    ],
+                )
+            ),
+            dbc.Stack(
+                [
+                    dbc.Button("RHG Lattice", id="alg1"),
+                    dbc.Button("Find Lattice", id="findlattice"),
+                    dbc.Button("Find Cluster", id="alg2"),
+                    dbc.Button("Repair Grid", id="repair"),
+                    dbc.Button("Find Cluster v2", id="findlattice2"),
+                    dbc.Button("Find Cluster v3 (slow)", id="findlattice3"),
+                ],
+                direction="horizontal",
+                gap=3,
+            ),
+            html.Hr(),
+            html.B("Scale Factor"),
+            dcc.Slider(
+                id="rhg-slider",
+                min=1,
+                max=5,
+                step=1,
+                value=1,
+                tooltip={
+                    "placement": "bottom",
+                },
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dcc.Dropdown(
+                ["Select One Cube", "Select All Cubes"],
+                "Select All Cubes",
+                id="select-cubes",
+                className="dash-bootstrap",
+            ),
+        ],
+    )
 )
 
 
@@ -159,7 +175,7 @@ def find_lattice(nclicks, browser_data, graphData, holeData):
             ui = "FindLattice: Run RHG Lattice first."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-        if s.n_cubes is None:
+        if s.cubes is None:
             s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
 
         click_number = nclicks % (len(s.cubes))
@@ -431,7 +447,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
             ui = "FindLattice2: No valid unit cells found."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-    if select_cubes == "Select One":
+    if select_cubes == "Select One Cube":
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
@@ -440,7 +456,7 @@ def find_cluster2(nclicks, browser_data, graphData, holeData, select_cubes):
         H = check_unit_cell_path(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
-    if select_cubes == "Select All":
+    if select_cubes == "Select All Cubes":
 
         graphs = []
         for unit_cell_coord in s.valid_unit_cells:
@@ -524,7 +540,7 @@ def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
             ui = "FindLattice2: No valid unit cells found."
             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-    if select_cubes == "Select One":
+    if select_cubes == "Select One Cube":
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
@@ -533,7 +549,7 @@ def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
         H = check_unit_cell_path(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
         )
-    if select_cubes == "Select All":
+    if select_cubes == "Select All Cubes":
 
         graphs = []
         for unit_cell_coord in s.valid_unit_cells:
@@ -636,7 +652,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
                 joined_faces.append(checks)
                 break
         else:
-            print("No face found")
+            # print("No face found")
             return None
 
     joined_faces = [node for l in joined_faces for node in l]
@@ -708,7 +724,7 @@ def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
                 # should append path
                 break
         else:
-            print("No face found")
+            # print("No face found")
             return None
 
     joined_faces = [node for l in joined_faces for node in l]

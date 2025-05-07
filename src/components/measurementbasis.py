@@ -1,24 +1,30 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Input, Output
+from dash import dcc, callback, Input, Output
+import dash_bootstrap_components as dbc
 
-measurementbasis = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+measurementbasis = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
         **Select Measurement Basis**
 
         Click to select the type of measurement. Click points in the graph to apply measurement.
         """
-            )
-        ),
-        dcc.RadioItems(
-            ["Z", "Y", "X", "Erasure"],
-            "Z",
-            id="radio-items",
-            inline=True,
-        ),
-    ]
+                )
+            ),
+            dbc.RadioItems(
+                ["Z", "Y", "X", "Erasure"],
+                value="Z",
+                id="radio-items",
+                className="btn-group",
+                inputClassName="btn-check",
+                labelClassName="btn btn-outline-primary",
+                labelCheckedClassName="active",
+            ),
+        ]
+    )
 )
 
 

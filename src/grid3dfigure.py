@@ -12,22 +12,17 @@ import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
-    move_log,
-    reset_graph,
-    algorithms,
-    hover_data,
-    zoom_data,
-    load_graph,
-    measurementbasis,
-    display_options,
     figure,
-    error_channel,
+    tab_ui,
 )
+import dash_bootstrap_components as dbc
 
 jsonpickle_numpy.register_handlers()
 
 app = dash.Dash(
-    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    # external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 )
 app.title = "Cluster Sim"
 server = app.server  # For deployment
@@ -54,33 +49,7 @@ app.layout = html.Div(
                 ),
                 Panel(
                     id="resize_info",
-                    children=[
-                        html.Div(
-                            [
-                                algorithms,
-                                move_log,
-                            ],
-                            className="four columns",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(id="ui"),
-                                measurementbasis,
-                                display_options,
-                                hover_data,
-                                zoom_data,
-                            ],
-                            className="four columns",
-                        ),
-                        html.Div(
-                            [
-                                reset_graph,
-                                error_channel,
-                                load_graph,
-                            ],
-                            className="four columns",
-                        ),
-                    ],
+                    children=tab_ui,
                     style={"overflow": "scroll", "width": "95%"},
                 ),
             ],
@@ -165,7 +134,7 @@ def display_click_data(
             s.removed_nodes[i] = True
             G.handle_measurements(i, measurementChoice)
             s.move_list.append([i, measurementChoice])
-            ui = f"Clicked on {i} at {get_node_coords(i, s.shape)}"
+            ui = f"Measured {i} with {measurementChoice} at {get_node_coords(i, s.shape)}"
         s.log.append(f"{i}, {measurementChoice}; ")
         s.log.append(html.Br())
 

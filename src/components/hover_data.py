@@ -2,23 +2,26 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Output, Input, State, callback, no_update
 import json
 import jsonpickle
+import dash_bootstrap_components as dbc
 
-hover_data = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+hover_data = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
                 **Hover Data**
 
                 Mouse over values in the graph.
             """
-            )
-        ),
-        html.Pre(
-            id="hover-data",
-            style={"border": "thin lightgrey solid", "overflowX": "scroll"},
-        ),
-    ]
+                )
+            ),
+            html.Pre(
+                id="hover-data",
+                style={"border": "thin lightgrey solid", "overflowX": "scroll"},
+            ),
+        ]
+    )
 )
 
 

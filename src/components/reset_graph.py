@@ -1,59 +1,71 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
-import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 import numpy as np
+import dash_bootstrap_components as dbc
 
-reset_graph = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+reset_graph = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
             **Reset Graph State.**
 
             Choose cube dimensions as well as a seed. If no seed, will use a random seed.
             """
-            )
-        ),
-        dcc.Slider(
-            min=1,
-            max=16,
-            step=1,
-            value=4,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-            id="xmax",
-        ),
-        dcc.Slider(
-            min=1,
-            max=16,
-            step=1,
-            value=4,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-            id="ymax",
-        ),
-        dcc.Slider(
-            min=1,
-            max=16,
-            step=1,
-            value=4,
-            tooltip={
-                "placement": "bottom",
-                "always_visible": True,
-            },
-            id="zmax",
-        ),
-        html.Button("Reset Grid", id="reset"),
-        html.Button("Undo", id="undo"),
-    ]
+                ),
+                className="dbc",
+            ),
+            dcc.Slider(
+                min=1,
+                max=16,
+                step=1,
+                value=4,
+                tooltip={
+                    "placement": "bottom",
+                },
+                id="xmax",
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dcc.Slider(
+                min=1,
+                max=16,
+                step=1,
+                value=4,
+                tooltip={
+                    "placement": "bottom",
+                },
+                id="ymax",
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dcc.Slider(
+                min=1,
+                max=16,
+                step=1,
+                value=4,
+                tooltip={
+                    "placement": "bottom",
+                },
+                id="zmax",
+                className="dash-bootstrap",
+            ),
+            html.Hr(),
+            dbc.Stack(
+                [
+                    dbc.Button("Reset Grid", id="reset"),
+                    dbc.Button("Undo", id="undo"),
+                ],
+                gap=3,
+                direction="horizontal",
+            ),
+        ]
+    )
 )
 
 
