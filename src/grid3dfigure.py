@@ -16,16 +16,19 @@ from components import (
     tab_ui,
 )
 import dash_bootstrap_components as dbc
+from whitenoise import WhiteNoise
 
 jsonpickle_numpy.register_handlers()
 
-app = dash.Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
-    # external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
-)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
 app.title = "Cluster Sim"
+
 server = app.server  # For deployment
+server.wsgi_app = WhiteNoise(
+    server.wsgi_app, root="static/"
+)  # Needed to serve static files like CSS styling
+
 
 app.layout = html.Div(
     [

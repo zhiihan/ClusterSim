@@ -10,7 +10,6 @@ from components import (
     load_graph,
     measurementbasis,
     display_options,
-    figure,
     error_channel,
 )
 from dash import dcc
