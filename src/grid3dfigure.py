@@ -20,7 +20,9 @@ from whitenoise import WhiteNoise
 
 jsonpickle_numpy.register_handlers()
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(
+    __name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder="/assets"
+)
 
 app.title = "Cluster Sim"
 
@@ -28,7 +30,6 @@ server = app.server  # For deployment
 server.wsgi_app = WhiteNoise(
     server.wsgi_app, root="static/"
 )  # Needed to serve static files like CSS styling
-
 
 app.layout = html.Div(
     [
