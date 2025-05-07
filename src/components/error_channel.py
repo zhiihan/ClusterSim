@@ -12,7 +12,7 @@ error_channel = dbc.Card(
             dcc.Markdown(
                 d(
                     """
-            **Apply Erasure Channel.**
+            **Apply Erasure Channel**
 
             Select a probability p to randomly remove nodes.
             """

@@ -10,7 +10,7 @@ move_log = dbc.Card(
                     """
 **Move Log**
 
-Click on points in the graph.
+Click on points in the graph. Can be copied to clipboard to load a graph state.
 """
                 )
             ),

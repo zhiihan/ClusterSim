@@ -13,9 +13,9 @@ reset_graph = dbc.Card(
             dcc.Markdown(
                 d(
                     """
-            **Reset Graph State.**
+            **Reset Graph State**
 
-            Choose cube dimensions as well as a seed. If no seed, will use a random seed.
+            Choose cube dimensions.
             """
                 ),
                 className="dbc",

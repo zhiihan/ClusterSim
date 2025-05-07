@@ -54,11 +54,10 @@ app.layout = html.Div(
                 Panel(
                     id="resize_info",
                     children=tab_ui,
-                    style={"overflow": "scroll", "width": "95%"},
                 ),
             ],
             direction="horizontal",
-            style={"height": "95vh"},
+            style={"height": "100vh"},
         )
     ]
 )
