@@ -3,38 +3,43 @@ from dash import dcc, html, callback, Input, Output, State
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
+
+import dash_bootstrap_components as dbc
 import jsonpickle
 from dash import no_update
 import numpy as np
 
-load_graph = html.Div(
-    [
-        dcc.Markdown(
-            d(
-                """
+load_graph = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Markdown(
+                d(
+                    """
                 **Load Graph State**
 
                 Paste data to load a graph state.
                 """
-            )
-        ),
-        dcc.Input(
-            id="load-graph-input",
-            type="text",
-            placeholder="Load Graph State",
-        ),
-        html.Button("Load Graph", id="load-graph-button"),
-        # dcc.Store stores the intermediate value
-        dcc.Store(id="browser-data"),
-        dcc.Store(id="graph-data"),
-        dcc.Store(id="holes-data"),
-        dcc.Store(id="draw-plot"),
-        html.Div(
-            id="none",
-            children=[],
-            style={"display": "none"},
-        ),
-    ]
+                )
+            ),
+            dbc.Input(
+                id="load-graph-input",
+                type="text",
+                placeholder="Load Graph State",
+            ),
+            html.Hr(),
+            dbc.Button("Load Graph", id="load-graph-button"),
+            # dcc.Store stores the intermediate value
+            dcc.Store(id="browser-data"),
+            dcc.Store(id="graph-data"),
+            dcc.Store(id="holes-data"),
+            dcc.Store(id="draw-plot"),
+            html.Div(
+                id="none",
+                children=[],
+                style={"display": "none"},
+            ),
+        ]
+    )
 )
 
 

@@ -4,16 +4,20 @@ version = "0.1.0"
 description = "A measurement based quantum computing simulator."
 authors = [{name = "Zhihua Han", email = "zhihuahan72@gmail.com"}]
 license = "MIT"
+requires-python = "== 3.12.*"
 dependencies = [
     "dash",
     "dash_resizable_panels",
+    "gunicorn",
+    "dash-bootstrap-components",
     "jsonpickle",
     "networkx",
     "numpy",
-    "matplotlib",
+    "matplotlib"
 ]
 
 [project.optional-dependencies]
 dev = [
     "black",
+    "tqdm"
 ]
