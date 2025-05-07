@@ -13,8 +13,7 @@ dependencies = [
     "jsonpickle",
     "networkx",
     "numpy",
-    "matplotlib",
-    "whitenoise"
+    "matplotlib"
 ]
 
 [project.optional-dependencies]
