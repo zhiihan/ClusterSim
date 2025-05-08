@@ -523,10 +523,8 @@ def find_cluster3(nclicks, browser_data, graphData, holeData, select_cubes):
 
     if getattr(s, "valid_unit_cells", None) is None:
         possible_unit_cells = generate_unit_cell_global_coords(s.shape, s.scale_factor)
-        click_number = nclicks % (len(possible_unit_cells))
-        unit_cell_coord = possible_unit_cells[click_number]
-
         valid_unit_cells = []
+
         for possible_unit in possible_unit_cells:
             if (
                 check_unit_cell_path(
