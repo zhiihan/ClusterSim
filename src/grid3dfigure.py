@@ -54,6 +54,7 @@ app.layout = html.Div(
                 Panel(
                     id="resize_info",
                     children=tab_ui,
+                    style={"overflowY": "scroll"},
                 ),
             ],
             direction="horizontal",
