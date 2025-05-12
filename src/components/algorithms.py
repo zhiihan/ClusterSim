@@ -512,7 +512,6 @@ def find_cluster(
                 if taxicab_metric(c, unit_cell_coord) <= (s.scale_factor + 1):
                     C.add_edge(c, tuple(unit_cell_coord))
 
-        ui = f"FindLattice2: Displaying unit_cell_coord = {unit_cell_coord}"
         connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
 
         connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
@@ -525,6 +524,8 @@ def find_cluster(
         ]
 
         H = nx.compose_all(graphs)
+
+        ui = f"FindLattice2: Displaying cluster {nclicks % len(connected_clusters) + 1}/{len(connected_clusters)}, unit_cells = {C.number_of_nodes()}"
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 

@@ -138,7 +138,7 @@ def display_click_data(
             s.removed_nodes[i] = True
             G.handle_measurements(i, measurementChoice)
             s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice} at {get_node_coords(i, s.shape)}"
+            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
 
