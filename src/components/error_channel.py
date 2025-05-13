@@ -4,6 +4,7 @@ import jsonpickle
 import random
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
+from cluster_sim.app.utils import get_node_coords
 import dash_bootstrap_components as dbc
 
 error_channel = dbc.Card(
@@ -93,9 +94,9 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
             if s.removed_nodes[i] == False:
                 s.removed_nodes[i] = True
                 G.handle_measurements(i, measurementChoice)
-                s.log.append(f"{i}, {measurementChoice}; ")
+                s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
                 s.log.append(html.Br())
-                s.move_list.append([i, measurementChoice])
+                s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
                 D.add_node(i)
     D.add_edges()
     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()

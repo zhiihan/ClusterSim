@@ -8,4 +8,5 @@ from .load_graph import load_graph
 from .measurementbasis import measurementbasis
 from .figure import display_options, figure
 from .error_channel import error_channel
+from .stabilizer import stabilizer
 from .tab_ui import tab_ui

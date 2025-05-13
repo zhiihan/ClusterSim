@@ -137,9 +137,9 @@ def display_click_data(
         if s.removed_nodes[i] == False:
             s.removed_nodes[i] = True
             G.handle_measurements(i, measurementChoice)
-            s.move_list.append([i, measurementChoice])
-            ui = f"Measured {i} with {measurementChoice} at {get_node_coords(i, s.shape)}"
-        s.log.append(f"{i}, {measurementChoice}; ")
+            s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
+            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
+        s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
 
         # This solves the double click issue
