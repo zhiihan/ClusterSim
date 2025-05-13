@@ -11,6 +11,7 @@ from components import (
     measurementbasis,
     display_options,
     error_channel,
+    stabilizer,
 )
 from dash import dcc
 
@@ -39,6 +40,7 @@ tab_3 = dbc.Col(
     ]
 )
 
+tab_4 = dbc.Col([stabilizer])
 
 tab_ui = html.Div(
     [
@@ -63,6 +65,7 @@ tab_ui = html.Div(
                 dbc.Tab(tab_1, label="Reset Graph", tab_id="tab-1"),
                 dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Hover Data", tab_id="tab-3"),
+                dbc.Tab(tab_4, label="Stabilizers", tab_id="tab-4"),
             ],
             id="tabs",
             active_tab="tab-1",
