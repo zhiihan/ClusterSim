@@ -137,7 +137,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     xoffset, yoffset, zoffset = s.offset
 
-    s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
+    # s.cubes, s.n_cubes = D.find_lattice(s.removed_nodes, s.offset)
     ui = f"Applied Algorithm: RHG Lattice, scale_factor = {scale_factor}, offset = {s.offset}"
 
     s.scale_factor = scale_factor
