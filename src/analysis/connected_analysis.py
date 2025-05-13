@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 from cluster_sim.app.grid import Grid
 import pandas as pd
 from memory_profiler import profile, memory_usage
-
+import datetime
+import sys
 
 os.makedirs("./data", exist_ok=True)
 
@@ -117,6 +118,10 @@ def main(input_params):
                 "scale": scale,
                 "percolates": percolate,
                 "diff": diff,
+                "shape_x": shape[0],
+                "shape_y": shape[1],
+                "shape_z": shape[2],
+                "seed": seed + i,
             }
         )
 
@@ -125,20 +130,13 @@ def main(input_params):
     return data_out
 
 
-# results = Parallel(n_jobs=-1)([delayed(main)(x) for x in jobs_input_vec])
-# results = [item for sublist in results for item in sublist]
+if __name__ == "__main__":
+    i = int(sys.argv[1])  # get the value of the $SLURM_ARRAY_TASK_ID
+    results = main(jobs_input_vec[i])
 
-# df = pd.DataFrame(results)
-# df.to_csv("./data/test.csv", index=False, header=False)
+    name = time.strftime("%Y_%m_%d", time.gmtime())
 
+    exists = os.path.exists(f"./data/results_{name}.csv")
 
-@profile
-def grid(shape):
-    """
-    Create a grid of the given shape
-    """
-    G = Grid(shape, relabel=False)
-    return G
-
-
-grid(shape)
+    df = pd.DataFrame(results)
+    df.to_csv(f"./data/{name}.csv", index=False, header=not exists, mode="a")
