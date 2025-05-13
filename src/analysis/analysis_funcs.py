@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import networkx as nx
-from cluster_sim.app.utils import get_node_index, get_node_coords
+from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.grid import Grid
 import tqdm
@@ -181,12 +181,16 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
     return G, D, removed_nodes, offset
 
 
-def find_unit_cell(G, shape, offset, scale_factor=1):
+def find_unit_cell(G, shape, offset, scale_factor=1, algorithm="path"):
     """
     Find unit cells in a 3D grid.
 
     Returns the number of valid unit cells.
     """
+
+    coord_to_unit_cell = (
+        check_unit_cell if algorithm == "line" else check_unit_cell_path
+    )
 
     possible_unit_cells = generate_unit_cell_global_coords(shape, scale_factor)
     valid_unit_cell_counts = 0
@@ -195,7 +199,7 @@ def find_unit_cell(G, shape, offset, scale_factor=1):
 
     for possible_unit in possible_unit_cells:
 
-        unitcell = check_unit_cell(
+        unitcell = coord_to_unit_cell(
             G, scale_factor, offset, unit_cell_coord=possible_unit
         )
         if unitcell:
@@ -346,3 +350,48 @@ def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     joined_faces = [node for l in joined_faces for node in l]
 
     return G.graph.subgraph(joined_faces)
+
+
+def find_connected_unit_cells(G, shape, offset, scale_factor=1, algorithm="path"):
+    """
+    Find a cluster of connected cubes in the lattice.
+
+    Parameters:
+    - nclicks: number of clicks on the button (unused)
+    - browser_data: data from the browser
+    - graphData: data from the graph
+    - holeData: data from the holes
+    - select_cubes: type of selection for the cubes
+    - algorithm: algorithm to use for finding the cluster (default: "line" or "path")
+    """
+
+    # D = Holes(shape, json_data=holeData)
+
+    coord_to_unit_cell = (
+        check_unit_cell if algorithm == "line" else check_unit_cell_path
+    )
+
+    possible_unit_cells = generate_unit_cell_global_coords(shape, scale_factor)
+
+    valid_unit_cells = []
+    for possible_unit in possible_unit_cells:
+        if (
+            coord_to_unit_cell(G, scale_factor, offset, unit_cell_coord=possible_unit)
+            is not None
+        ):
+            valid_unit_cells.append(possible_unit)
+    if valid_unit_cells == []:
+        return []
+
+    C = nx.Graph()
+    for unit_cell_coord in valid_unit_cells:
+        C.add_node(tuple(unit_cell_coord))
+        for c in C.nodes:
+            if taxicab_metric(c, unit_cell_coord) <= (scale_factor + 1):
+                C.add_edge(c, tuple(unit_cell_coord))
+
+    return C
+
+    # connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
+
+    # return connected_clusters
