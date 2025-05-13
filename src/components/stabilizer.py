@@ -88,7 +88,7 @@ def stabilizer_data(n_clicks, graphData, browserData):
 
 def array2pauli(x):
     if x == 0:
-        return "I"
+        return "_"
     elif x == 1:
         return "Z"
     elif x == 2:
