@@ -22,5 +22,6 @@ dev = [
     "tqdm",
     "joblib",
     "pytest",
-    "pandas"
+    "pandas",
+    "flake8"
 ]
