@@ -7,13 +7,16 @@ class ClusterState:
     Adapter class containing a GraphState object.
     """
 
-    def __init__(self, graph: nx.Graph):
+    def __init__(self, graph: nx.Graph = nx.Graph()):
         """
-        Nodes are indexed from 0 to n-1, where n is the number of nodes in the graph.
+        Create a ClusterState object from a NetworkX graph.
 
         Attributes:
             graph: A networkx graph object.
             graph_state: A GraphState object.
+
+        Notes:
+            Nodes are indexed from 0 to n-1, where n is the number of nodes in the graph.
         """
 
         self.graph_state = GraphState(len(graph.nodes))
@@ -33,7 +36,8 @@ class ClusterState:
             qubit: The qubit to measure, which is an integer from 0 to n-1.
             basis: The basis to measure in, which is either 'X', 'Y' or 'Z'.
         """
-        self.graph_state.measure(qubit, basis=basis)
+
+        return self.graph_state.measure(qubit, basis=basis)
 
     def x(self, qubit: int):
         self.graph_state.x(qubit)

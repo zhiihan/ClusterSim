@@ -20,5 +20,7 @@ dependencies = [
 dev = [
     "black",
     "tqdm",
-    "joblib"
+    "joblib",
+    "pytest",
+    "pandas"
 ]
