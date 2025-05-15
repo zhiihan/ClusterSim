@@ -1,7 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
 from plotly.io import from_json
-import networkx as nx
 
 
 def get_node_index(x, y, z, shape):
@@ -129,7 +128,7 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
     hnx = d.to_networkx()
 
     for i, value in enumerate(s.removed_nodes):
-        if value == True:
+        if value:
             gnx.remove_node(i)
 
     g_nodes, g_edges = nx_to_plot(gnx, s.shape)
