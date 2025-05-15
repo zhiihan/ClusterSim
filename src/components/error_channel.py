@@ -91,7 +91,7 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
 
     for i in range(s.xmax * s.ymax * s.zmax):
         if random.random() < s.p:
-            if s.removed_nodes[i] == False:
+            if not s.removed_nodes[i]:
                 s.removed_nodes[i] = True
                 G.handle_measurements(i, measurementChoice)
                 s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")

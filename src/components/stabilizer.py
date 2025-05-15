@@ -1,10 +1,9 @@
 from textwrap import dedent as d
-from dash import dcc, html, Input, Output, State, callback, no_update
+from dash import dcc, html, Input, Output, State, callback
 from cluster_sim.app.grid import Grid
 import dash_bootstrap_components as dbc
 import jsonpickle
 import networkx as nx
-import json
 import numpy as np
 
 stabilizer = dbc.Card(

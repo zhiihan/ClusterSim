@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
+from cluster_sim.app.utils import get_node_coords, taxicab_metric
 
 
 class Holes:

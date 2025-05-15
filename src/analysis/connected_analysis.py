@@ -2,7 +2,7 @@ import numpy as np
 import os
 from joblib import delayed, Parallel
 import time
-from analysis_funcs import (
+from .analysis_funcs import (
     rhg_lattice_scale,
     apply_error_channel,
     ParallelTqdm,
@@ -15,6 +15,8 @@ import pandas as pd
 from memory_profiler import profile, memory_usage
 import datetime
 import sys
+
+# flake8: noqa
 
 os.makedirs("./data", exist_ok=True)
 

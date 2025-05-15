@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Output, Input, State, callback, no_update
+from dash import dcc, html, callback, Output, Input, State, no_update
 import json
 import jsonpickle
 import dash_bootstrap_components as dbc

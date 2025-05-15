@@ -19,7 +19,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
 
     for i in range(shape[0] * shape[1] * shape[2]):
         if random.random() < p:
-            if removed_nodes[i] == False:
+            if not removed_nodes[i]:
                 removed_nodes[i] = True
                 D.add_node(i)
                 G.handle_measurements(i, "Z")
@@ -173,7 +173,7 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
 
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, shape)
-                    if removed_nodes[i] == False:
+                    if not removed_nodes[i]:
                         G.handle_measurements(i, "Z")
                         removed_nodes[i] = True
 
@@ -193,8 +193,6 @@ def find_unit_cell(G, shape, offset, scale_factor=1, algorithm="path"):
 
     possible_unit_cells = generate_unit_cell_global_coords(shape, scale_factor)
     valid_unit_cell_counts = 0
-
-    invalid_unit_cell_counts = 0
 
     for possible_unit in possible_unit_cells:
 
@@ -274,7 +272,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
             # print("No face found")
             return None
 
-    joined_faces = [node for l in joined_faces for node in l]
+    joined_faces = [node for sublist in joined_faces for node in sublist]
 
     return G.graph.subgraph(joined_faces)
 
@@ -346,7 +344,7 @@ def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
             # print("No face found")
             return None
 
-    joined_faces = [node for l in joined_faces for node in l]
+    joined_faces = [node for sublist in joined_faces for node in sublist]
 
     return G.graph.subgraph(joined_faces)
 

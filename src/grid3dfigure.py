@@ -134,7 +134,7 @@ def display_click_data(
         if measurementChoice == "Erasure":
             D.add_node(i)
             measurementChoice = "Z"  # Handle it as if it was Z measurement
-        if s.removed_nodes[i] == False:
+        if not s.removed_nodes[i]:
             s.removed_nodes[i] = True
             G.handle_measurements(i, measurementChoice)
             s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
