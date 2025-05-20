@@ -2,7 +2,6 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 import jsonpickle
 import numpy as np
-from cluster_sim.app.utils import get_node_index
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.utils import (
@@ -128,7 +127,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, s.shape)
-                    if s.removed_nodes[i] == False:
+                    if not s.removed_nodes[i]:
                         G.handle_measurements(i, "Z")
                         s.log.append(f"{get_node_coords(i, s.shape)}, Z; ")
                         s.log.append(html.Br())
@@ -465,7 +464,7 @@ def find_cluster(
         click_number = nclicks % (len(s.valid_unit_cells))
         unit_cell_coord = s.valid_unit_cells[click_number]
 
-        ui = f"FindLattice2: Displaying {click_number+1}/{len(s.valid_unit_cells)} unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
+        ui = f"FindLattice2: Displaying {click_number + 1}/{len(s.valid_unit_cells)} unit cells found for p = {s.p}, shape = {s.shape}, offset = {s.offset}, unit_cell_coord = {unit_cell_coord}"
 
         H = coord_to_unit_cell(
             G, s.scale_factor, s.offset, unit_cell_coord=unit_cell_coord
@@ -600,10 +599,12 @@ def generate_unit_cell_faces(scale_factor, offset, unit_cell_coord=(0, 0, 0)):
 
     for f in range(12):
         face = []
-        for d in range(1, scale_factor + 1):
+        for dist in range(1, scale_factor + 1):
             face.append(
                 [
-                    tuple(global_coordinate_offset + np.array(face_gen_func[f](d, j)))
+                    tuple(
+                        global_coordinate_offset + np.array(face_gen_func[f](dist, j))
+                    )
                     for j in range(0, scale_factor + 2)
                 ]
             )
@@ -641,7 +642,7 @@ def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)) -> nx.Gr
             # print("No face found")
             return None
 
-    joined_faces = [node for l in joined_faces for node in l]
+    joined_faces = [node for sublist in joined_faces for node in sublist]
 
     return G.graph.subgraph(joined_faces)
 
@@ -713,6 +714,6 @@ def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
             # print("No face found")
             return None
 
-    joined_faces = [node for l in joined_faces for node in l]
+    joined_faces = [node for sublist in joined_faces for node in sublist]
 
     return G.graph.subgraph(joined_faces)
