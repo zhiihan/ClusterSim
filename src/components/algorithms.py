@@ -14,6 +14,8 @@ import plotly.graph_objects as go
 import networkx as nx
 import itertools
 import dash_bootstrap_components as dbc
+import logging
+
 
 algorithms = dbc.Card(
     dbc.CardBody(
@@ -113,6 +115,8 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
             if np.all(test_cond == offset) or np.all(test_cond != offset):
                 hole_locations[tuple(offset)] += 1
 
+    logging.info(f"Hole locations:\n{np.ravel(hole_locations)}")
+
     # Finding the offset that maximizes holes placed in hole locations
     # Can use other indices to find other maximizing offsets
     s.offset = np.argwhere(hole_locations == np.max(hole_locations))[0]
@@ -161,7 +165,6 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 def reduce_lattice(
     nclicks, browser_data, graphData, holeData, select_cubes, algorithm="line"
 ):
-    ui = "Find Cluster: Run RHG Lattice first."
 
     s = jsonpickle.decode(browser_data)
     G = Grid(s.shape, json_data=graphData)
@@ -171,17 +174,92 @@ def reduce_lattice(
         ui = "Find Cluster: Run RHG Lattice first."
         return no_update, no_update, ui, no_update, no_update, no_update
 
-    possible_unit_cells = generate_unit_cell_global_coords(s.shape, s.scale_factor)
-    click_number = nclicks % (len(possible_unit_cells))
-
-    H, imperfection_score = find_rings(
-        G,
-        s.scale_factor,
-        s.offset,
-        unit_cell_coord=possible_unit_cells[click_number],
+    s.valid_unit_cells, s.unit_cell_shape = generate_unit_cell_global_coords(
+        s.shape, s.scale_factor, s.offset
     )
 
-    ui = f"Reduction: Imperfection score = {imperfection_score}"
+    if not s.valid_unit_cells:
+        return (
+            no_update,
+            no_update,
+            "No valid unit cells found.",
+            jsonpickle.encode(s),
+            G.encode(),
+            D.encode(),
+        )
+
+    click_number = nclicks % (len(s.valid_unit_cells))
+
+    if select_cubes == "Select One Cube":
+        H, imperfection_score = find_rings(
+            G,
+            s.scale_factor,
+            unit_cell_coord=s.valid_unit_cells[click_number],
+        )
+        ui = f"Reduction: Imperfection score = {imperfection_score}"
+
+    elif select_cubes == "Select All Cubes":
+        graphs = []
+        imperfection_score = 0
+        for unit_cell_coord in s.valid_unit_cells:
+            H, _ = find_rings(
+                G,
+                s.scale_factor,
+                unit_cell_coord=unit_cell_coord,
+            )
+            graphs.append(H)
+        H = nx.compose_all(graphs)
+
+        imperfection_score = nx.number_of_isolates(H)
+
+        logging.info(f"Total Imperfection score: {imperfection_score}")
+
+        ui = f"Reduction: Total Imperfection score = {imperfection_score}, Equivalent 1-cell deletion ratio = {100 * imperfection_score / H.number_of_nodes()}%"
+    elif select_cubes == "Select All Connected Cubes":
+
+        C = nx.Graph()
+        graphs_hashmap = {}
+        imperfect_cells = 0
+
+        for unit_cell_coord in s.valid_unit_cells:
+            H_subgraph, imperfection_score = find_rings(
+                G, s.scale_factor, unit_cell_coord=unit_cell_coord
+            )
+            if imperfection_score == 0:
+                C.add_node(tuple(unit_cell_coord))
+                graphs_hashmap[tuple(unit_cell_coord)] = H_subgraph
+
+                for c in C.nodes:
+                    if taxicab_metric(c, unit_cell_coord) <= (s.scale_factor + 1):
+                        C.add_edge(c, tuple(unit_cell_coord))
+            else:
+                imperfect_cells += 1
+
+        connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
+
+        if not connected_clusters:
+            ui = "Reduction: No connected clusters found."
+            s.lattice = None
+            s.lattice_edges = None
+            return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+
+        connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
+
+        graphs = [
+            graphs_hashmap[unit_cell_coord]
+            for unit_cell_coord in connected_cluster_graph.nodes
+        ]
+
+        H = nx.compose_all(graphs)
+
+        imperfection_score = nx.number_of_isolates(H)
+        perfect_cells = len(graphs)
+
+        logging.info(
+            f"Finding connected components: {perfect_cells} perfect cells, {imperfect_cells} imperfect cells."
+        )
+
+        ui = f"Reduction: Displaying cluster {nclicks % len(connected_clusters) + 1}/{len(connected_clusters)}, perfect cells = {perfect_cells}, imperfect cells = {imperfect_cells}"
 
     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
 
@@ -221,12 +299,12 @@ def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):
     return list(ring_node_coords)
 
 
-def find_rings(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
+def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
     """
     Find the rings of a unit cell in a Raussendorf lattice.
     """
 
-    global_coordinate_offset = np.array(offset) + np.array(unit_cell_coord)
+    unit_cell_coord = np.array(unit_cell_coord)
 
     ring_gen_funcs_x = [
         lambda i, j: (j, 0, i),
@@ -255,30 +333,23 @@ def find_rings(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
     for ring_gen in [ring_gen_funcs_x, ring_gen_funcs_y, ring_gen_funcs_z]:
         rings = {}
         for j in range(1, scale_factor + 1):
-            ring_list = generate_ring(
-                scale_factor, global_coordinate_offset, j, ring_gen
-            )
+            ring_list = generate_ring(scale_factor, unit_cell_coord, j, ring_gen)
             counter = evaluate_ring(G, ring_list)
 
             if counter == 0:
                 optimized_rings.append(ring_list)
-                print(f"Ring {j} is perfect, no erasures found.")
+                logging.info(f"Ring {j} is perfect, no erasures found.")
                 break
             else:
                 rings[j] = counter
-                print(f"Ring {j} has {counter} erasures.")
+                logging.info(f"Ring {j} has {counter} erasures.")
         else:
             best_j = min(rings, key=rings.get)
-            print(f"Best ring is {best_j} with {rings[best_j]} erasures.")
+            logging.info(f"Best ring is {best_j} with {rings[best_j]} erasures.")
 
-            ring_list = generate_ring(
-                scale_factor, global_coordinate_offset, best_j, ring_gen
-            )
+            ring_list = generate_ring(scale_factor, unit_cell_coord, best_j, ring_gen)
             optimized_rings.append(ring_list)
             imperfection_score += rings[best_j]
-
-    # generate_rings(scale_factor, global_coordinate_offset, 1, ring_gen_funcs_y)
-    # generate_rings(scale_factor, global_coordinate_offset, 2, ring_gen_funcs_z)
 
     optimized_rings = [item for sublist in optimized_rings for item in sublist]
 
@@ -291,9 +362,8 @@ def evaluate_ring(G, ring_list):
     This is used to determine how many nodes are missing from the graph.
     """
     counter = 0
-    G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
     for node in ring_list:
-        if node not in G.graph:
+        if nx.is_isolate(G.graph, node):
             counter += 1
     return counter
 
@@ -450,7 +520,7 @@ def evaluate_ring(G, ring_list):
 #     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
 
-def generate_unit_cell_global_coords(shape, scale_factor) -> list[np.ndarray]:
+def generate_unit_cell_global_coords(shape, scale_factor, offset) -> list[np.ndarray]:
     """
     Find the bottom left corner of each unit cell in a 3D grid.
     """
@@ -459,12 +529,25 @@ def generate_unit_cell_global_coords(shape, scale_factor) -> list[np.ndarray]:
     num_cubes = np.array(shape) // (scale_factor + 1)
 
     unit_cell_locations = []
+
+    unit_cell_shape = np.array([0, 0, 0], dtype=int)
     for i in itertools.product(
         range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
     ):
-        unit_cell_locations.append(np.array(i) * (scale_factor + 1))
+        print(f"Unit cell location: {i}, scale factor: {scale_factor}")
 
-    return unit_cell_locations
+        if any(
+            np.array(i) * (scale_factor + 1) + (scale_factor + 2) + offset
+            > np.array(shape)
+        ):
+            print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
+            continue
+
+        unit_cell_locations.append(np.array(i) * (scale_factor + 1) + offset)
+
+        unit_cell_shape = np.maximum(np.array(i), unit_cell_shape)
+
+    return unit_cell_locations, unit_cell_shape + np.array([1, 1, 1])
 
 
 # def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):

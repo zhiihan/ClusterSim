@@ -16,6 +16,12 @@ from components import (
     tab_ui,
 )
 import dash_bootstrap_components as dbc
+import logging
+
+# Basic configuration
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 jsonpickle_numpy.register_handlers()
 
@@ -148,4 +154,5 @@ def display_click_data(
 
 
 if __name__ == "__main__":
+
     app.run(debug=True)
