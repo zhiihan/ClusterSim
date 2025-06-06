@@ -6,6 +6,7 @@ from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
 from cluster_sim.app.utils import get_node_coords
 import dash_bootstrap_components as dbc
+import logging
 
 error_channel = dbc.Card(
     dbc.CardBody(
@@ -78,12 +79,12 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))
-        print(f"Loaded seed : {seed_input}, p = {s.p}")
+        logging.info(f"Loaded seed : {seed_input}, p = {s.p}")
         ui = "Loaded seed : {}, p = {}".format(seed_input, s.p)
     else:
         # Use a random seed.
         random.seed()
-        print(f"Loaded seed : {s.seed}, p = {s.p}")
+        logging.info(f"Loaded seed : {s.seed}, p = {s.p}")
         ui = "Loaded seed : None, p = {}, shape = {}".format(s.p, s.shape)
     # p is the probability of losing a qubit
 
