@@ -3,10 +3,10 @@ import numpy as np
 import networkx as nx
 from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.grid import Grid
 import tqdm
 from joblib import Parallel
 import itertools
+import logging
 
 
 def apply_error_channel(p, seed, shape, removed_nodes, G):
@@ -20,7 +20,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
 
     for i in range(shape[0] * shape[1] * shape[2]):
         if random.random() < p:
-            if removed_nodes[i] == False:
+            if removed_nodes[i] is False:
                 removed_nodes[i] = True
                 D.add_node(i)
                 G.handle_measurements(i, "Z")
@@ -174,113 +174,161 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
 
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, shape)
-                    if removed_nodes[i] == False:
+                    if removed_nodes[i] is False:
                         G.handle_measurements(i, "Z")
                         removed_nodes[i] = True
 
     return G, D, removed_nodes, offset
 
 
-def find_unit_cell(G, shape, offset, scale_factor=1, algorithm="path"):
-    """
-    Find unit cells in a 3D grid.
+def reduce_lattice(G, shape, offsets, scale_factor=1):
+    valid_unit_cells, _ = generate_unit_cell_global_coords(shape, scale_factor, offsets)
 
-    Returns the number of valid unit cells.
-    """
+    C = nx.Graph()
+    graphs_hashmap = {}
+    imperfect_cells = 0
+    all_graphs = []
+    perfect_cells = 0
 
-    coord_to_unit_cell = (
-        check_unit_cell if algorithm == "line" else check_unit_cell_path
+    for unit_cell_coord in valid_unit_cells:
+        H_subgraph, imperfection_score = find_rings(
+            G, scale_factor, unit_cell_coord=unit_cell_coord
+        )
+        all_graphs.append(H_subgraph)
+        if imperfection_score == 0:
+            C.add_node(tuple(unit_cell_coord))
+            graphs_hashmap[tuple(unit_cell_coord)] = H_subgraph
+            perfect_cells += 1
+
+            for c in C.nodes:
+                if taxicab_metric(c, unit_cell_coord) <= (scale_factor + 1):
+                    C.add_edge(c, tuple(unit_cell_coord))
+        else:
+            imperfect_cells += 1
+
+    largest_cc = max(nx.connected_components(C), key=len)
+    largest_cc = C.subgraph(largest_cc).copy()
+
+    print(largest_cc)
+
+    # Check if the largest cluster percolates
+    low = np.array([np.inf, np.inf, np.inf])
+    high = np.zeros(3)
+
+    if not largest_cc:
+        # print("No clusters")
+        percolation_distance = 0
+        percolate = 0
+
+    else:
+        for node in largest_cc.nodes:
+            # Get the coordinates of the node
+            low = np.minimum(low, np.array(node))
+            high = np.maximum(high, np.array(node))
+        percolation_distance = high[2] - low[2]
+
+        # print(f"high = {high}, low={low}, diff={diff}")
+        if shape[2] - percolation_distance <= 2 * (scale_factor + 2):
+            percolate = 1
+
+        connected_perfect_cells = largest_cc.number_of_nodes()
+
+    H_all = nx.compose_all(all_graphs)
+
+    return (
+        H_all,
+        perfect_cells,
+        connected_perfect_cells,
+        imperfect_cells,
+        percolate,
+        percolation_distance,
     )
 
-    possible_unit_cells = generate_unit_cell_global_coords(shape, scale_factor)
-    valid_unit_cell_counts = 0
 
-    invalid_unit_cell_counts = 0
-
-    for possible_unit in possible_unit_cells:
-
-        unitcell = coord_to_unit_cell(
-            G, scale_factor, offset, unit_cell_coord=possible_unit
-        )
-        if unitcell:
-            valid_unit_cell_counts += 1
-    return valid_unit_cell_counts
-
-
-def generate_unit_cell_faces(scale_factor, offset, unit_cell_coord=(0, 0, 0)):
+def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):
     """
-    Generate face slices for a unit cell.
+    Generate the rings of a unit cell in a Raussendorf lattice.
     """
+
+    ring_node_coords = set()
+    for i in range(0, scale_factor + 2):
+        for f in ring_gen_funcs:
+            ring_node_coords.add(tuple(np.array(global_offset) + np.array(f(i, j))))
+    return list(ring_node_coords)
+
+
+def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
+    """
+    Find the rings of a unit cell in a Raussendorf lattice.
+    """
+
     unit_cell_coord = np.array(unit_cell_coord)
 
-    global_coordinate_offset = np.array(offset) + np.array(unit_cell_coord)
-
-    face_gen_func = [
-        lambda d, j: (j, 0, d),  # face1
-        lambda d, j: (j, d, 0),  # face2
-        lambda d, j: (j, scale_factor + 1, d),  # face3
-        lambda d, j: (j, d, scale_factor + 1),  # face4
-        lambda d, j: (d, j, 0),  # face5
-        lambda d, j: (0, j, d),  # face6
-        lambda d, j: (d, j, scale_factor + 1),  # face7
-        lambda d, j: (scale_factor + 1, j, d),  # face8
-        lambda d, j: (d, scale_factor + 1, j),  # face9
-        lambda d, j: (scale_factor + 1, d, j),  # face10
-        lambda d, j: (d, 0, j),  # face11
-        lambda d, j: (0, d, j),  # face12
+    ring_gen_funcs_x = [
+        lambda i, j: (j, 0, i),
+        lambda i, j: (j, i, scale_factor + 1),
+        lambda i, j: (j, scale_factor + 1, i),
+        lambda i, j: (j, i, 0),
     ]
 
-    all_faces = []
-
-    for f in range(12):
-        face = []
-        for d in range(1, scale_factor + 1):
-            face.append(
-                [
-                    tuple(global_coordinate_offset + np.array(face_gen_func[f](d, j)))
-                    for j in range(0, scale_factor + 2)
-                ]
-            )
-        all_faces.append(face)
-
-    all_faces_unzipped = [
-        node for face in all_faces for checks in face for node in checks
+    ring_gen_funcs_y = [
+        lambda i, j: (0, j, i),
+        lambda i, j: (i, j, scale_factor + 1),
+        lambda i, j: (scale_factor + 1, j, i),
+        lambda i, j: (i, j, 0),
     ]
-    return all_faces, all_faces_unzipped, face_gen_func, global_coordinate_offset
 
+    ring_gen_funcs_z = [
+        lambda i, j: (0, i, j),
+        lambda i, j: (i, scale_factor + 1, j),
+        lambda i, j: (scale_factor + 1, i, j),
+        lambda i, j: (i, 0, j),
+    ]
 
-def check_unit_cell(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
-    """
-    Check if a unit cell is a valid Raussendorf unit cell.
-    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
+    optimized_rings = []
+    imperfection_score = 0
 
-    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
-    """
+    for ring_gen in [ring_gen_funcs_x, ring_gen_funcs_y, ring_gen_funcs_z]:
+        rings = {}
+        for j in range(1, scale_factor + 1):
+            ring_list = generate_ring(scale_factor, unit_cell_coord, j, ring_gen)
+            counter = evaluate_ring(G, ring_list)
 
-    all_faces, all_faces_unzipped, _, _ = generate_unit_cell_faces(
-        scale_factor, offset, unit_cell_coord=unit_cell_coord
-    )
-
-    H = G.graph.subgraph(all_faces_unzipped).copy()
-    H.remove_nodes_from(list(nx.isolates(H)))
-
-    joined_faces = []
-
-    for face in all_faces:
-        for checks in face:
-            if all(H.has_node(i) for i in checks):
-                joined_faces.append(checks)
+            if counter == 0:
+                optimized_rings.append(ring_list)
                 break
+            else:
+                rings[j] = counter
+                logging.info(f"Ring {j} has {counter} erasures.")
         else:
-            # print("No face found")
-            return None
+            best_j = min(rings, key=rings.get)
+            logging.info(f"Best ring is {best_j} with {rings[best_j]} erasures.")
 
-    joined_faces = [node for l in joined_faces for node in l]
+            ring_list = generate_ring(scale_factor, unit_cell_coord, best_j, ring_gen)
+            optimized_rings.append(ring_list)
+            imperfection_score += rings[best_j]
 
-    return G.graph.subgraph(joined_faces)
+    optimized_rings = [item for sublist in optimized_rings for item in sublist]
+
+    logging.info(f"Total Imperfection Score: {imperfection_score}")
+
+    return G.graph.subgraph(optimized_rings), imperfection_score
 
 
-def generate_unit_cell_global_coords(shape, scale_factor):
+def evaluate_ring(G, ring_list):
+    """
+    Evaluate the number of nodes in a ring that are not in the graph.
+    This is used to determine how many nodes are missing from the graph.
+    """
+    counter = 0
+    G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
+    for node in ring_list:
+        if node not in G.graph:
+            counter += 1
+    return counter
+
+
+def generate_unit_cell_global_coords(shape, scale_factor, offset) -> list[np.ndarray]:
     """
     Find the bottom left corner of each unit cell in a 3D grid.
     """
@@ -289,109 +337,22 @@ def generate_unit_cell_global_coords(shape, scale_factor):
     num_cubes = np.array(shape) // (scale_factor + 1)
 
     unit_cell_locations = []
+
+    unit_cell_shape = np.array([0, 0, 0], dtype=int)
     for i in itertools.product(
         range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
     ):
-        unit_cell_locations.append(np.array(i) * (scale_factor + 1))
+        print(f"Unit cell location: {i}, scale factor: {scale_factor}")
 
-    return unit_cell_locations
-
-
-def check_unit_cell_path(G, scale_factor, offset, unit_cell_coord=(0, 0, 0)):
-    """
-    Check if a unit cell is a valid Raussendorf unit cell.
-    A valid unit cell is a cube has 6 faces, each with 2 orientations, for a total of 12 oriented faces.
-
-    If all oriented faces contains at least 1 line that does not contain an erasure, the unit cell is valid.
-
-    This is the path version of the function, which may run slower.
-    """
-
-    all_faces, all_faces_unzipped, face_gen_func, global_coordinate_offset = (
-        generate_unit_cell_faces(scale_factor, offset, unit_cell_coord=unit_cell_coord)
-    )
-
-    H = G.graph.subgraph(all_faces_unzipped).copy()
-    H.remove_nodes_from(list(nx.isolates(H)))
-
-    joined_faces = []
-
-    for face, gen_func in zip(all_faces, face_gen_func):
-        face_unzipped = [node for checks in face for node in checks]
-
-        F = H.subgraph(face_unzipped).copy()
-
-        edges1 = [
-            tuple(global_coordinate_offset + np.array(gen_func(d, 0)))
-            for d in range(1, scale_factor + 1)
-        ]
-        edges2 = [
-            tuple(global_coordinate_offset + np.array(gen_func(d, scale_factor + 1)))
-            for d in range(1, scale_factor + 1)
-        ]
-
-        for i, j in itertools.product(edges1, edges2):
-
-            # Edge cases for when the unit cell is at the edge of the grid
-            if i not in F.nodes:
-                continue
-            if j not in F.nodes:
-                continue
-
-            if nx.has_path(F, i, j):
-                path = nx.shortest_path(F, i, j)
-                joined_faces.append(path)
-                # should append path
-                break
-        else:
-            # print("No face found")
-            return None
-
-    joined_faces = [node for l in joined_faces for node in l]
-
-    return G.graph.subgraph(joined_faces)
-
-
-def find_connected_unit_cells(G, shape, offset, scale_factor=1, algorithm="path"):
-    """
-    Find a cluster of connected cubes in the lattice.
-
-    Parameters:
-    - nclicks: number of clicks on the button (unused)
-    - browser_data: data from the browser
-    - graphData: data from the graph
-    - holeData: data from the holes
-    - select_cubes: type of selection for the cubes
-    - algorithm: algorithm to use for finding the cluster (default: "line" or "path")
-    """
-
-    # D = Holes(shape, json_data=holeData)
-
-    coord_to_unit_cell = (
-        check_unit_cell if algorithm == "line" else check_unit_cell_path
-    )
-
-    possible_unit_cells = generate_unit_cell_global_coords(shape, scale_factor)
-
-    valid_unit_cells = []
-    for possible_unit in possible_unit_cells:
-        if (
-            coord_to_unit_cell(G, scale_factor, offset, unit_cell_coord=possible_unit)
-            is not None
+        if any(
+            np.array(i) * (scale_factor + 1) + (scale_factor + 2) + offset
+            > np.array(shape)
         ):
-            valid_unit_cells.append(possible_unit)
-    if valid_unit_cells == []:
-        return []
+            print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
+            continue
 
-    C = nx.Graph()
-    for unit_cell_coord in valid_unit_cells:
-        C.add_node(tuple(unit_cell_coord))
-        for c in C.nodes:
-            if taxicab_metric(c, unit_cell_coord) <= (scale_factor + 1):
-                C.add_edge(c, tuple(unit_cell_coord))
+        unit_cell_locations.append(np.array(i) * (scale_factor + 1) + offset)
 
-    return C
+        unit_cell_shape = np.maximum(np.array(i), unit_cell_shape)
 
-    # connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
-
-    # return connected_clusters
+    return unit_cell_locations, unit_cell_shape + np.array([1, 1, 1])
