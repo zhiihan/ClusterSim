@@ -1,5 +1,3 @@
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
 from cluster_sim.app.state import BrowserState
 from cluster_sim.app.utils import (
     get_node_index,
@@ -7,12 +5,10 @@ from cluster_sim.app.utils import (
 )
 
 from cluster_sim.simulator import ClusterState, NetworkXState
-import networkx as nx
-
+import rustworkx as rx
 import dash
 from dash import html, Input, Output, State
 import time
-import jsonpickle
 import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
@@ -86,8 +82,8 @@ def initial_call(dummy):
     """
     user_state = BrowserState()
 
-    cluster = ClusterState(nx.grid_graph(user_state.shape))
-    errors = NetworkXState(nx.Graph())
+    cluster = ClusterState(rx.grid_graph(user_state.shape))
+    errors = NetworkXState(rx.PyGraph())
 
     return user_state.to_json(), cluster.to_json(), errors.to_json()
 
