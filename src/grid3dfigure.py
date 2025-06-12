@@ -5,6 +5,10 @@ from cluster_sim.app.utils import (
     get_node_index,
     get_node_coords,
 )
+
+from cluster_sim.simulator import ClusterState, NetworkXState
+import networkx as nx
+
 import dash
 from dash import html, Input, Output, State
 import time
@@ -80,11 +84,12 @@ def initial_call(dummy):
     """
     Initialize the graph in the browser as a JSON object.
     """
-    s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+    user_state = BrowserState()
 
-    return jsonpickle.encode(s), G.encode(), D.encode()
+    cluster = ClusterState(nx.grid_graph(user_state.shape))
+    errors = NetworkXState(nx.Graph())
+
+    return user_state.to_json(), cluster.to_json(), errors.to_json()
 
 
 @app.callback(
@@ -103,8 +108,14 @@ def initial_call(dummy):
     State("holes-data", "data"),
     prevent_initial_call=True,
 )
-def display_click_data(
-    clickData, measurementChoice, clickLog, hoverData, browser_data, graphData, holeData
+def handle_qubit_measurements(
+    clickData,
+    measurement_basis,
+    clickLog,
+    hoverData,
+    user_state_json: dict,
+    cluster_json: dict,
+    erasure_json: dict,
 ):
     """
     Updates the browser state if there is a click.
@@ -119,7 +130,6 @@ def display_click_data(
             dash.no_update,
         )
     point = clickData["points"][0]
-
     # Do nothing if clicked on edges
     if point["curveNumber"] > 0 or "x" not in point:
         return (
@@ -130,27 +140,40 @@ def display_click_data(
             dash.no_update,
             dash.no_update,
         )
-    else:
-        s = jsonpickle.decode(browser_data)
-        G = Grid(s.shape, json_data=graphData)
-        D = Holes(s.shape, json_data=holeData)
 
-        i = get_node_index(point["x"], point["y"], point["z"], s.shape)
-        # Update the plot based on the node clicked
-        if measurementChoice == "Erasure":
-            D.add_node(i)
-            measurementChoice = "Z"  # Handle it as if it was Z measurement
-        if not s.removed_nodes[i]:
-            s.removed_nodes[i] = True
-            G.handle_measurements(i, measurementChoice)
-            s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
-        s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
-        s.log.append(html.Br())
+    user_state = BrowserState.from_json(user_state_json)
+    cluster = ClusterState.from_json(cluster_json)
+    errors = NetworkXState.from_json(erasure_json)
 
-        # This solves the double click issue
-        time.sleep(0.1)
-        return html.P(s.log), i, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    i = get_node_index(point["x"], point["y"], point["z"], user_state.shape)
+    # Update the plot based on the node clicked
+    if measurement_basis == "Erasure":
+        errors.add_node(i)
+        measurement_basis = "Z"  # Handle it as if it was Z measurement
+
+    if not user_state.removed_nodes[i]:
+        user_state.removed_nodes[i] = True
+
+        cluster.measure(i, measurement_basis)
+        user_state.move_list.append(
+            [get_node_coords(i, user_state.shape), measurement_basis]
+        )
+        ui = f"Measured {get_node_coords(i, user_state.shape)} with {measurement_basis}"
+    user_state.log.append(
+        f"{get_node_coords(i, user_state.shape)}, {measurement_basis}; "
+    )
+    user_state.log.append(html.Br())
+
+    # This solves the double click issue
+    time.sleep(0.1)
+    return (
+        html.P(user_state.log),
+        i,
+        ui,
+        user_state.to_json(),
+        cluster.to_json(),
+        errors.to_json(),
+    )
 
 
 if __name__ == "__main__":

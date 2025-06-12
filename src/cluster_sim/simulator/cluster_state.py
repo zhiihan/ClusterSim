@@ -64,6 +64,9 @@ class ClusterState:
         self.graph_state.cz(control, qubit)
 
     def sync_graph(self):
+        """
+        Sync the graph state with the NetworkX graph.
+        """
         self.graph = self.graph_state.to_networkx()
         self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
 
@@ -122,3 +125,13 @@ class NetworkXState:
             A JSON-serializable representation of the graph state.
         """
         return nx.node_link_data(self.graph, edges="edges")
+
+    def add_node(self, *args, **kwargs):
+        """
+        Add a node to the graph.
+
+        Args:
+            args: Positional arguments for the add_node method.
+            kwargs: Keyword arguments for the add_node method.
+        """
+        self.graph.add_node(*args, **kwargs)

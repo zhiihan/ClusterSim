@@ -1,4 +1,5 @@
 import numpy as np
+import jsonpickle
 
 
 class BrowserState:
@@ -42,3 +43,16 @@ class BrowserState:
         self.offset = [0, 0, 0]
         self.xoffset, self.yoffset, self.zoffset = self.offset
         self.ncubes = None
+
+    def to_json(self):
+        return jsonpickle.encode(self)
+
+    @classmethod
+    def from_json(self, json_data):
+        """
+        Convert the graph state to a JSON-serializable format.
+
+        Returns:
+            A JSON-serializable representation of the graph state.
+        """
+        return jsonpickle.decode(json_data)
