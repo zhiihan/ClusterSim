@@ -1,4 +1,5 @@
 from cluster_sim.graph_state import GraphState
+import rustworkx as rx
 import networkx as nx
 
 
@@ -7,7 +8,7 @@ class ClusterState:
     Adapter class containing a GraphState object.
     """
 
-    def __init__(self, graph: nx.Graph = nx.Graph()):
+    def __init__(self, graph: nx.Graph | rx.PyGraph = rx.PyGraph()):
         """
         Create a ClusterState object from a NetworkX graph.
 
@@ -19,14 +20,24 @@ class ClusterState:
             Nodes are indexed from 0 to n-1, where n is the number of nodes in the graph.
         """
 
-        self.graph_state = GraphState(len(graph.nodes))
-        self.graph = nx.convert_node_labels_to_integers(graph)
+        if isinstance(graph, nx.Graph):
+            graph = nx.convert_node_labels_to_integers(graph)
+            self.graph = rx.networkx_converter(graph)
+            self.graph_state = GraphState(len(graph.nodes))
+        elif isinstance(graph, rx.PyGraph):
+            self.graph = graph
+            for n in self.graph.node_indices():
+                self.graph[n] = n
+            self.graph_state = GraphState(graph.num_nodes())
+        else:
+            raise TypeError("Graph must be a NetworkX graph or a RustworkX PyGraph.")
 
-        for i in self.graph.nodes:
+        for i in self.graph.node_indices():
             self.graph_state.h(i)
 
-        for e in self.graph.edges:
-            self.graph_state.add_edge(*e)
+        for e in self.graph.edge_indices():
+            edge_data = self.graph.get_edge_endpoints_by_index(e)
+            self.graph_state.add_edge(edge_data[0], edge_data[1])
 
     def measure(self, qubit: int, basis: str):
         """
@@ -67,8 +78,8 @@ class ClusterState:
         """
         Sync the graph state with the NetworkX graph.
         """
-        self.graph = self.graph_state.to_networkx()
-        self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
+        self.graph = self.graph_state.to_rustworkx()
+        self.graph.remove_nodes_from(rx.isolates(self.graph))
 
     @classmethod
     def from_json(cls, json_data):
@@ -78,7 +89,7 @@ class ClusterState:
         Returns:
             A JSON-serializable representation of the graph state.
         """
-        return cls(nx.node_link_graph(json_data, edges="edges"))
+        return cls(rx.parse_node_link_json(json_data))
 
     def to_json(self):
         """
@@ -87,22 +98,24 @@ class ClusterState:
         Returns:
             A JSON-serializable representation of the graph state.
         """
-        return nx.node_link_data(self.graph, edges="edges")
+        return rx.node_link_json(self.graph)
 
 
-class NetworkXState:
+class RustworkXState:
     """
-    Adapter class containing a NetworkX graph object.
+    Adapter class containing a RustworkX graph object.
     """
 
-    def __init__(self, graph: nx.Graph):
+    def __init__(self, graph: nx.Graph | rx.PyGraph = rx.PyGraph()):
         """
         Nodes are indexed from 0 to n-1, where n is the number of nodes in the graph.
 
         Attributes:
-            graph: A networkx graph object.
+            graph: A rustworkx graph object.
         """
-        self.graph = nx.convert_node_labels_to_integers(graph)
+        self.graph = graph
+        for n in self.graph.node_indices():
+            self.graph[n] = n
 
     def sync_graph(self):
         pass
@@ -110,12 +123,12 @@ class NetworkXState:
     @classmethod
     def from_json(cls, json_data):
         """
-        Create a NetworkXState object from JSON data.
+        Convert the graph state to a JSON-serializable format.
 
         Returns:
-            A NetworkXState object.
+            A JSON-serializable representation of the graph state.
         """
-        return cls(nx.node_link_graph(json_data, edges="edges"))
+        return cls(rx.parse_node_link_json(json_data))
 
     def to_json(self):
         """
@@ -124,7 +137,7 @@ class NetworkXState:
         Returns:
             A JSON-serializable representation of the graph state.
         """
-        return nx.node_link_data(self.graph, edges="edges")
+        return rx.node_link_json(self.graph)
 
     def add_node(self, *args, **kwargs):
         """

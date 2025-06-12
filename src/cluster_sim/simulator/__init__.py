@@ -1,3 +1,3 @@
-from .cluster_state import ClusterState, NetworkXState
+from .cluster_state import ClusterState, RustworkXState
 
-__all__ = ["ClusterState", "NetworkXState"]
+__all__ = ["ClusterState", "RustworkXState"]

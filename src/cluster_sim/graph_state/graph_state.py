@@ -246,6 +246,23 @@ class GraphState(object):
 
         return G
 
+    def to_rustworkx(self):
+        import rustworkx as rx
+
+        G = rx.PyGraph()
+
+        for idx, v in enumerate(self.vertices):
+            G.add_node(idx)
+
+        for idx, v in enumerate(self.vertices):
+            G.add_node(idx)
+            for u in v.neighbors:
+                G.add_edge(idx, u, None)
+
+            G[idx] = {"vop": v.vop_code}
+
+        return G
+
     def draw(self):
         import networkx as nx
         import matplotlib.pyplot as plt

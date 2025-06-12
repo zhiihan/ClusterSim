@@ -1,6 +1,6 @@
-from cluster_sim.simulator import ClusterState, NetworkXState
+from cluster_sim.simulator import ClusterState, RustworkXState
 import plotly.graph_objects as go
-import networkx as nx
+import rustworkx as rx
 
 
 class Plot2D:
@@ -24,7 +24,7 @@ class Plot3D:
 class Plot3DGrid:
     def __init__(
         self,
-        cluster_state: ClusterState | nx.Graph,
+        cluster_state: ClusterState | rx.PyGraph,
         shape: list[int],
         browser_state=None,
     ):
@@ -34,8 +34,12 @@ class Plot3DGrid:
 
         if isinstance(cluster_state, ClusterState):
             self.cluster_state.sync_graph()
-        elif isinstance(cluster_state, nx.Graph):
-            self.cluster_state = NetworkXState(cluster_state)
+        elif isinstance(cluster_state, rx.PyGraph):
+            self.cluster_state = RustworkXState(cluster_state)
+        else:
+            raise TypeError(
+                "cluster_state must be an instance of ClusterState or rustworkx.PyGraph"
+            )
 
     def plot(self):
         trace_nodes, trace_edges = self.nx_to_plot(index=True)
@@ -78,30 +82,35 @@ class Plot3DGrid:
         x_edges, y_edges, z_edges = [], [], []
 
         if index:
-            for node in self.cluster_state.graph.nodes:
+            for node in self.cluster_state.graph.node_indices():
                 x = self._get_node_coords(node)
 
                 x_nodes.append(x[0])
                 y_nodes.append(x[1])
                 z_nodes.append(x[2])
 
-            for edge in self.cluster_state.graph.edges:
-                x1 = self._get_node_coords(edge[0])
-                x2 = self._get_node_coords(edge[1])
+            for edge in self.cluster_state.graph.edge_indices():
+
+                node1, node2 = self.cluster_state.graph.get_edge_endpoints_by_index(
+                    edge
+                )
+
+                x1 = self._get_node_coords(node1)
+                x2 = self._get_node_coords(node2)
 
                 x_edges += [x1[0], x2[0], None]
                 y_edges += [x1[1], x2[1], None]
                 z_edges += [x1[2], x2[2], None]
 
         else:
-            for node in self.cluster_state.graph.nodes:
+            for node in self.cluster_state.graph.node_indices():
                 x_nodes.append(node[0])
                 y_nodes.append(node[1])
                 z_nodes.append(node[2])
 
-            for edge in self.cluster_state.graph.edges:
-                x1 = edge[0]
-                x2 = edge[1]
+            for edge in self.cluster_state.graph.edge_indices():
+                x1 = self.cluster_state[edge][0]
+                x2 = self.cluster_state[edge][1]
 
                 x_edges += [x1[0], x2[0], None]
                 y_edges += [x1[1], x2[1], None]

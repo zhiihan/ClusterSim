@@ -4,7 +4,7 @@ from cluster_sim.app.utils import (
     get_node_coords,
 )
 
-from cluster_sim.simulator import ClusterState, NetworkXState
+from cluster_sim.simulator import ClusterState, RustworkXState
 import rustworkx as rx
 import dash
 from dash import html, Input, Output, State
@@ -83,7 +83,7 @@ def initial_call(dummy):
     user_state = BrowserState()
 
     cluster = ClusterState(rx.grid_graph(user_state.shape))
-    errors = NetworkXState(rx.PyGraph())
+    errors = RustworkXState(rx.PyGraph())
 
     return user_state.to_json(), cluster.to_json(), errors.to_json()
 
@@ -139,7 +139,7 @@ def handle_qubit_measurements(
 
     user_state = BrowserState.from_json(user_state_json)
     cluster = ClusterState.from_json(cluster_json)
-    errors = NetworkXState.from_json(erasure_json)
+    errors = RustworkXState.from_json(erasure_json)
 
     i = get_node_index(point["x"], point["y"], point["z"], user_state.shape)
     # Update the plot based on the node clicked
