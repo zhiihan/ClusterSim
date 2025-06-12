@@ -2,8 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import random
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
+from cluster_sim.simulator import ClusterState, RustworkXState
 from cluster_sim.app.utils import get_node_coords
 import dash_bootstrap_components as dbc
 import logging
@@ -73,9 +72,10 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     Randomly measure qubits.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
+    G = ClusterState(s.shape, json_data=graphData)
+    D = RustworkXState(s.shape)
+
     s.p = prob
-    D = Holes(s.shape)
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))

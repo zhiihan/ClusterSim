@@ -259,7 +259,7 @@ class GraphState(object):
             for u in v.neighbors:
                 G.add_edge(idx, u, None)
 
-            G[idx] = {"vop": v.vop_code}
+            G[idx] = {"index": idx, "vop": v.vop_code}
 
         return G
 

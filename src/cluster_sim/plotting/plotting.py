@@ -28,13 +28,12 @@ class Plot3DGrid:
         shape: list[int],
         browser_state=None,
     ):
-        self.cluster_state = cluster_state
         self.shape = shape
         self.browser_state = browser_state
 
-        if isinstance(cluster_state, ClusterState):
-            self.cluster_state.sync_graph()
-        elif isinstance(cluster_state, RustworkXState):
+        if isinstance(cluster_state, ClusterState) or isinstance(
+            cluster_state, RustworkXState
+        ):
             self.cluster_state = cluster_state
         elif isinstance(cluster_state, rx.PyGraph):
             self.cluster_state = RustworkXState(cluster_state)
@@ -83,40 +82,24 @@ class Plot3DGrid:
         x_nodes, y_nodes, z_nodes = [], [], []
         x_edges, y_edges, z_edges = [], [], []
 
-        if index:
-            for node in self.cluster_state.graph.node_indices():
-                x = self._get_node_coords(node)
+        for node in self.cluster_state.graph.node_indices():
+            print(self.cluster_state.graph[node]["index"])
 
-                x_nodes.append(x[0])
-                y_nodes.append(x[1])
-                z_nodes.append(x[2])
+            x = self._get_node_coords(self.cluster_state.graph[node]["index"])
 
-            for edge in self.cluster_state.graph.edge_indices():
+            x_nodes.append(x[0])
+            y_nodes.append(x[1])
+            z_nodes.append(x[2])
 
-                node1, node2 = self.cluster_state.graph.get_edge_endpoints_by_index(
-                    edge
-                )
+        for edge in self.cluster_state.graph.edge_indices():
+            node1, node2 = self.cluster_state.graph.get_edge_endpoints_by_index(edge)
 
-                x1 = self._get_node_coords(node1)
-                x2 = self._get_node_coords(node2)
+            x1 = self._get_node_coords(self.cluster_state.graph[node1]["index"])
+            x2 = self._get_node_coords(self.cluster_state.graph[node2]["index"])
 
-                x_edges += [x1[0], x2[0], None]
-                y_edges += [x1[1], x2[1], None]
-                z_edges += [x1[2], x2[2], None]
-
-        else:
-            for node in self.cluster_state.graph.node_indices():
-                x_nodes.append(node[0])
-                y_nodes.append(node[1])
-                z_nodes.append(node[2])
-
-            for edge in self.cluster_state.graph.edge_indices():
-                x1 = self.cluster_state[edge][0]
-                x2 = self.cluster_state[edge][1]
-
-                x_edges += [x1[0], x2[0], None]
-                y_edges += [x1[1], x2[1], None]
-                z_edges += [x1[2], x2[2], None]
+            x_edges += [x1[0], x2[0], None]
+            y_edges += [x1[1], x2[1], None]
+            z_edges += [x1[2], x2[2], None]
 
         trace_nodes = go.Scatter3d(
             x=x_nodes,

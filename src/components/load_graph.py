@@ -1,7 +1,6 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
+from cluster_sim.simulator import ClusterState, RustworkXState
 from cluster_sim.app.state import BrowserState
 from cluster_sim.app.utils import (
     get_node_index,
@@ -92,8 +91,8 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     shape = s.shape
 
     s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+    G = ClusterState(s.shape)
+    D = RustworkXState(s.shape)
 
     s.xmax, s.ymax, s.zmax = shape[0], shape[1], shape[2]
     s.shape = shape

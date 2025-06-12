@@ -1,6 +1,6 @@
 from textwrap import dedent as d
 from dash import dcc, html, Input, Output, State, callback
-from cluster_sim.app.grid import Grid
+from cluster_sim.simulator import ClusterState, RustworkXState
 import dash_bootstrap_components as dbc
 import jsonpickle
 import networkx as nx
@@ -70,7 +70,7 @@ Click on points in the graph. Can be copied to clipboard to load a graph state.
 )
 def download_stab(n_clicks, browserData, graphData):
     s = jsonpickle.decode(browserData)
-    G = Grid(s.shape, json_data=graphData)
+    G = ClusterState(s.shape, json_data=graphData)
     G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
     adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)
     adjacency_matrix += np.diag(2 * np.ones(adjacency_matrix.shape[0])).astype(int)

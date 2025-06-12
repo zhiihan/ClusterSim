@@ -1,15 +1,9 @@
 from textwrap import dedent as d
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
+from cluster_sim.simulator import ClusterState, RustworkXState
 from cluster_sim.app.state import BrowserState
-from cluster_sim.app.utils import (
-    update_plot,
-)
-
 
 import dash
 from dash import dcc, callback, Input, Output, State
-from cluster_sim.simulator import ClusterState, RustworkXState
 from cluster_sim.plotting import Plot3DGrid
 from networkx import grid_graph
 from plotly.io import from_json
@@ -83,7 +77,6 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
     user_state = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
     D = RustworkXState.from_json(holeData)
-    print(G.graph.node_indices())
     trace_nodes, trace_edges = Plot3DGrid(G, user_state.shape).rx_to_plot()
     trace_holes, trace_holes_edges = Plot3DGrid(D, user_state.shape).rx_to_plot()
 

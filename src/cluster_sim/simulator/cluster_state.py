@@ -21,13 +21,15 @@ class ClusterState:
         """
 
         if isinstance(graph, nx.Graph):
-            graph = nx.convert_node_labels_to_integers(graph)
             self.graph = rx.networkx_converter(graph)
+            for node in self.graph.node_indices():
+                self.graph[node] = {"index": node}
             self.graph_state = GraphState(len(graph.nodes))
         elif isinstance(graph, rx.PyGraph):
             self.graph = graph
-            for n in self.graph.node_indices():
-                self.graph[n] = n
+            for node in self.graph.node_indices():
+                if self.graph[node] is None:
+                    self.graph[node] = {"index": node}
             self.graph_state = GraphState(graph.num_nodes())
         else:
             raise TypeError("Graph must be a NetworkX graph or a RustworkX PyGraph.")
@@ -74,13 +76,6 @@ class ClusterState:
     def cz(self, control: int, qubit: int):
         self.graph_state.cz(control, qubit)
 
-    def sync_graph(self):
-        """
-        Sync the graph state with the NetworkX graph.
-        """
-        self.graph = self.graph_state.to_rustworkx()
-        self.graph.remove_nodes_from(rx.isolates(self.graph))
-
     @classmethod
     def from_json(cls, json_data):
         """
@@ -89,7 +84,11 @@ class ClusterState:
         Returns:
             A JSON-serializable representation of the graph state.
         """
-        return cls(rx.parse_node_link_json(json_data))
+        return cls(
+            rx.parse_node_link_json(
+                json_data, node_attrs=lambda node: {"index": int(node["index"])}
+            )
+        )
 
     def to_json(self):
         """
@@ -98,7 +97,9 @@ class ClusterState:
         Returns:
             A JSON-serializable representation of the graph state.
         """
-        return rx.node_link_json(self.graph)
+        return rx.node_link_json(
+            self.graph, node_attrs=lambda node: {"index": str(node["index"])}
+        )
 
 
 class RustworkXState:

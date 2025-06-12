@@ -1,1 +1,1 @@
-__all__ = ["grid", "utils", "holes", "state"]
+__all__ = ["utils", "state"]
