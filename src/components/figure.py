@@ -6,27 +6,32 @@ from cluster_sim.app.utils import (
     update_plot,
 )
 
+
 import dash
 from dash import dcc, callback, Input, Output, State
-import jsonpickle
+from cluster_sim.simulator import ClusterState, RustworkXState
+from cluster_sim.plotting import Plot3DGrid
+from networkx import grid_graph
+from plotly.io import from_json
 import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
 
 
 # Initialize the state of the user's browsing section
-def _init_state():
+def _initial_figure():
     """
-    Initialize the state of the user's browsing section.
+    Initialize the figure with a 3D grid graph.
     """
 
-    s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
-    return update_plot(s, G, D)
+    user_state = BrowserState()
+
+    G = ClusterState(grid_graph(dim=user_state.shape))
+    return Plot3DGrid(G, user_state.shape).plot()
 
 
 figure = dcc.Graph(
     id="basic-interactions",
-    figure=_init_state(),
+    figure=_initial_figure(),
     responsive=True,
     style={"width": "100%", "height": "100%"},
 )
@@ -75,12 +80,63 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
     if browser_data is None:
         return dash.no_update
 
-    s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    D = Holes(s.shape, json_data=holeData)
+    user_state = BrowserState.from_json(browser_data)
+    G = ClusterState.from_json(graphData)
+    D = RustworkXState.from_json(holeData)
+    print(G.graph.node_indices())
+    trace_nodes, trace_edges = Plot3DGrid(G, user_state.shape).rx_to_plot()
+    trace_holes, trace_holes_edges = Plot3DGrid(D, user_state.shape).rx_to_plot()
 
-    fig = update_plot(s, G, D, plotoptions=plotoptions)
-    # Make sure the view/angle stays the same when updating the figure
+    if "Qubits" in plotoptions:
+        trace_nodes.visible = True
+        trace_edges.visible = True
+    else:
+        trace_nodes.visible = "legendonly"
+        trace_edges.visible = "legendonly"
+
+    if "Holes" in plotoptions:
+        trace_holes.visible = True
+        trace_holes_edges.visible = True
+    else:
+        trace_holes.visible = "legendonly"
+        trace_holes_edges.visible = "legendonly"
+
+    # Include the traces we want to plot and create a figure
+    data = [trace_nodes, trace_edges, trace_holes, trace_holes_edges]
+    if user_state.lattice:
+        lattice_nodes = go.Scatter3d(
+            from_json(user_state.lattice_edges).data[0],
+            mode="markers",
+            line=dict(color="blue", width=2),
+            hoverinfo="none",
+        )
+        if "Lattice" in plotoptions:
+            lattice_nodes.visible = True
+        else:
+            lattice_nodes.visible = "legendonly"
+        data.append(lattice_nodes)
+    if user_state.lattice_edges:
+        lattice_edges = go.Scatter3d(
+            from_json(user_state.lattice_edges).data[0],
+            mode="lines",
+            line=dict(color="blue", width=2),
+            hoverinfo="none",
+        )
+        if "Lattice" in plotoptions:
+            lattice_edges.visible = True
+        else:
+            lattice_edges.visible = "legendonly"
+        data.append(lattice_edges)
+
+    fig = go.Figure(data=data)
+    # fig.layout.height = 600
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        # autosize=True,
+        scene_camera=user_state.camera_state["scene.camera"],
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+    )
+
     if "scene.camera" in relayoutData:
-        fig.update_layout(scene_camera=s.camera_state["scene.camera"])
+        fig.update_layout(scene_camera=user_state.camera_state["scene.camera"])
     return fig

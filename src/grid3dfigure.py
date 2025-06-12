@@ -6,6 +6,7 @@ from cluster_sim.app.utils import (
 
 from cluster_sim.simulator import ClusterState, RustworkXState
 import rustworkx as rx
+from networkx import grid_graph
 import dash
 from dash import html, Input, Output, State
 import time
@@ -82,8 +83,10 @@ def initial_call(dummy):
     """
     user_state = BrowserState()
 
-    cluster = ClusterState(rx.grid_graph(user_state.shape))
+    cluster = ClusterState(grid_graph(dim=user_state.shape))
     errors = RustworkXState(rx.PyGraph())
+
+    print(cluster.graph.node_indices())
 
     return user_state.to_json(), cluster.to_json(), errors.to_json()
 
@@ -142,6 +145,8 @@ def handle_qubit_measurements(
     errors = RustworkXState.from_json(erasure_json)
 
     i = get_node_index(point["x"], point["y"], point["z"], user_state.shape)
+
+    ui = ""
     # Update the plot based on the node clicked
     if measurement_basis == "Erasure":
         errors.add_node(i)
@@ -151,10 +156,12 @@ def handle_qubit_measurements(
         user_state.removed_nodes[i] = True
 
         cluster.measure(i, measurement_basis)
+        cluster.graph.remove_node(i)
         user_state.move_list.append(
             [get_node_coords(i, user_state.shape), measurement_basis]
         )
         ui = f"Measured {get_node_coords(i, user_state.shape)} with {measurement_basis}"
+        print(cluster.graph.node_indices())
     user_state.log.append(
         f"{get_node_coords(i, user_state.shape)}, {measurement_basis}; "
     )

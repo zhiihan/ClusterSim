@@ -34,15 +34,17 @@ class Plot3DGrid:
 
         if isinstance(cluster_state, ClusterState):
             self.cluster_state.sync_graph()
+        elif isinstance(cluster_state, RustworkXState):
+            self.cluster_state = cluster_state
         elif isinstance(cluster_state, rx.PyGraph):
             self.cluster_state = RustworkXState(cluster_state)
         else:
             raise TypeError(
-                "cluster_state must be an instance of ClusterState or rustworkx.PyGraph"
+                "cluster_state must be an instance of ClusterState, RustworkXState, or rustworkx.PyGraph"
             )
 
     def plot(self):
-        trace_nodes, trace_edges = self.nx_to_plot(index=True)
+        trace_nodes, trace_edges = self.rx_to_plot(index=True)
         data = [trace_nodes, trace_edges]
 
         fig = go.Figure(data=data)
@@ -70,9 +72,9 @@ class Plot3DGrid:
         index_z = (i // (self.shape[0] * self.shape[1])) % self.shape[2]
         return (index_x, index_y, index_z)
 
-    def nx_to_plot(self, index: bool = True):
+    def rx_to_plot(self, index: bool = True):
         """
-        Convert a networkx graph to a format suitable for Plotly 3D plotting, on a Grid layout.
+        Convert a rustworkx graph to a format suitable for Plotly 3D plotting, on a Grid layout.
 
         Args:
             index (bool): If True, use node indices for coordinates. If False, use actual coordinates.
