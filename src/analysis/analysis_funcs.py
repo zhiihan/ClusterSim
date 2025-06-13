@@ -20,7 +20,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
 
     for i in range(shape[0] * shape[1] * shape[2]):
         if random.random() < p:
-            if removed_nodes[i] is False:
+            if removed_nodes[i] == False:  # noqa: E712
                 removed_nodes[i] = True
                 D.add_node(i)
                 G.handle_measurements(i, "Z")
@@ -174,14 +174,14 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
 
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, shape)
-                    if removed_nodes[i] is False:
+                    if removed_nodes[i] == False:  # noqa: E712
                         G.handle_measurements(i, "Z")
                         removed_nodes[i] = True
 
     return G, D, removed_nodes, offset
 
 
-def reduce_lattice(G, shape, offsets, scale_factor=1):
+def reduce_lattice(G, shape, offsets, removed_nodes, scale_factor=1):
     valid_unit_cells, _ = generate_unit_cell_global_coords(shape, scale_factor, offsets)
 
     C = nx.Graph()
@@ -192,7 +192,7 @@ def reduce_lattice(G, shape, offsets, scale_factor=1):
 
     for unit_cell_coord in valid_unit_cells:
         H_subgraph, imperfection_score = find_rings(
-            G, scale_factor, unit_cell_coord=unit_cell_coord
+            G, scale_factor, removed_nodes, shape, unit_cell_coord=unit_cell_coord
         )
         all_graphs.append(H_subgraph)
         if imperfection_score == 0:
@@ -208,8 +208,6 @@ def reduce_lattice(G, shape, offsets, scale_factor=1):
 
     largest_cc = max(nx.connected_components(C), key=len)
     largest_cc = C.subgraph(largest_cc).copy()
-
-    print(largest_cc)
 
     # Check if the largest cluster percolates
     low = np.array([np.inf, np.inf, np.inf])
@@ -257,7 +255,7 @@ def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):
     return list(ring_node_coords)
 
 
-def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
+def find_rings(G, scale_factor, removed_nodes, shape, unit_cell_coord=(0, 0, 0)):
     """
     Find the rings of a unit cell in a Raussendorf lattice.
     """
@@ -292,7 +290,7 @@ def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
         rings = {}
         for j in range(1, scale_factor + 1):
             ring_list = generate_ring(scale_factor, unit_cell_coord, j, ring_gen)
-            counter = evaluate_ring(G, ring_list)
+            counter = evaluate_ring(G, ring_list, removed_nodes, shape)
 
             if counter == 0:
                 optimized_rings.append(ring_list)
@@ -315,15 +313,15 @@ def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
     return G.graph.subgraph(optimized_rings), imperfection_score
 
 
-def evaluate_ring(G, ring_list):
+def evaluate_ring(G, ring_list, removed_nodes, shape) -> int:
     """
     Evaluate the number of nodes in a ring that are not in the graph.
     This is used to determine how many nodes are missing from the graph.
     """
-    counter = 0
-    G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
+    counter = 0  # noqa: E712
     for node in ring_list:
-        if node not in G.graph:
+        node = get_node_index(node[0], node[1], node[2], shape)
+        if removed_nodes[node]:
             counter += 1
     return counter
 
