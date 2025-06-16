@@ -239,10 +239,6 @@ def reduce_lattice(
 
         connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
 
-        largest_cc = max(nx.connected_components(C), key=len)
-        largest_cc = C.subgraph(largest_cc).copy()
-        print(largest_cc.number_of_nodes())
-
         if not connected_clusters:
             ui = "Reduction: No connected clusters found."
             s.lattice = None

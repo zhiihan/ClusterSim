@@ -15,7 +15,7 @@ import sys
 
 os.makedirs("./data", exist_ok=True)
 
-SHAPE = [40, 40, 100]
+SHAPE = (50, 50, 100)
 SEED = 1
 NUM_SAMPLES = 1
 MAX_SCALE = 5

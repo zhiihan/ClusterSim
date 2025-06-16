@@ -40,26 +40,15 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
     - graphData: data from the graph
     - holeData: data from the holes
     """
-    holes = D.graph.nodes
+    holes = [np.array(h) for h in D.graph.nodes]
 
     hole_locations = np.zeros(
         (scale_factor + 1, scale_factor + 1, scale_factor + 1), dtype=int
     )
-
-    # Finding the offset that maximizes holes placed in hole locations
     for h in holes:
-        x, y, z = h
-
-        x_vec = np.array([x, y, z])
-        for xoffset, yoffset, zoffset in itertools.product(
-            range(scale_factor + 1), repeat=3
-        ):
-            test_cond = x_vec % (scale_factor + 1)
-            offset = np.array([xoffset, yoffset, zoffset])
-
-            if np.all(test_cond == offset) or np.all(test_cond != offset):
-                hole_locations[tuple(offset)] += 1
-
+        hole_locations += compute_hole_locations(
+            scale_factor=scale_factor, h_vec=h, hole_locations=hole_locations
+        )
     # print("hole locations", hole_locations)
 
     # Finding the offset that maximizes holes placed in hole locations
@@ -81,6 +70,22 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
                         removed_nodes[i] = True
 
     return G, D, removed_nodes, offset
+
+
+@jit(nopython=True)
+def compute_hole_locations(
+    scale_factor: int, h_vec: np.ndarray, hole_locations: np.ndarray
+):
+
+    test_cond = h_vec % (scale_factor + 1)
+
+    for xoffset in range(scale_factor + 1):
+        for yoffset in range(scale_factor + 1):
+            for zoffset in range(scale_factor + 1):
+                offset = np.array([xoffset, yoffset, zoffset])
+                if np.all(test_cond == offset) or np.all(test_cond != offset):
+                    hole_locations[xoffset, yoffset, zoffset] += 1
+    return hole_locations
 
 
 def reduce_lattice(G, shape, offsets, removed_nodes, scale_factor=1):
@@ -147,20 +152,20 @@ def reduce_lattice(G, shape, offsets, removed_nodes, scale_factor=1):
     )
 
 
+@jit(nopython=True)
 def generate_ring(scale_factor: int, global_offset: np.ndarray, j: int, ring_dir: str):
     """
     Generate the rings of a unit cell in a Raussendorf lattice.
     """
 
-    ring_coords = np.empty((4 * (scale_factor + 2), 3), dtype=int)
+    circumference = 4 * (scale_factor + 2)
+
+    ring_coords = np.empty((circumference, 3))
 
     for i in range(0, scale_factor + 2):
         ring_coords[4 * i : 4 * (i + 1)] = (  # noqa: E203
             ring_gen_funcs(i, j, scale_factor, ring_dir) + global_offset
         )
-
-    ring_coords = np.unique(ring_coords, axis=0)
-    ring_coords = [tuple(coord) for coord in ring_coords]
 
     return ring_coords
 
@@ -216,6 +221,8 @@ def find_rings(G, scale_factor: int, removed_nodes, shape, unit_cell_coord=(0, 0
         rings = {}
         for j in range(1, scale_factor + 1):
             ring_list = generate_ring(scale_factor, unit_cell_coord, j, ring_gen)
+            ring_list = np.unique(ring_list, axis=0).astype(int)
+
             counter = evaluate_ring(ring_list, removed_nodes, shape)
 
             if counter == 0:
@@ -229,17 +236,22 @@ def find_rings(G, scale_factor: int, removed_nodes, shape, unit_cell_coord=(0, 0
             logging.info(f"Best ring is {best_j} with {rings[best_j]} erasures.")
 
             ring_list = generate_ring(scale_factor, unit_cell_coord, best_j, ring_gen)
+            ring_list = np.unique(ring_list, axis=0)
+
             optimized_rings.append(ring_list)
             imperfection_score += rings[best_j]
 
-    optimized_rings = [item for sublist in optimized_rings for item in sublist]
+    optimized_rings = [tuple(coord) for sublist in optimized_rings for coord in sublist]
 
     logging.info(f"Total Imperfection Score: {imperfection_score}")
 
     return G.graph.subgraph(optimized_rings), imperfection_score
 
 
-def evaluate_ring(ring_list, removed_nodes, shape) -> int:
+@jit(nopython=True)
+def evaluate_ring(
+    ring_list: np.ndarray, removed_nodes: np.ndarray, shape: tuple[int, int, int]
+) -> int:
     """
     Evaluate the number of nodes in a ring that are not in the graph.
     This is used to determine how many nodes are missing from the graph.
