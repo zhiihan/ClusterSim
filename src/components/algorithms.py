@@ -230,7 +230,9 @@ def reduce_lattice(
                 graphs_hashmap[tuple(unit_cell_coord)] = H_subgraph
 
                 for c in C.nodes:
-                    if taxicab_metric(c, unit_cell_coord) <= (s.scale_factor + 1):
+                    if taxicab_metric(np.array(c), unit_cell_coord) <= (
+                        s.scale_factor + 1
+                    ):
                         C.add_edge(c, tuple(unit_cell_coord))
             else:
                 imperfect_cells += 1

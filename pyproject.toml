@@ -13,7 +13,8 @@ dependencies = [
     "jsonpickle",
     "networkx",
     "numpy",
-    "matplotlib"
+    "matplotlib",
+    "numba"
 ]
 
 [project.optional-dependencies]

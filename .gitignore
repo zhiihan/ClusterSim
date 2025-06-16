@@ -3,8 +3,10 @@
 # Edit at https://www.gitignore.io/?templates=c++,node,cmake,macos,linux,python,windows
 
 # Data analysis
-analysis/
 data/
+old/
+profile.html
+profile.json
 
 #
 *.png

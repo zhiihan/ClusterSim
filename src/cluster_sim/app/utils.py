@@ -1,13 +1,16 @@
 import numpy as np
 import plotly.graph_objects as go
 from plotly.io import from_json
+from numba import jit
 
 
-def get_node_index(x, y, z, shape):
+@jit(nopython=True)
+def get_node_index(x: int, y: int, z: int, shape: tuple[int, int, int]) -> int:
     return x + y * shape[0] + z * shape[1] * shape[0]
 
 
-def get_node_coords(i, shape):
+@jit(nopython=True)
+def get_node_coords(i: int, shape: tuple[int, int, int]) -> tuple[int, int, int]:
     index_x = i % shape[0]
     index_y = (i // shape[0]) % shape[1]
     index_z = (i // (shape[0] * shape[1])) % shape[2]
@@ -112,10 +115,8 @@ def path_to_plot(path, shape, index=True):
     return [x_nodes, y_nodes, z_nodes], [x_edges, y_edges, z_edges]
 
 
-def taxicab_metric(node1, node2):
-    x1 = np.array(node1)
-    x2 = np.array(node2)
-
+@jit(nopython=True)
+def taxicab_metric(x1: np.ndarray, x2: np.ndarray) -> float:
     return np.sum(np.abs(x1 - x2))
 
 

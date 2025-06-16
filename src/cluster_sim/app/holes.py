@@ -29,7 +29,7 @@ class Holes:
         nodes = list(self.graph.nodes)
         for index, n in enumerate(nodes):
             for n2 in nodes[index:]:
-                if taxicab_metric(n, n2) == 1:
+                if taxicab_metric(np.array(n), np.array(n2)) == 1:
                     self.graph.add_edge(n, n2)
         if double_hole:
             self.double_hole()
