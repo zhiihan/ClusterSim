@@ -132,7 +132,7 @@ def reduce_lattice(G, shape, offsets, removed_nodes, scale_factor=1):
             # Get the coordinates of the node
             low = np.minimum(low, np.array(node))
             high = np.maximum(high, np.array(node))
-        percolation_distance = high[2] - low[2]
+        percolation_distance = high[2] - low[2] + 1
 
         connected_perfect_cells = largest_cc.number_of_nodes()
 
@@ -266,13 +266,13 @@ def generate_unit_cell_global_coords(shape, scale_factor, offset) -> list[np.nda
     for i in itertools.product(
         range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
     ):
-        print(f"Unit cell location: {i}, scale factor: {scale_factor}")
+        # print(f"Unit cell location: {i}, scale factor: {scale_factor}")
 
         if any(
             np.array(i) * (scale_factor + 1) + (scale_factor + 2) + offset
             > np.array(shape)
         ):
-            print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
+            # print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
             continue
 
         unit_cell_locations.append(np.array(i) * (scale_factor + 1) + offset)

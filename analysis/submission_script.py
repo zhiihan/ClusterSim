@@ -24,7 +24,7 @@ MAX_SCALE = 5
 # Input vector for all jobs
 jobs_input_vec = [
     (p, scale, sample)
-    for p in np.linspace(0, 0.3, 25)
+    for p in np.linspace(0, 0.3, 10)
     for scale in range(1, MAX_SCALE + 1)
     for sample in range(NUM_SAMPLES)
 ]
