@@ -100,4 +100,4 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
                 s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
                 D.add_node(i)
     D.add_edges()
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.encode(), D.encode()

@@ -1,7 +1,7 @@
 from textwrap import dedent as d
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+from cluster_sim.simulator import BrowserState
 from cluster_sim.app.utils import (
     update_plot,
 )

@@ -2,7 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+from cluster_sim.simulator import BrowserState
 from cluster_sim.app.utils import (
     get_node_index,
     get_node_coords,
@@ -112,7 +112,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
         s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-    return s.log, 1, "Graph loaded!", jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, "Graph loaded!", s.to_json(), G.encode(), D.encode()
 
 
 @callback(
@@ -147,7 +147,7 @@ def undo_move(n_clicks, browser_data, graphData, holeData):
             G.handle_measurements(i, measurementChoice)
             s.log.append(f"{coords}, {measurementChoice}; ")
             s.log.append(html.Br())
-        return s.log, 1, f"Undo: {undo}", jsonpickle.encode(s), G.encode(), D.encode()
+        return s.log, 1, f"Undo: {undo}", s.to_json(), G.encode(), D.encode()
     else:
         return (
             no_update,

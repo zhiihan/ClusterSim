@@ -145,7 +145,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     s.scale_factor = scale_factor
 
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.encode(), D.encode()
 
 
 @callback(
@@ -183,7 +183,7 @@ def reduce_lattice(
             no_update,
             no_update,
             "No valid unit cells found.",
-            jsonpickle.encode(s),
+            s.to_json(),
             G.encode(),
             D.encode(),
         )
@@ -243,7 +243,7 @@ def reduce_lattice(
             ui = "Reduction: No connected clusters found."
             s.lattice = None
             s.lattice_edges = None
-            return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+            return s.log, 1, ui, s.to_json(), G.encode(), D.encode()
 
         connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
 
@@ -286,7 +286,7 @@ def reduce_lattice(
     s.lattice = lattice.to_json()
     s.lattice_edges = lattice_edges.to_json()
 
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.encode(), D.encode()
 
 
 def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):

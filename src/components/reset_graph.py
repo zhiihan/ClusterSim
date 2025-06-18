@@ -3,7 +3,7 @@ from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+from cluster_sim.simulator import BrowserState
 import numpy as np
 import dash_bootstrap_components as dbc
 
@@ -99,7 +99,7 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
         1,
         s.log,
         "Created grid of shape {}".format(s.shape),
-        jsonpickle.encode(s),
+        s.to_json(),
         G.encode(),
         D.encode(),
     )

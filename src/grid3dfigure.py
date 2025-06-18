@@ -1,6 +1,6 @@
 from cluster_sim.app.grid import Grid
 from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+from cluster_sim.simulator import BrowserState
 from cluster_sim.app.utils import (
     get_node_index,
     get_node_coords,
@@ -84,7 +84,7 @@ def initial_call(dummy):
     G = Grid(s.shape)
     D = Holes(s.shape)
 
-    return jsonpickle.encode(s), G.encode(), D.encode()
+    return s.to_json(), G.encode(), D.encode()
 
 
 @app.callback(
@@ -150,7 +150,7 @@ def display_click_data(
 
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(s.log), i, ui, jsonpickle.encode(s), G.encode(), D.encode()
+        return html.P(s.log), i, ui, s.to_json(), G.encode(), D.encode()
 
 
 if __name__ == "__main__":

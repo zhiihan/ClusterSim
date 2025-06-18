@@ -104,7 +104,7 @@ def stabilizer_data(n_clicks, browserData, graphData):
 
     s.stabilizer = adjacency_mat_to_stabilizer(adjacency_matrix)
 
-    return html.P(s.stabilizer), jsonpickle.encode(s)
+    return html.P(s.stabilizer), s.to_json()
 
 
 def adjacency_mat_to_stabilizer(adjacency_matrix, newline=True):
