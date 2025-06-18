@@ -20,7 +20,7 @@ import logging
 
 # Basic configuration
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 jsonpickle_numpy.register_handlers()
