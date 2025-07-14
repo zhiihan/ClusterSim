@@ -1,8 +1,7 @@
 import random
 import numpy as np
 import networkx as nx
-from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
-from cluster_sim.app.holes import Holes
+from cluster_sim.app import Holes, get_node_index, get_node_coords, taxicab_metric
 import itertools
 import logging
 

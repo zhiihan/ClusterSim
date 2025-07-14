@@ -1,9 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-import jsonpickle
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.simulator import BrowserState
+from cluster_sim.app import Grid, Holes, BrowserState
+
 import numpy as np
 import dash_bootstrap_components as dbc
 

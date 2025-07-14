@@ -1,6 +1,6 @@
 from textwrap import dedent as d
 from dash import dcc, html, Input, Output, State, callback, no_update
-from cluster_sim.app.grid import Grid
+from cluster_sim.app import Grid
 import dash_bootstrap_components as dbc
 import jsonpickle
 import networkx as nx

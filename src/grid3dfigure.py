@@ -1,10 +1,4 @@
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.simulator import BrowserState
-from cluster_sim.app.utils import (
-    get_node_index,
-    get_node_coords,
-)
+from cluster_sim.app import Grid, Holes, BrowserState, get_node_index, get_node_coords
 import dash
 from dash import html, Input, Output, State
 import time

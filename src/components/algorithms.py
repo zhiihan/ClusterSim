@@ -2,9 +2,9 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 import jsonpickle
 import numpy as np
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.utils import (
+from cluster_sim.app import (
+    Grid,
+    Holes,
     get_node_index,
     get_node_coords,
     nx_to_plot,

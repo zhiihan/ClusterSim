@@ -9,7 +9,7 @@ from analysis_funcs import (
 
 
 import networkx as nx
-from cluster_sim.app.grid import Grid
+from cluster_sim.app import Grid
 import pandas as pd
 import sys
 

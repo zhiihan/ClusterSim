@@ -2,9 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import random
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.utils import get_node_coords
+from cluster_sim.app import Grid, Holes, get_node_coords
 import dash_bootstrap_components as dbc
 import logging
 

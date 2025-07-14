@@ -1,10 +1,5 @@
 from textwrap import dedent as d
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.simulator import BrowserState
-from cluster_sim.app.utils import (
-    update_plot,
-)
+from cluster_sim.app import Grid, Holes, BrowserState, update_plot
 
 import dash
 from dash import dcc, callback, Input, Output, State

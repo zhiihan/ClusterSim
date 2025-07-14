@@ -1,4 +1,4 @@
-import numpy as np
+import jsonpickle
 
 
 class BrowserState:
@@ -27,7 +27,7 @@ class BrowserState:
         self.lattice_edges = None
         self.connected_cubes = None
 
-        self.removed_nodes = np.zeros(self.xmax * self.ymax * self.zmax, dtype=bool)
+        self.removed_nodes = [0] * (self.xmax * self.ymax * self.zmax)
         self.log = []  # html version of move_list
         self.move_list = []  # local variable containing moves
         self.camera_state = {
@@ -42,3 +42,6 @@ class BrowserState:
         self.offset = [0, 0, 0]
         self.xoffset, self.yoffset, self.zoffset = self.offset
         self.ncubes = None
+
+    def to_json(self):
+        return jsonpickle.encode(self)
