@@ -95,10 +95,13 @@ class NetworkXState:
         Attributes:
             graph: A networkx graph object.
         """
-        self.graph = nx.convert_node_labels_to_integers(graph)
+        self.graph = graph
 
     def sync_graph(self):
         pass
+
+    def add_node(self, i):
+        self.graph.add_node(i)
 
     @classmethod
     def from_json(cls, json_data):

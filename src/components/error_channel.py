@@ -2,10 +2,11 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import random
-from cluster_sim.app import Holes, get_node_coords
-from cluster_sim.simulator import ClusterState
+from cluster_sim.app import get_node_coords
+from cluster_sim.simulator import ClusterState, NetworkXState
 import dash_bootstrap_components as dbc
 import logging
+import networkx as nx
 
 error_channel = dbc.Card(
     dbc.CardBody(
@@ -75,7 +76,7 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     s.p = prob
 
     G = ClusterState.from_json(graphData)
-    D = Holes(s.shape)
+    D = NetworkXState(nx.Graph())
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))
@@ -99,5 +100,4 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
                 s.log.append(html.Br())
                 s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
                 D.add_node(i)
-    D.add_edges()
-    return s.log, 1, ui, s.to_json(), G.to_json(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()

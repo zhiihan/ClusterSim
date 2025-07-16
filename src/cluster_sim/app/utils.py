@@ -126,14 +126,14 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
     """
 
     gnx = g.graph
-    hnx = d.to_networkx()
+    hnx = d.graph
 
     for i, value in enumerate(s.removed_nodes):
         if value == True:
             gnx.remove_node(i)
 
     g_nodes, g_edges = nx_to_plot(gnx, s.shape)
-    h_nodes, h_edges = nx_to_plot(hnx, s.shape, index=False)
+    h_nodes, h_edges = nx_to_plot(hnx, s.shape)
     # x_removed_nodes = [g.node_coords[j][0] for j in removed_nodes]
     # y_removed_nodes = [g.node_coords[j][1] for j in removed_nodes]
     # z_removed_nodes = [g.node_coords[j][2] for j in removed_nodes]

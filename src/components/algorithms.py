@@ -3,7 +3,6 @@ from dash import dcc, html, callback, Input, Output, State, no_update
 import jsonpickle
 import numpy as np
 from cluster_sim.app import (
-    Holes,
     get_node_index,
     get_node_coords,
     nx_to_plot,
@@ -14,7 +13,7 @@ import networkx as nx
 import itertools
 import dash_bootstrap_components as dbc
 import logging
-from cluster_sim.simulator import ClusterState
+from cluster_sim.simulator import ClusterState, NetworkXState
 
 
 algorithms = dbc.Card(
@@ -93,7 +92,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     """
     s = jsonpickle.decode(browser_data)
     G = ClusterState.from_json(graphData)
-    D = Holes(s.shape, json_data=holeData)
+    D = NetworkXState.from_json(holeData)
 
     holes = D.graph.nodes
 
@@ -103,7 +102,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     # Finding the offset that maximizes holes placed in hole locations
     for h in holes:
-        x, y, z = h
+        x, y, z = get_node_coords(h, shape=s.shape)
 
         x_vec = np.array([x, y, z])
         for xoffset, yoffset, zoffset in itertools.product(
@@ -145,7 +144,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     s.scale_factor = scale_factor
 
-    return s.log, 1, ui, s.to_json(), G.to_json(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
 
 @callback(
@@ -168,7 +167,7 @@ def reduce_lattice(
 
     s = jsonpickle.decode(browser_data)
     G = ClusterState.from_json(graphData)
-    D = Holes(s.shape, json_data=holeData)
+    D = NetworkXState.from_json(holeData)
 
     if getattr(s, "scale_factor", None) is None:
         ui = "Find Cluster: Run RHG Lattice first."
@@ -185,7 +184,7 @@ def reduce_lattice(
             "No valid unit cells found.",
             s.to_json(),
             G.to_json(),
-            D.encode(),
+            D.to_json(),
         )
 
     click_number = nclicks % (len(s.valid_unit_cells))
@@ -245,7 +244,7 @@ def reduce_lattice(
             ui = "Reduction: No connected clusters found."
             s.lattice = None
             s.lattice_edges = None
-            return s.log, 1, ui, s.to_json(), G.to_json(), D.encode()
+            return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
         connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
 
@@ -288,7 +287,7 @@ def reduce_lattice(
     s.lattice = lattice.to_json()
     s.lattice_edges = lattice_edges.to_json()
 
-    return s.log, 1, ui, s.to_json(), G.to_json(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
 
 def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):

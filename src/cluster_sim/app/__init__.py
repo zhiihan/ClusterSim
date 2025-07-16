@@ -1,5 +1,4 @@
 from .state import BrowserState
-from .grid import Holes
 from .utils import (
     taxicab_metric,
     nx_to_plot,
@@ -10,7 +9,6 @@ from .utils import (
 )
 
 __all__ = [
-    "Holes",
     "BrowserState",
     "taxicab_metric",
     "nx_to_plot",
