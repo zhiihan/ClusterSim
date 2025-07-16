@@ -70,7 +70,6 @@ Click on points in the graph. Can be copied to clipboard to load a graph state.
     prevent_initial_call=True,
 )
 def download_stab(n_clicks, browserData, graphData):
-    s = jsonpickle.decode(browserData)
     G = ClusterState.from_json(graphData)
     G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
     adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)

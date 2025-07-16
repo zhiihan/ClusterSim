@@ -17,7 +17,11 @@ class ClusterState:
         """
 
         self.graph_state = GraphState(len(graph.nodes))
-        self.graph = nx.convert_node_labels_to_integers(graph)
+
+        if any(not isinstance(n, int) for n in graph.nodes):
+            self.graph = nx.convert_node_labels_to_integers(graph)
+        else:
+            self.graph = graph
 
         for i in self.graph.nodes:
             self.graph_state.h(i)
@@ -34,6 +38,7 @@ class ClusterState:
             basis: The basis to measure in, which is either 'X', 'Y' or 'Z'.
         """
         self.graph_state.measure(qubit, basis=basis)
+        self.graph = self.graph_state.to_networkx()
 
     def x(self, qubit: int):
         self.graph_state.x(qubit)

@@ -1,5 +1,4 @@
 from cluster_sim.simulator import ClusterState, NetworkXState
-from cluster_sim.app import BrowserState
 import plotly.graph_objects as go
 import networkx as nx
 
