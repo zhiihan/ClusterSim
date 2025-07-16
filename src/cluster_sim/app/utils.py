@@ -125,7 +125,7 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
     Main function that updates the plot.
     """
 
-    gnx = g.to_networkx()
+    gnx = g.graph
     hnx = d.to_networkx()
 
     for i, value in enumerate(s.removed_nodes):

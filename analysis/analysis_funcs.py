@@ -22,7 +22,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
             if removed_nodes[i] == False:  # noqa: E712
                 removed_nodes[i] = True
                 D.add_node(i)
-                G.handle_measurements(i, "Z")
+                G.measure(i, "Z")
                 G.graph.remove_node(get_node_coords(i, shape))
 
     return G, D, removed_nodes
@@ -65,7 +65,7 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, shape)
                     if removed_nodes[i] == False:  # noqa: E712
-                        G.handle_measurements(i, "Z")
+                        G.measure(i, "Z")
                         removed_nodes[i] = True
 
     return G, D, removed_nodes, offset

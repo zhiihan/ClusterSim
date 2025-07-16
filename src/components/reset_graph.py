@@ -1,6 +1,8 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-from cluster_sim.app import Grid, Holes, BrowserState
+from cluster_sim.app import Holes, BrowserState
+from cluster_sim.simulator import ClusterState
+import networkx as nx
 
 import numpy as np
 import dash_bootstrap_components as dbc
@@ -90,7 +92,7 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     s.zmax = int(zslider)
     s.shape = [s.xmax, s.ymax, s.zmax]
     s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-    G = Grid(s.shape)
+    G = ClusterState(nx.grid_graph(s.shape))
     D = Holes(s.shape)
     # Make sure the view/angle stays the same when updating the figure
     return (
@@ -98,6 +100,6 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
         s.log,
         "Created grid of shape {}".format(s.shape),
         s.to_json(),
-        G.encode(),
+        G.to_json(),
         D.encode(),
     )
