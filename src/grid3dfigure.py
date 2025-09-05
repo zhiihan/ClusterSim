@@ -130,7 +130,16 @@ def display_click_data(
         D = NetworkXState.from_json(holeData)
 
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)
-        # Update the plot based on the node clicked
+
+        # Click is local complementation
+        if measurementChoice == "LC":
+            G.lc(i)
+            ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
+            # This solves the double click issue
+            time.sleep(0.1)
+            return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
+
+        # Click is qubit measurement
         if measurementChoice == "Erasure":
             D.add_node(i)
             measurementChoice = "Z"  # Handle it as if it was Z measurement

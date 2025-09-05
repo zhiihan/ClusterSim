@@ -68,6 +68,10 @@ class ClusterState:
         self.graph = self.graph_state.to_networkx()
         self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
 
+    def lc(self, qubit):
+        self.graph_state.local_complementation(qubit)
+        self.graph = self.graph_state.to_networkx()
+
     @classmethod
     def from_json(cls, json_data):
         """
