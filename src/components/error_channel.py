@@ -2,11 +2,11 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import random
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.utils import get_node_coords
+from cluster_sim.app import get_node_coords
+from cluster_sim.simulator import ClusterState, NetworkXState
 import dash_bootstrap_components as dbc
 import logging
+import networkx as nx
 
 error_channel = dbc.Card(
     dbc.CardBody(
@@ -73,9 +73,10 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     Randomly measure qubits.
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
     s.p = prob
-    D = Holes(s.shape)
+
+    G = ClusterState.from_json(graphData)
+    D = NetworkXState(nx.Graph())
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))
@@ -94,10 +95,9 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
         if random.random() < s.p:
             if not s.removed_nodes[i]:
                 s.removed_nodes[i] = True
-                G.handle_measurements(i, measurementChoice)
+                G.measure(i, measurementChoice)
                 s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
                 s.log.append(html.Br())
                 s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
                 D.add_node(i)
-    D.add_edges()
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()

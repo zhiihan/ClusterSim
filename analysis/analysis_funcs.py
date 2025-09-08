@@ -1,8 +1,8 @@
 import random
 import numpy as np
 import networkx as nx
-from cluster_sim.app.utils import get_node_index, get_node_coords, taxicab_metric
-from cluster_sim.app.holes import Holes
+from cluster_sim.app import get_node_index, get_node_coords, taxicab_metric
+from cluster_sim.simulator import NetworkXState
 import itertools
 import logging
 
@@ -13,7 +13,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
     """
     Randomly measure qubits.
     """
-    D = Holes(shape)
+    D = NetworkXState(nx.Graph())
 
     random.seed(int(seed))
     # p is the probability of losing a qubit
@@ -23,7 +23,7 @@ def apply_error_channel(p, seed, shape, removed_nodes, G):
             if removed_nodes[i] == False:  # noqa: E712
                 removed_nodes[i] = True
                 D.add_node(i)
-                G.handle_measurements(i, "Z")
+                G.measure(i, "Z")
                 G.graph.remove_node(get_node_coords(i, shape))
 
     return G, D, removed_nodes
@@ -40,7 +40,7 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
     - graphData: data from the graph
     - holeData: data from the holes
     """
-    holes = [np.array(h) for h in D.graph.nodes]
+    holes = [np.array(get_node_coords(h, shape)) for h in D.graph.nodes]
 
     hole_locations = np.zeros(
         (scale_factor + 1, scale_factor + 1, scale_factor + 1), dtype=int
@@ -66,7 +66,7 @@ def rhg_lattice_scale(G, D, removed_nodes, shape, scale_factor=1):
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, shape)
                     if removed_nodes[i] == False:  # noqa: E712
-                        G.handle_measurements(i, "Z")
+                        G.measure(i, "Z")
                         removed_nodes[i] = True
 
     return G, D, removed_nodes, offset

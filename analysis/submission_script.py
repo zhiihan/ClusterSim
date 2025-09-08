@@ -9,7 +9,7 @@ from analysis_funcs import (
 
 
 import networkx as nx
-from cluster_sim.app.grid import Grid
+from cluster_sim.simulator import ClusterState
 import pandas as pd
 import sys
 
@@ -56,7 +56,7 @@ def main(input_params):
 
     start = time.time()
 
-    G = Grid(SHAPE)
+    G = ClusterState(nx.grid_graph(SHAPE))
     removed_nodes = np.zeros(SHAPE[0] * SHAPE[1] * SHAPE[2], dtype=bool)
 
     G, D, removed_nodes = apply_error_channel(p, SEED + sample, SHAPE, removed_nodes, G)

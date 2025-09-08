@@ -7,6 +7,7 @@ data/
 old/
 profile.html
 profile.json
+sbatch.sh
 
 #
 *.png

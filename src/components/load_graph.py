@@ -1,17 +1,14 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Input, Output, State
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
-from cluster_sim.app.utils import (
-    get_node_index,
-    get_node_coords,
-)
+from dash import dcc, html, callback, Input, Output, State, no_update
+from cluster_sim.app import BrowserState, get_node_coords, get_node_index
+from cluster_sim.simulator import ClusterState, NetworkXState
+import networkx as nx
+import logging
+
 import re
 
 import dash_bootstrap_components as dbc
 import jsonpickle
-from dash import no_update
 import numpy as np
 
 load_graph = dbc.Card(
@@ -92,8 +89,8 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     shape = s.shape
 
     s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+    G = ClusterState(nx.grid_graph(s.shape))
+    D = NetworkXState(nx.Graph())
 
     s.xmax, s.ymax, s.zmax = shape[0], shape[1], shape[2]
     s.shape = shape
@@ -108,11 +105,11 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 
     for i, measurementChoice in instructions:
         s.removed_nodes[i] = True
-        G.handle_measurements(i, measurementChoice)
+        G.measure(i, measurementChoice)
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
         s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-    return s.log, 1, "Graph loaded!", jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, "Graph loaded!", s.to_json(), G.to_json(), D.to_json()
 
 
 @callback(
@@ -133,21 +130,21 @@ def undo_move(n_clicks, browser_data, graphData, holeData):
 
     if s.move_list:
         # Soft reset
-        G = Grid(s.shape)
-        D = Holes(s.shape, json_data=holeData)
+        G = ClusterState(nx.grid_graph(s.shape))
+        D = NetworkXState.from_json(holeData)
         s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
         s.log = []
 
         undo = s.move_list.pop(-1)
-        print(f"Undo: {undo}")
+        logging.info(f"Undo: {undo}")
         for move in s.move_list:
             coords, measurementChoice = move
             i = get_node_index(*coords, s.shape)
             s.removed_nodes[i] = True
-            G.handle_measurements(i, measurementChoice)
+            G.measure(i, measurementChoice)
             s.log.append(f"{coords}, {measurementChoice}; ")
             s.log.append(html.Br())
-        return s.log, 1, f"Undo: {undo}", jsonpickle.encode(s), G.encode(), D.encode()
+        return s.log, 1, f"Undo: {undo}", s.to_json(), G.to_json(), D.to_json()
     else:
         return (
             no_update,

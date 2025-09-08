@@ -1,9 +1,9 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-import jsonpickle
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
+from cluster_sim.app import BrowserState
+from cluster_sim.simulator import ClusterState, NetworkXState
+import networkx as nx
+
 import numpy as np
 import dash_bootstrap_components as dbc
 
@@ -92,14 +92,14 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     s.zmax = int(zslider)
     s.shape = [s.xmax, s.ymax, s.zmax]
     s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+    G = ClusterState(nx.grid_graph(s.shape))
+    D = NetworkXState(nx.Graph())
     # Make sure the view/angle stays the same when updating the figure
     return (
         1,
         s.log,
         "Created grid of shape {}".format(s.shape),
-        jsonpickle.encode(s),
-        G.encode(),
-        D.encode(),
+        s.to_json(),
+        G.to_json(),
+        D.to_json(),
     )

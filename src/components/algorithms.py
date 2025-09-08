@@ -2,9 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 import jsonpickle
 import numpy as np
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.utils import (
+from cluster_sim.app import (
     get_node_index,
     get_node_coords,
     nx_to_plot,
@@ -15,6 +13,7 @@ import networkx as nx
 import itertools
 import dash_bootstrap_components as dbc
 import logging
+from cluster_sim.simulator import ClusterState, NetworkXState
 
 
 algorithms = dbc.Card(
@@ -92,8 +91,8 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
     - holeData: data from the holes
     """
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    D = Holes(s.shape, json_data=holeData)
+    G = ClusterState.from_json(graphData)
+    D = NetworkXState.from_json(holeData)
 
     holes = D.graph.nodes
 
@@ -103,7 +102,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     # Finding the offset that maximizes holes placed in hole locations
     for h in holes:
-        x, y, z = h
+        x, y, z = get_node_coords(h, shape=s.shape)
 
         x_vec = np.array([x, y, z])
         for xoffset, yoffset, zoffset in itertools.product(
@@ -132,7 +131,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
                 if np.all(x_vec == offset) or np.all(x_vec != offset):
                     i = get_node_index(x, y, z, s.shape)
                     if not s.removed_nodes[i]:
-                        G.handle_measurements(i, "Z")
+                        G.measure(i, "Z")
                         s.log.append(f"{get_node_coords(i, s.shape)}, Z; ")
                         s.log.append(html.Br())
                         s.removed_nodes[i] = True
@@ -145,7 +144,7 @@ def rhg_lattice_scale(nclicks, scale_factor, browser_data, graphData, holeData):
 
     s.scale_factor = scale_factor
 
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
 
 @callback(
@@ -167,8 +166,8 @@ def reduce_lattice(
 ):
 
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    D = Holes(s.shape, json_data=holeData)
+    G = ClusterState.from_json(graphData)
+    D = NetworkXState.from_json(holeData)
 
     if getattr(s, "scale_factor", None) is None:
         ui = "Find Cluster: Run RHG Lattice first."
@@ -183,9 +182,9 @@ def reduce_lattice(
             no_update,
             no_update,
             "No valid unit cells found.",
-            jsonpickle.encode(s),
-            G.encode(),
-            D.encode(),
+            s.to_json(),
+            G.to_json(),
+            D.to_json(),
         )
 
     click_number = nclicks % (len(s.valid_unit_cells))
@@ -194,6 +193,7 @@ def reduce_lattice(
         H, imperfection_score = find_rings(
             G,
             s.scale_factor,
+            shape=s.shape,
             unit_cell_coord=s.valid_unit_cells[click_number],
         )
         ui = f"Reduction: Imperfection score = {imperfection_score}"
@@ -205,6 +205,7 @@ def reduce_lattice(
             H, _ = find_rings(
                 G,
                 s.scale_factor,
+                shape=s.shape,
                 unit_cell_coord=unit_cell_coord,
             )
             graphs.append(H)
@@ -223,7 +224,7 @@ def reduce_lattice(
 
         for unit_cell_coord in s.valid_unit_cells:
             H_subgraph, imperfection_score = find_rings(
-                G, s.scale_factor, unit_cell_coord=unit_cell_coord
+                G, s.scale_factor, shape=s.shape, unit_cell_coord=unit_cell_coord
             )
             if imperfection_score == 0:
                 C.add_node(tuple(unit_cell_coord))
@@ -243,7 +244,7 @@ def reduce_lattice(
             ui = "Reduction: No connected clusters found."
             s.lattice = None
             s.lattice_edges = None
-            return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+            return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
         connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
 
@@ -263,7 +264,7 @@ def reduce_lattice(
 
         ui = f"Reduction: Displaying cluster {nclicks % len(connected_clusters) + 1}/{len(connected_clusters)}, perfect cells = {perfect_cells}, imperfect cells = {imperfect_cells}"
 
-    nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
+    nodes, edges = nx_to_plot(H, shape=s.shape, index=True)
 
     lattice = go.Scatter3d(
         x=nodes[0],
@@ -286,7 +287,7 @@ def reduce_lattice(
     s.lattice = lattice.to_json()
     s.lattice_edges = lattice_edges.to_json()
 
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
 
 
 def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):
@@ -301,7 +302,7 @@ def generate_ring(scale_factor, global_offset, j, ring_gen_funcs):
     return list(ring_node_coords)
 
 
-def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
+def find_rings(G, scale_factor, shape, unit_cell_coord=(0, 0, 0)):
     """
     Find the rings of a unit cell in a Raussendorf lattice.
     """
@@ -354,6 +355,8 @@ def find_rings(G, scale_factor, unit_cell_coord=(0, 0, 0)):
             imperfection_score += rings[best_j]
 
     optimized_rings = [item for sublist in optimized_rings for item in sublist]
+
+    optimized_rings = [get_node_index(*item, shape=shape) for item in optimized_rings]
 
     return G.graph.subgraph(optimized_rings), imperfection_score
 

@@ -1,15 +1,11 @@
 from textwrap import dedent as d
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
-from cluster_sim.app.utils import (
-    update_plot,
-)
-
+from cluster_sim.app import BrowserState, update_plot
+from cluster_sim.simulator import ClusterState, NetworkXState
 import dash
 from dash import dcc, callback, Input, Output, State
 import jsonpickle
 import dash_bootstrap_components as dbc
+import networkx as nx
 
 
 # Initialize the state of the user's browsing section
@@ -19,8 +15,9 @@ def _init_state():
     """
 
     s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+
+    G = ClusterState(nx.grid_graph(s.shape))
+    D = NetworkXState(nx.Graph())
     return update_plot(s, G, D)
 
 
@@ -76,8 +73,9 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
         return dash.no_update
 
     s = jsonpickle.decode(browser_data)
-    G = Grid(s.shape, json_data=graphData)
-    D = Holes(s.shape, json_data=holeData)
+
+    G = ClusterState.from_json(graphData)
+    D = NetworkXState.from_json(holeData)
 
     fig = update_plot(s, G, D, plotoptions=plotoptions)
     # Make sure the view/angle stays the same when updating the figure

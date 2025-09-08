@@ -1,29 +1,23 @@
-from cluster_sim.app.grid import Grid
-from cluster_sim.app.holes import Holes
-from cluster_sim.app.state import BrowserState
-from cluster_sim.app.utils import (
-    get_node_index,
-    get_node_coords,
-)
+from cluster_sim.app import BrowserState, get_node_index, get_node_coords
 import dash
 from dash import html, Input, Output, State
 import time
 import jsonpickle
-import jsonpickle.ext.numpy as jsonpickle_numpy
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
     figure,
     tab_ui,
 )
+from cluster_sim.simulator import ClusterState, NetworkXState
+import networkx as nx
+
 import dash_bootstrap_components as dbc
 import logging
 
 # Basic configuration
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-
-jsonpickle_numpy.register_handlers()
 
 app = dash.Dash(
     __name__,
@@ -81,10 +75,10 @@ def initial_call(dummy):
     Initialize the graph in the browser as a JSON object.
     """
     s = BrowserState()
-    G = Grid(s.shape)
-    D = Holes(s.shape)
+    G = ClusterState(nx.grid_graph(s.shape))
+    D = NetworkXState(nx.Graph())
 
-    return jsonpickle.encode(s), G.encode(), D.encode()
+    return s.to_json(), G.to_json(), D.to_json()
 
 
 @app.callback(
@@ -132,17 +126,26 @@ def display_click_data(
         )
     else:
         s = jsonpickle.decode(browser_data)
-        G = Grid(s.shape, json_data=graphData)
-        D = Holes(s.shape, json_data=holeData)
+        G = ClusterState.from_json(graphData)
+        D = NetworkXState.from_json(holeData)
 
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)
-        # Update the plot based on the node clicked
+
+        # Click is local complementation
+        if measurementChoice == "LC":
+            G.lc(i)
+            ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
+            # This solves the double click issue
+            time.sleep(0.1)
+            return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
+
+        # Click is qubit measurement
         if measurementChoice == "Erasure":
             D.add_node(i)
             measurementChoice = "Z"  # Handle it as if it was Z measurement
         if not s.removed_nodes[i]:
             s.removed_nodes[i] = True
-            G.handle_measurements(i, measurementChoice)
+            G.measure(i, measurementChoice)
             s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
             ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
@@ -150,9 +153,8 @@ def display_click_data(
 
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(s.log), i, ui, jsonpickle.encode(s), G.encode(), D.encode()
+        return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
 
 
 if __name__ == "__main__":
-
     app.run(debug=True)

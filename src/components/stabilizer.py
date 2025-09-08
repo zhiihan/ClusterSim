@@ -1,10 +1,10 @@
 from textwrap import dedent as d
-from dash import dcc, html, Input, Output, State, callback, no_update
-from cluster_sim.app.grid import Grid
+from dash import dcc, html, Input, Output, State, callback
+from cluster_sim.simulator import ClusterState
+
 import dash_bootstrap_components as dbc
 import jsonpickle
 import networkx as nx
-import json
 import numpy as np
 
 stabilizer = dbc.Card(
@@ -70,8 +70,7 @@ Click on points in the graph. Can be copied to clipboard to load a graph state.
     prevent_initial_call=True,
 )
 def download_stab(n_clicks, browserData, graphData):
-    s = jsonpickle.decode(browserData)
-    G = Grid(s.shape, json_data=graphData)
+    G = ClusterState.from_json(graphData)
     G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
     adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)
     adjacency_matrix += np.diag(2 * np.ones(adjacency_matrix.shape[0])).astype(int)
@@ -95,7 +94,7 @@ def stabilizer_data(n_clicks, browserData, graphData):
     """
 
     s = jsonpickle.decode(browserData)
-    G = Grid(s.shape, json_data=graphData)
+    G = ClusterState.from_json(graphData)
     G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
 
     adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)
@@ -104,7 +103,7 @@ def stabilizer_data(n_clicks, browserData, graphData):
 
     s.stabilizer = adjacency_mat_to_stabilizer(adjacency_matrix)
 
-    return html.P(s.stabilizer), jsonpickle.encode(s)
+    return html.P(s.stabilizer), s.to_json()
 
 
 def adjacency_mat_to_stabilizer(adjacency_matrix, newline=True):

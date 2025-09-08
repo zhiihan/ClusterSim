@@ -10,12 +10,12 @@ measurementbasis = dbc.Card(
                     """
         **Select Measurement Basis**
 
-        Click to select the type of measurement. Click points in the graph to apply measurement.
+        Click to select the type of measurement, or LC for local complementation. Click points in the graph to apply measurement.
         """
                 )
             ),
             dbc.RadioItems(
-                ["Z", "Y", "X", "Erasure"],
+                ["Z", "Y", "X", "Erasure", "LC"],
                 value="Z",
                 id="radio-items",
                 className="btn-group",

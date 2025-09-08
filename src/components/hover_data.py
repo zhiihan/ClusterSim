@@ -1,5 +1,5 @@
 from textwrap import dedent as d
-from dash import dcc, html, callback, Output, Input, State, callback, no_update
+from dash import dcc, html, callback, Output, Input, State, no_update
 import json
 import jsonpickle
 import dash_bootstrap_components as dbc
@@ -49,6 +49,6 @@ def display_relayout_data(relayoutData, camera, browser_data):
 
     if relayoutData and "scene.camera" in relayoutData:
         s.camera_state = relayoutData
-        return json.dumps(relayoutData, indent=2), jsonpickle.encode(s)
+        return json.dumps(relayoutData, indent=2), s.to_json()
     else:
-        return camera, jsonpickle.encode(s)
+        return camera, s.to_json()
