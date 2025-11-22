@@ -135,19 +135,17 @@ def display_click_data(
         if measurementChoice == "LC":
             G.lc(i)
             ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
-            # This solves the double click issue
-            time.sleep(0.1)
-            return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
-
         # Click is qubit measurement
-        if measurementChoice == "Erasure":
+        elif measurementChoice == "Erasure":
             D.add_node(i)
             measurementChoice = "Z"  # Handle it as if it was Z measurement
-        if not s.removed_nodes[i]:
+
+        if measurementChoice in ["X", "Y", "Z"] and not s.removed_nodes[i]:
             s.removed_nodes[i] = True
             G.measure(i, measurementChoice)
-            s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
             ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
+
+        s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
 
