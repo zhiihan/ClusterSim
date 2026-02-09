@@ -1,6 +1,5 @@
 from cluster_sim.app import BrowserState, get_node_index, get_node_coords
-import dash
-from dash import html, Input, Output, State
+from dash import html, Input, Output, State, no_update, Dash
 import time
 import jsonpickle
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
@@ -19,7 +18,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-app = dash.Dash(
+app = Dash(
     __name__,
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
@@ -105,24 +104,24 @@ def display_click_data(
     """
     if not clickData:
         return (
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
         )
     point = clickData["points"][0]
 
     # Do nothing if clicked on edges
     if point["curveNumber"] > 0 or "x" not in point:
         return (
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
-            dash.no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
         )
     else:
         s = jsonpickle.decode(browser_data)
@@ -155,4 +154,4 @@ def display_click_data(
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

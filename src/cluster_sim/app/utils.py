@@ -6,14 +6,38 @@ from numba import jit
 
 @jit(nopython=True)
 def get_node_index(x: int, y: int, z: int, shape: tuple[int, int, int]) -> int:
+    """
+    Get the index from the coordinates.
+
+    :param x: x coordinate
+    :type x: int
+    :param y: y coordinate
+    :type y: int
+    :param z: z coordinate
+    :type z: int
+    :param shape: the length, width, height of the grid
+    :type shape: tuple[int, int, int]
+    :return: the index
+    :rtype: int
+    """
     return x + y * shape[0] + z * shape[1] * shape[0]
 
 
 @jit(nopython=True)
-def get_node_coords(i: int, shape: tuple[int, int, int]) -> tuple[int, int, int]:
-    index_x = i % shape[0]
-    index_y = (i // shape[0]) % shape[1]
-    index_z = (i // (shape[0] * shape[1])) % shape[2]
+def get_node_coords(index: int, shape: tuple[int, int, int]) -> tuple[int, int, int]:
+    """
+    Get node coordinates from the grid shape and index.
+
+    :param index: index
+    :type index: int
+    :param shape: the grid shape
+    :type shape: tuple[int, int, int]
+    :return: the x, y, z coordinates
+    :rtype: tuple[int, int, int]
+    """
+    index_x = index % shape[0]
+    index_y = (index // shape[0]) % shape[1]
+    index_z = (index // (shape[0] * shape[1])) % shape[2]
     return (index_x, index_y, index_z)
 
 
