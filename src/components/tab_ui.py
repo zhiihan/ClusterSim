@@ -12,6 +12,7 @@ from components import (
     display_options,
     error_channel,
     stabilizer,
+    settings,
 )
 from dash import dcc
 
@@ -42,6 +43,8 @@ tab_3 = dbc.Col(
 
 tab_4 = dbc.Col([stabilizer])
 
+tab_5 = dbc.Col([settings])
+
 tab_ui = html.Div(
     [
         dbc.CardBody(
@@ -66,6 +69,7 @@ tab_ui = html.Div(
                 dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Hover Data", tab_id="tab-3"),
                 dbc.Tab(tab_4, label="Stabilizers", tab_id="tab-4"),
+                dbc.Tab(tab_5, label="Settings", tab_id="tab-5"),
             ],
             id="tabs",
             active_tab="tab-1",

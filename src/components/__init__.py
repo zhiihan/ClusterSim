@@ -9,7 +9,9 @@ from .measurementbasis import measurementbasis
 from .figure import display_options, figure
 from .error_channel import error_channel
 from .stabilizer import stabilizer
-from .tab_ui import tab_ui
+from .settings import settings
+from .tab_ui import tab_ui  # This must be the last import
+
 
 __all__ = [
     "move_log",
@@ -24,4 +26,5 @@ __all__ = [
     "error_channel",
     "stabilizer",
     "tab_ui",
+    "settings",
 ]
