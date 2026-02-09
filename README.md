@@ -10,18 +10,9 @@ To install, use:
 
 `pip install .`
 
-Alternatively, using `requirements.txt`:
-
-`pip install -r requirements.txt`
-
-To install with conda, make an empty conda environment, and then run:
-
-`conda install --file requirements.txt`
-
 After installation, run 
 
 ```
-cd src
 python grid3dfigure.py
 ```
 

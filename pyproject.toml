@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "A measurement based quantum computing simulator."
 authors = [{name = "Zhihua Han", email = "zhihuahan72@gmail.com"}]
 license = "MIT"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.11"
 dependencies = [
     "dash",
     "dash_resizable_panels",
@@ -21,5 +21,17 @@ dependencies = [
 dev = [
     "black",
     "tqdm",
-    "joblib"
+    "joblib",
+    "pytest"
+]
+
+# ------------------------------------------------------------
+# Pytest configuration
+# ------------------------------------------------------------
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = [
+    "-ra",            # show extra summary (skipped/xfailed/etc.)
+    "--strict-markers"
 ]
