@@ -1,8 +1,7 @@
 from textwrap import dedent as d
 from cluster_sim.app import BrowserState, update_plot
 from cluster_sim.simulator import ClusterState, NetworkXState
-import dash
-from dash import dcc, callback, Input, Output, State
+from dash import dcc, callback, Input, Output, State, no_update
 import jsonpickle
 import dash_bootstrap_components as dbc
 import networkx as nx
@@ -70,7 +69,7 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
     Called when ever the plot needs to be drawn.
     """
     if browser_data is None:
-        return dash.no_update
+        return no_update
 
     s = jsonpickle.decode(browser_data)
 
