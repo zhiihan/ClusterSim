@@ -5,9 +5,12 @@
 # Data analysis
 data/
 old/
+analysis/
 profile.html
 profile.json
 sbatch.sh
+
+*.ipynb_checkpoints
 
 #
 *.png

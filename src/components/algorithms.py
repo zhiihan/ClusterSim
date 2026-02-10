@@ -217,7 +217,6 @@ def reduce_lattice(
 
         ui = f"Reduction: Total Imperfection score = {imperfection_score}, Equivalent 1-cell deletion ratio = {100 * imperfection_score / H.number_of_nodes()}%"
     elif select_cubes == "Select All Connected Cubes":
-
         C = nx.Graph()
         graphs_hashmap = {}
         imperfect_cells = 0

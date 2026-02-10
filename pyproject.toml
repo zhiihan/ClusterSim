@@ -14,15 +14,8 @@ dependencies = [
     "networkx",
     "numpy",
     "matplotlib",
-    "numba"
-]
-
-[project.optional-dependencies]
-dev = [
-    "black",
-    "tqdm",
-    "joblib",
-    "pytest"
+    "numba",
+    "pytest>=9.0.2",
 ]
 
 # ------------------------------------------------------------
@@ -34,4 +27,9 @@ testpaths = ["tests"]
 addopts = [
     "-ra",            # show extra summary (skipped/xfailed/etc.)
     "--strict-markers"
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
 ]

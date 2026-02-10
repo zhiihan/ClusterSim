@@ -240,7 +240,6 @@ class GraphState(object):
         for idx, v in enumerate(self.vertices):
             G.add_node(idx)
             for u in v.neighbors:
-
                 G.add_edge(idx, u)
             G.nodes[idx]["vop"] = v.vop_code
 
