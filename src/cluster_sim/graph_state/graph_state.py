@@ -11,6 +11,12 @@ from .lookup_tables import (
 
 
 class GraphState(object):
+    """
+    Initialize a GraphState object.
+
+    Note: This initializes the state to |0...0> state and not a graph state.
+    In other words, no Hadamards or CZs are automatically applied.
+    """
     def __init__(self, num_nodes):
         self.vertices = []
 
