@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "A measurement based quantum computing simulator."
 authors = [{name = "Zhihua Han", email = "zhihuahan72@gmail.com"}]
 license = "MIT"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "dash",
     "dash_resizable_panels",
@@ -15,6 +15,8 @@ dependencies = [
     "numpy",
     "matplotlib",
     "numba",
+    "rustworkx>=0.17.1",
+    "graphstatesim>=0.2.1",
 ]
 
 # ------------------------------------------------------------
