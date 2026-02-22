@@ -10,12 +10,12 @@ dependencies = [
     "dash_resizable_panels",
     "gunicorn",
     "dash-bootstrap-components",
-    "jsonpickle",
     "numpy",
     "matplotlib",
     "numba",
     "rustworkx>=0.17.1",
     "graphstatesim>=0.2.3",
+    "jsons>=1.6.3",
 ]
 
 # ------------------------------------------------------------

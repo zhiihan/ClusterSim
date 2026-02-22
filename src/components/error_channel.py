@@ -1,8 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-import jsonpickle
 import random
-from cluster_sim.app import get_node_coords
+from cluster_sim.app import get_node_coords, BrowserState
 from cluster_sim.simulator import ClusterState
 import dash_bootstrap_components as dbc
 import logging
@@ -71,7 +70,7 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     """
     Randomly measure qubits.
     """
-    s = jsonpickle.decode(browser_data)
+    s = BrowserState.from_json(browser_data)
     s.p = prob
 
     G = ClusterState.from_json(graphData)
@@ -91,10 +90,8 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
 
     for i in range(s.xmax * s.ymax * s.zmax):
         if random.random() < s.p:
-            if not s.removed_nodes[i]:
-                s.removed_nodes[i] = True
+            if i not in s.removed_nodes:
                 G.measure(i, measurementChoice)
-                s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
-                s.log.append(html.Br())
-                s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
+                s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice};\n"
+                s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
     return s.log, 1, ui, s.to_json(), G.to_json(), 

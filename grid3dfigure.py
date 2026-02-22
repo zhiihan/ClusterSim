@@ -1,7 +1,6 @@
 from cluster_sim.app import BrowserState, get_node_index, get_node_coords, grid_graph_3d
 from dash import html, Input, Output, State, no_update, Dash
 import time
-import jsonpickle
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
     figure,
@@ -119,7 +118,7 @@ def display_click_data(
         )
     else:
         print(browser_data)
-        s = jsonpickle.decode(browser_data)
+        s = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)
 
@@ -127,15 +126,15 @@ def display_click_data(
         if measurementChoice == "LC":
             G.LC(i)
             ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
-
-        if measurementChoice in ["X", "Y", "Z"] and not s.removed_nodes[i]:
-            s.removed_nodes[i] = True
+        if measurementChoice in ["X", "Y", "Z"] and (i not in s.removed_nodes):
+            s.removed_nodes.add(i)
             G.measure(i, measurementChoice)
             ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
+        else:
+            ui = "Qubit already measured!"
 
-        s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-        s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
-        s.log.append(html.Br())
+        s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
+        s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice}; "
 
         # This solves the double click issue
         time.sleep(0.1)

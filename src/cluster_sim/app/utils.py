@@ -192,31 +192,6 @@ def update_plot(s, g : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"])
 
     # Include the traces we want to plot and create a figure
     data = [trace_nodes, trace_edges]
-    if s.lattice:
-        lattice_nodes = go.Scatter3d(
-            from_json(s.lattice_edges).data[0],
-            mode="markers",
-            line=dict(color="blue", width=2),
-            hoverinfo="none",
-        )
-        if "Lattice" in plotoptions:
-            lattice_nodes.visible = True
-        else:
-            lattice_nodes.visible = "legendonly"
-        data.append(lattice_nodes)
-    if s.lattice_edges:
-        lattice_edges = go.Scatter3d(
-            from_json(s.lattice_edges).data[0],
-            mode="lines",
-            line=dict(color="blue", width=2),
-            hoverinfo="none",
-        )
-        if "Lattice" in plotoptions:
-            lattice_edges.visible = True
-        else:
-            lattice_edges.visible = "legendonly"
-        data.append(lattice_edges)
-
     fig = go.Figure(data=data)
     # fig.layout.height = 600
     fig.update_layout(
@@ -240,7 +215,7 @@ def grid_graph_3d(shape: tuple[int, int, int]):
     Lx, Ly, Lz = shape
     G = rx.PyGraph()
     G.add_nodes_from([(i,j,k) for k in range(Lz) for j in range(Ly) for i in range(Lx)])
-    G.add_edges_from([(i+j*Ly+k*Lz**2,(i+1)+j*Ly+k*Lz**2,None) for k in range(Lz) for j in range(Ly) for i in range(Lx-1)])
-    G.add_edges_from([(i+j*Ly+k*Lz**2,i+(j+1)*Ly+k*Lz**2,None) for k in range(Lz) for j in range(Ly-1) for i in range(Lx)])
-    G.add_edges_from([(i+j*Ly+k*Lz**2,i+j*Ly+(k+1)*Lz**2,None) for k in range(Lz-1) for j in range(Ly) for i in range(Lx)])
+    G.add_edges_from([(i+j*Lx+k*Lx*Ly,(i+1)+j*Lx+k*Lx*Ly,None) for k in range(Lz) for j in range(Ly) for i in range(Lx-1)])
+    G.add_edges_from([(i+j*Lx+k*Lx*Ly,i+(j+1)*Lx+k*Lx*Ly,None) for k in range(Lz) for j in range(Ly-1) for i in range(Lx)])
+    G.add_edges_from([(i+j*Lx+k*Lx*Ly,i+j*Lx+(k+1)*Lx*Ly,None) for k in range(Lz-1) for j in range(Ly) for i in range(Lx)])
     return G

@@ -6,7 +6,6 @@ import logging
 import re
 
 import dash_bootstrap_components as dbc
-import jsonpickle
 import numpy as np
 
 load_graph = dbc.Card(
@@ -81,7 +80,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 
     if input_string is None:
         return no_update, no_update, no_update, no_update, no_update, no_update
-    s = jsonpickle.decode(browser_data)
+    s = BrowserState.from_json(browser_data)
     shape = s.shape
 
     s = BrowserState()
@@ -99,11 +98,10 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     print(f"Instructions: {instructions}")
 
     for i, measurementChoice in instructions:
-        s.removed_nodes[i] = True
+        s.removed_nodes.add(i)
         G.measure(i, measurementChoice)
-        s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
-        s.log.append(html.Br())
-        s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
+        s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice};\n"
+        s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
     return s.log, 1, "Graph loaded!", s.to_json(), G.to_json()
 
 
@@ -119,23 +117,22 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     prevent_initial_call=True,
 )
 def undo_move(n_clicks, browser_data, graphData):
-    s = jsonpickle.decode(browser_data)
+    s = BrowserState.from_json(browser_data)
 
     if s.move_list:
         # Soft reset
         G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
-        s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-        s.log = []
+        s.removed_nodes = set()
+        s.log = ""
 
         undo = s.move_list.pop(-1)
         logging.info(f"Undo: {undo}")
         for move in s.move_list:
             coords, measurementChoice = move
             i = get_node_index(*coords, s.shape)
-            s.removed_nodes[i] = True
+            s.removed_nodes.add(i)
             G.measure(i, measurementChoice)
-            s.log.append(f"{coords}, {measurementChoice}; ")
-            s.log.append(html.Br())
+            s.log += f"{coords}, {measurementChoice};\n"
         return s.log, 1, f"Undo: {undo}", s.to_json(), G.to_json()
     else:
         return (

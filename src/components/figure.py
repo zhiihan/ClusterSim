@@ -2,7 +2,6 @@ from textwrap import dedent as d
 from cluster_sim.app import BrowserState, update_plot, grid_graph_3d
 from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
-import jsonpickle
 import dash_bootstrap_components as dbc
 
 # Initialize the state of the user's browsing section
@@ -65,7 +64,7 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData):
     if browser_data is None:
         return no_update
 
-    s = jsonpickle.decode(browser_data)
+    s = BrowserState.from_json(browser_data)
 
     G = ClusterState.from_json(graphData)
 

@@ -1,7 +1,6 @@
-import jsonpickle
+import jsons
 from dataclasses import dataclass, field
-from typing import Any, List, Dict
-
+from typing import Any, Dict, Optional
 
 @dataclass
 class BrowserState:
@@ -14,19 +13,15 @@ class BrowserState:
     xmax: int = 4
     ymax: int = 4
     zmax: int = 4
-    shape: tuple = (xmax, ymax, zmax)
+    shape: tuple[int, int, int] = (xmax, ymax, zmax)
     p: float = 0.09
 
-    seed: None | int = None
+    seed: Optional[int] = None
     path_clicks: int = 0
 
-    lattice: dict[str, Any] = None
-    lattice_edges: dict[str, Any] = None
-    connected_cubes: dict[str, Any] = None
-
-    removed_nodes: List[int] = field(init=False)
-    log: List[Any] = field(default_factory=list)
-    move_list: List[Any] = field(default_factory=list)
+    removed_nodes: set[int] = field(default_factory=set)
+    log: str = ""
+    move_list: str = ""
     camera_state: Dict[str, Any] = field(
         default_factory=lambda: {
             "scene.camera": {
@@ -41,8 +36,9 @@ class BrowserState:
     offset: tuple = (0, 0, 0)
     xoffset, yoffset, zoffset = offset
 
-    def __post_init__(self) -> None:
-        self.removed_nodes = [0] * (self.xmax * self.ymax * self.zmax)
-
     def to_json(self):
-        return jsonpickle.encode(self)
+        return jsons.dumps(self)
+
+    @classmethod
+    def from_json(cls, json_str):
+        return jsons.loads(json_str, cls=BrowserState)

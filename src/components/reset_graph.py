@@ -4,6 +4,7 @@ from dash import dcc, html, callback, Input, Output, State
 from cluster_sim.app import BrowserState, grid_graph_3d
 from cluster_sim.simulator import ClusterState
 import dash_bootstrap_components as dbc
+import numpy as np
 
 reset_graph = dbc.Card(
     dbc.CardBody(
@@ -87,6 +88,8 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     s.xmax = int(xslider)
     s.ymax = int(yslider)
     s.zmax = int(zslider)
+    s.shape = (s.xmax, s.ymax, s.zmax)
+    s.removed_nodes  = set()
 
     G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
     
