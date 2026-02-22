@@ -44,8 +44,6 @@ def get_node_coords(index: int, shape: tuple[int, int, int]) -> tuple[int, int, 
 
 
 def nx_to_plot(graph: rx.PyGraph, shape, index=True):
-    nodes = graph.nodes
-    edges = graph.edges
     # we need to seperate the X,Y,Z coordinates for Plotly
     # NOTE: g.node_coords is a dictionary where the keys are 1,...,6
 
@@ -59,9 +57,7 @@ def nx_to_plot(graph: rx.PyGraph, shape, index=True):
             x, y, z = get_node_coords(j, shape)
         else:
             raise NotImplementedError
-            x = j[0]
-            y = j[1]
-            z = j[2]
+
         x_nodes.append(x)  # x-coordinates of nodes
         y_nodes.append(y)  # y-coordinates
         z_nodes.append(z)  # z-coordinate
@@ -147,22 +143,18 @@ def taxicab_metric(x1: np.ndarray, x2: np.ndarray) -> float:
     return np.sum(np.abs(x1 - x2))
 
 
-def update_plot(s, g : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"]):
+def update_plot(s, G : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"], remove_measured_qubits : bool = True):
     """
     Main function that updates the plot.
     """
 
-    gnx = g.to_rustworkx()
+    g = G.to_rustworkx()
 
-    for i, value in enumerate(s.removed_nodes):
-        if value == True:
-            gnx.remove_node(i)
+    if remove_measured_qubits:
+        g.remove_nodes_from(s.removed_nodes)
 
-    g_nodes, g_edges = nx_to_plot(gnx, s.shape)
-    # x_removed_nodes = [g.node_coords[j][0] for j in removed_nodes]
-    # y_removed_nodes = [g.node_coords[j][1] for j in removed_nodes]
-    # z_removed_nodes = [g.node_coords[j][2] for j in removed_nodes]
-
+    g_nodes, g_edges = nx_to_plot(g, s.shape)
+    
     # create a trace for the edges
     trace_edges = go.Scatter3d(
         x=g_edges[0],
