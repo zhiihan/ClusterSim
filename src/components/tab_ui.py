@@ -4,13 +4,11 @@ from dash import html
 from components import (
     move_log,
     reset_graph,
-    algorithms,
     hover_data,
     zoom_data,
     load_graph,
     measurementbasis,
     display_options,
-    error_channel,
     stabilizer,
 )
 from dash import dcc
@@ -24,12 +22,11 @@ tab_1 = dbc.Col(
     ],
 )
 
-tab_2 = dbc.Col(
-    [
-        error_channel,
-        algorithms,
-    ]
-)
+# tab_2 = dbc.Col(
+#     [
+#         algorithms,
+#     ]
+# )
 
 tab_3 = dbc.Col(
     [
@@ -63,7 +60,7 @@ tab_ui = html.Div(
         dbc.Tabs(
             [
                 dbc.Tab(tab_1, label="Reset Graph", tab_id="tab-1"),
-                dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
+                # dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Hover Data", tab_id="tab-3"),
                 dbc.Tab(tab_4, label="Stabilizers", tab_id="tab-4"),
             ],

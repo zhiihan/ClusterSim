@@ -2,6 +2,8 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.io import from_json
 from numba import jit
+from cluster_sim.simulator import ClusterState
+import rustworkx as rx
 
 
 @jit(nopython=True)
@@ -41,7 +43,7 @@ def get_node_coords(index: int, shape: tuple[int, int, int]) -> tuple[int, int, 
     return (index_x, index_y, index_z)
 
 
-def nx_to_plot(graph, shape, index=True):
+def nx_to_plot(graph: rx.PyGraph, shape, index=True):
     nodes = graph.nodes
     edges = graph.edges
     # we need to seperate the X,Y,Z coordinates for Plotly
@@ -52,10 +54,11 @@ def nx_to_plot(graph, shape, index=True):
     z_nodes = []
 
     # if we pass in the index
-    for j in nodes:
+    for j in graph.node_indices():
         if index:
             x, y, z = get_node_coords(j, shape)
         else:
+            raise NotImplementedError
             x = j[0]
             y = j[1]
             z = j[2]
@@ -69,7 +72,7 @@ def nx_to_plot(graph, shape, index=True):
     z_edges = []
 
     # need to fill these with all of the coordinates
-    for edge in edges:
+    for edge in graph.edge_list():
         # format: [beginning,ending,None]
         if index:
             x1 = get_node_coords(edge[0], shape)
@@ -144,20 +147,18 @@ def taxicab_metric(x1: np.ndarray, x2: np.ndarray) -> float:
     return np.sum(np.abs(x1 - x2))
 
 
-def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
+def update_plot(s, g : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"]):
     """
     Main function that updates the plot.
     """
 
-    gnx = g.graph
-    hnx = d.graph
+    gnx = g.to_rustworkx()
 
     for i, value in enumerate(s.removed_nodes):
         if value == True:
             gnx.remove_node(i)
 
     g_nodes, g_edges = nx_to_plot(gnx, s.shape)
-    h_nodes, h_edges = nx_to_plot(hnx, s.shape)
     # x_removed_nodes = [g.node_coords[j][0] for j in removed_nodes]
     # y_removed_nodes = [g.node_coords[j][1] for j in removed_nodes]
     # z_removed_nodes = [g.node_coords[j][2] for j in removed_nodes]
@@ -181,23 +182,6 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
         marker=dict(symbol="circle", size=10, color="skyblue"),
     )
 
-    trace_holes = go.Scatter3d(
-        x=h_nodes[0],
-        y=h_nodes[1],
-        z=h_nodes[2],
-        mode="markers",
-        marker=dict(symbol="circle", size=10, color="green"),
-    )
-
-    trace_holes_edges = go.Scatter3d(
-        x=h_edges[0],
-        y=h_edges[1],
-        z=h_edges[2],
-        mode="lines",
-        line=dict(color="forestgreen", width=2),
-        hoverinfo="none",
-    )
-
     if "Qubits" in plotoptions:
         trace_nodes.visible = True
         trace_edges.visible = True
@@ -205,15 +189,9 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
         trace_nodes.visible = "legendonly"
         trace_edges.visible = "legendonly"
 
-    if "Holes" in plotoptions:
-        trace_holes.visible = True
-        trace_holes_edges.visible = True
-    else:
-        trace_holes.visible = "legendonly"
-        trace_holes_edges.visible = "legendonly"
 
     # Include the traces we want to plot and create a figure
-    data = [trace_nodes, trace_edges, trace_holes, trace_holes_edges]
+    data = [trace_nodes, trace_edges]
     if s.lattice:
         lattice_nodes = go.Scatter3d(
             from_json(s.lattice_edges).data[0],
@@ -248,3 +226,21 @@ def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
     )
     return fig
+
+
+def grid_graph_3d(shape: tuple[int, int, int]):
+    """Generate a Grid graph in rustworkx
+
+    Args:
+        shape (tuple[int, int, int]): the shape
+
+    Returns:
+        _type_: rustworkx graph 
+    """
+    Lx, Ly, Lz = shape
+    G = rx.PyGraph()
+    G.add_nodes_from([(i,j,k) for k in range(Lz) for j in range(Ly) for i in range(Lx)])
+    G.add_edges_from([(i+j*Ly+k*Lz**2,(i+1)+j*Ly+k*Lz**2,None) for k in range(Lz) for j in range(Ly) for i in range(Lx-1)])
+    G.add_edges_from([(i+j*Ly+k*Lz**2,i+(j+1)*Ly+k*Lz**2,None) for k in range(Lz) for j in range(Ly-1) for i in range(Lx)])
+    G.add_edges_from([(i+j*Ly+k*Lz**2,i+j*Ly+(k+1)*Lz**2,None) for k in range(Lz-1) for j in range(Ly) for i in range(Lx)])
+    return G

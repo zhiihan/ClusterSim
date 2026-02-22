@@ -101,7 +101,6 @@ dependencies = [
     { name = "gunicorn" },
     { name = "jsonpickle" },
     { name = "matplotlib" },
-    { name = "networkx" },
     { name = "numba" },
     { name = "numpy" },
     { name = "rustworkx" },
@@ -114,6 +113,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "invoke" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -123,11 +123,10 @@ requires-dist = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
     { name = "dash-resizable-panels" },
-    { name = "graphstatesim", specifier = ">=0.2.1" },
+    { name = "graphstatesim", specifier = ">=0.2.3" },
     { name = "gunicorn" },
     { name = "jsonpickle" },
     { name = "matplotlib" },
-    { name = "networkx" },
     { name = "numba" },
     { name = "numpy" },
     { name = "pytest", marker = "extra == 'dev'" },
@@ -137,6 +136,7 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "invoke", specifier = ">=2.2.1" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.15.0" },
 ]
@@ -326,17 +326,13 @@ wheels = [
 
 [[package]]
 name = "graphstatesim"
-version = "0.2.1"
+version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/29/2c62d96501b0df7c1af1409c37706a50e73fe5684d3e84040e4e424ab0fa/graphstatesim-0.2.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f3531bad8f51f02f60e42bc0ed34b1f9acbe3310bf728d3bc65a2f56a2e5acf1", size = 130336, upload-time = "2026-02-21T16:16:46.834Z" },
-    { url = "https://files.pythonhosted.org/packages/22/f4/b690751f647067377179b966ba1dc34a2e38ae883351e0836ba1b121a416/graphstatesim-0.2.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:773a6dd938fa6b14fbd0177f238f3e8b5a851c014635a6b82ba07b705d3297f6", size = 1163350, upload-time = "2026-02-21T16:16:41.578Z" },
-    { url = "https://files.pythonhosted.org/packages/1d/0e/dbb27ec50ce8b89537ae836716791fdf0f15a9c5d590389573d67af10a8b/graphstatesim-0.2.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e121042f721edb0098c83ad604bed0e969daf8a26919255b4ca0b0a59fb4156d", size = 130343, upload-time = "2026-02-21T16:16:47.866Z" },
-    { url = "https://files.pythonhosted.org/packages/e0/e3/664e6159c5a8d5e860e0ca8850ed9bbc9da1e9f3466954aa74f4572fb54c/graphstatesim-0.2.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:a18411f36b4c4e1f419b37377469723a98f4b38f86308170b0d71b692173aa97", size = 1163353, upload-time = "2026-02-21T16:16:39.366Z" },
-    { url = "https://files.pythonhosted.org/packages/9e/22/917958fbbb8abdd0cf4fdda95e1cf1d2a3780b8603149779f16c6aca67a5/graphstatesim-0.2.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5aa274458365944366a8bbbb5887b8b349a5938bb7c960e91a047ba66782ca8c", size = 130479, upload-time = "2026-02-21T16:16:45.567Z" },
-    { url = "https://files.pythonhosted.org/packages/22/91/69db692237994e8280c2a8e41109f57bbb919fde669ac8fc80c3f2ed45be/graphstatesim-0.2.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:57e9d0d03278954ed6a24c5ce70d7d8984547014b01a9a5918da9ebcd0275f20", size = 1163360, upload-time = "2026-02-21T16:16:35.98Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/d9/f0e49bb3402ba56bc658615d4a65865a3175a8c291cdfc4bc94c8d33c4c7/graphstatesim-0.2.1-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2a561399609dabceb4df11def6144bdc13d9b99c8ba3bb51e14c08193655eee3", size = 132131, upload-time = "2026-02-21T16:16:44.503Z" },
-    { url = "https://files.pythonhosted.org/packages/4d/5e/c3f36810b871694c6846e2f517116ffba97d150d495877a5e4605d69ac1d/graphstatesim-0.2.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:b5c78afdf71efb11267a9a195e56739def595e41e5563583b2e7d380d0838a12", size = 1165129, upload-time = "2026-02-21T16:16:37.747Z" },
+    { url = "https://files.pythonhosted.org/packages/87/61/b959d97e171f41590607e47372328f41d586b61e57304a41be50d074d1c0/graphstatesim-0.2.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8a0394d13d5cbf60d177b4c051d200860bafc7f83ce8ef5b5416cf1cf5d1fe1a", size = 145975, upload-time = "2026-02-22T19:01:26.342Z" },
+    { url = "https://files.pythonhosted.org/packages/72/41/cd6b8c16d41becfec820e57798d8a7eb6a2aec7773fccdbcb90d06c8e5e2/graphstatesim-0.2.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:16043e7011c4c3eb25fd59947e409debd21d934d6ca842625a7c13c350bc2e18", size = 1180163, upload-time = "2026-02-22T19:01:29.556Z" },
+    { url = "https://files.pythonhosted.org/packages/85/02/4789aff35da8c638ce5b65509a3ba07b801feab2bd0666feb657ee606001/graphstatesim-0.2.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a2d77127d2faf0c28d9cc51f18e25ce67d149b7e7f06c9a59b65e880b486fe39", size = 145982, upload-time = "2026-02-22T19:01:30.777Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/81/c01721faf7d0658dab78447a41bdc64ded466ff71a4b340b684b84ac5c12/graphstatesim-0.2.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:c14accb9aa86e41320361e6ef6220c10caaf90e774074bcefeae9035071c275d", size = 1180214, upload-time = "2026-02-22T19:01:27.952Z" },
 ]
 
 [[package]]
@@ -379,6 +375,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
+]
+
+[[package]]
+name = "invoke"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/bd/b461d3424a24c80490313fd77feeb666ca4f6a28c7e72713e3d9095719b4/invoke-2.2.1.tar.gz", hash = "sha256:515bf49b4a48932b79b024590348da22f39c4942dff991ad1fb8b8baea1be707", size = 304762, upload-time = "2025-10-11T00:36:35.172Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/4b/b99e37f88336009971405cbb7630610322ed6fbfa31e1d7ab3fbf3049a2d/invoke-2.2.1-py3-none-any.whl", hash = "sha256:2413bc441b376e5cd3f55bb5d364f973ad8bdd7bf87e53c79de3c11bf3feecc8", size = 160287, upload-time = "2025-10-11T00:36:33.703Z" },
 ]
 
 [[package]]
@@ -636,15 +641,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/83/f8/51569ac65d696c8ecbee95938f89d4abf00f47d58d48f6fbabfe8f0baefe/nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe", size = 7418, upload-time = "2024-01-21T14:25:19.227Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c", size = 5195, upload-time = "2024-01-21T14:25:17.223Z" },
-]
-
-[[package]]
-name = "networkx"
-version = "3.6.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/51/63fe664f3908c97be9d2e4f1158eb633317598cfa6e1fc14af5383f17512/networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509", size = 2517025, upload-time = "2025-12-08T17:02:39.908Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl", hash = "sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762", size = 2068504, upload-time = "2025-12-08T17:02:38.159Z" },
 ]
 
 [[package]]

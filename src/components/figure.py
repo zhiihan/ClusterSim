@@ -1,11 +1,9 @@
 from textwrap import dedent as d
-from cluster_sim.app import BrowserState, update_plot
-from cluster_sim.simulator import ClusterState, NetworkXState
+from cluster_sim.app import BrowserState, update_plot, grid_graph_3d
+from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
 import jsonpickle
 import dash_bootstrap_components as dbc
-import networkx as nx
-
 
 # Initialize the state of the user's browsing section
 def _init_state():
@@ -15,9 +13,8 @@ def _init_state():
 
     s = BrowserState()
 
-    G = ClusterState(nx.grid_graph(s.shape))
-    D = NetworkXState(nx.Graph())
-    return update_plot(s, G, D)
+    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
+    return update_plot(s, G)
 
 
 figure = dcc.Graph(
@@ -42,10 +39,8 @@ display_options = dbc.Card(
             dbc.Checklist(
                 options=[
                     {"label": "Qubits", "value": "Qubits"},
-                    {"label": "Erasures", "value": "Holes"},
-                    {"label": "Lattice", "value": "Lattice"},
                 ],
-                value=["Qubits", "Holes", "Lattice"],
+                value=["Qubits"],
                 id="plotoptions",
                 inline=True,
                 switch=True,
@@ -62,9 +57,8 @@ display_options = dbc.Card(
     State("basic-interactions", "relayoutData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
-    State("holes-data", "data"),
 )
-def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, holeData):
+def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData):
     """
     Called when ever the plot needs to be drawn.
     """
@@ -74,9 +68,8 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData, hol
     s = jsonpickle.decode(browser_data)
 
     G = ClusterState.from_json(graphData)
-    D = NetworkXState.from_json(holeData)
 
-    fig = update_plot(s, G, D, plotoptions=plotoptions)
+    fig = update_plot(s, G, plotoptions=plotoptions)
     # Make sure the view/angle stays the same when updating the figure
     if "scene.camera" in relayoutData:
         fig.update_layout(scene_camera=s.camera_state["scene.camera"])

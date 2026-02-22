@@ -1,10 +1,8 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
-from cluster_sim.app import BrowserState, get_node_coords, get_node_index
-from cluster_sim.simulator import ClusterState, NetworkXState
-import networkx as nx
+from cluster_sim.app import BrowserState, get_node_coords, get_node_index, grid_graph_3d
+from cluster_sim.simulator import ClusterState
 import logging
-
 import re
 
 import dash_bootstrap_components as dbc
@@ -33,7 +31,6 @@ load_graph = dbc.Card(
             # dcc.Store stores the intermediate value
             dcc.Store(id="browser-data"),
             dcc.Store(id="graph-data"),
-            dcc.Store(id="holes-data"),
             dcc.Store(id="draw-plot"),
             html.Div(
                 id="none",
@@ -75,7 +72,6 @@ def process_string(input_string):
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("load-graph-button", "n_clicks"),
     State("load-graph-input", "value"),
     State("browser-data", "data"),
@@ -89,8 +85,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     shape = s.shape
 
     s = BrowserState()
-    G = ClusterState(nx.grid_graph(s.shape))
-    D = NetworkXState(nx.Graph())
+    G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
 
     s.xmax, s.ymax, s.zmax = shape[0], shape[1], shape[2]
     s.shape = shape
@@ -109,7 +104,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
         s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
         s.log.append(html.Br())
         s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-    return s.log, 1, "Graph loaded!", s.to_json(), G.to_json(), D.to_json()
+    return s.log, 1, "Graph loaded!", s.to_json(), G.to_json()
 
 
 @callback(
@@ -118,20 +113,17 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("undo", "n_clicks"),
     State("browser-data", "data"),
     State("graph-data", "data"),
-    State("holes-data", "data"),
     prevent_initial_call=True,
 )
-def undo_move(n_clicks, browser_data, graphData, holeData):
+def undo_move(n_clicks, browser_data, graphData):
     s = jsonpickle.decode(browser_data)
 
     if s.move_list:
         # Soft reset
-        G = ClusterState(nx.grid_graph(s.shape))
-        D = NetworkXState.from_json(holeData)
+        G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
         s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
         s.log = []
 
@@ -144,13 +136,12 @@ def undo_move(n_clicks, browser_data, graphData, holeData):
             G.measure(i, measurementChoice)
             s.log.append(f"{coords}, {measurementChoice}; ")
             s.log.append(html.Br())
-        return s.log, 1, f"Undo: {undo}", s.to_json(), G.to_json(), D.to_json()
+        return s.log, 1, f"Undo: {undo}", s.to_json(), G.to_json()
     else:
         return (
             no_update,
             no_update,
             "Undo: No move to undo.",
-            no_update,
             no_update,
             no_update,
         )

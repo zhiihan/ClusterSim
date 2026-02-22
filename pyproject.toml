@@ -11,12 +11,11 @@ dependencies = [
     "gunicorn",
     "dash-bootstrap-components",
     "jsonpickle",
-    "networkx",
     "numpy",
     "matplotlib",
     "numba",
     "rustworkx>=0.17.1",
-    "graphstatesim>=0.2.1",
+    "graphstatesim>=0.2.3",
 ]
 
 # ------------------------------------------------------------
@@ -32,6 +31,7 @@ addopts = [
 
 [dependency-groups]
 dev = [
+    "invoke>=2.2.1",
     "pytest>=9.0.2",
     "ruff>=0.15.0",
 ]

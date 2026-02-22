@@ -3,10 +3,10 @@ from dash import dcc, html, callback, Input, Output, State
 import jsonpickle
 import random
 from cluster_sim.app import get_node_coords
-from cluster_sim.simulator import ClusterState, NetworkXState
+from cluster_sim.simulator import ClusterState
 import dash_bootstrap_components as dbc
 import logging
-import networkx as nx
+
 
 error_channel = dbc.Card(
     dbc.CardBody(
@@ -60,7 +60,6 @@ error_channel = dbc.Card(
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("reset-seed", "n_clicks"),
     State("load-graph-seed", "value"),
     State("prob", "value"),
@@ -76,7 +75,6 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     s.p = prob
 
     G = ClusterState.from_json(graphData)
-    D = NetworkXState(nx.Graph())
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))
@@ -99,5 +97,4 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
                 s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
                 s.log.append(html.Br())
                 s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-                D.add_node(i)
-    return s.log, 1, ui, s.to_json(), G.to_json(), D.to_json()
+    return s.log, 1, ui, s.to_json(), G.to_json(), 

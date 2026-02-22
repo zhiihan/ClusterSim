@@ -6,6 +6,7 @@ from .utils import (
     get_node_coords,
     get_node_index,
     path_to_plot,
+    grid_graph_3d
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "get_node_coords",
     "get_node_index",
     "path_to_plot",
+    "grid_graph_3d"
 ]

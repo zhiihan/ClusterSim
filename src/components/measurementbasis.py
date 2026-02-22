@@ -15,7 +15,7 @@ measurementbasis = dbc.Card(
                 )
             ),
             dbc.RadioItems(
-                ["Z", "Y", "X", "Erasure", "LC"],
+                ["Z", "Y", "X", "LC"],
                 value="Z",
                 id="radio-items",
                 className="btn-group",

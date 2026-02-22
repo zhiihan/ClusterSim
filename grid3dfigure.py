@@ -1,4 +1,4 @@
-from cluster_sim.app import BrowserState, get_node_index, get_node_coords
+from cluster_sim.app import BrowserState, get_node_index, get_node_coords, grid_graph_3d
 from dash import html, Input, Output, State, no_update, Dash
 import time
 import jsonpickle
@@ -7,8 +7,7 @@ from components import (
     figure,
     tab_ui,
 )
-from cluster_sim.simulator import ClusterState, NetworkXState
-import networkx as nx
+from cluster_sim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
 import logging
@@ -66,7 +65,6 @@ app.layout = html.Div(
 @app.callback(
     Output("browser-data", "data"),
     Output("graph-data", "data"),
-    Output("holes-data", "data"),
     Input("none", "children"),
 )
 def initial_call(dummy):
@@ -74,10 +72,10 @@ def initial_call(dummy):
     Initialize the graph in the browser as a JSON object.
     """
     s = BrowserState()
-    G = ClusterState(nx.grid_graph(s.shape))
-    D = NetworkXState(nx.Graph())
 
-    return s.to_json(), G.to_json(), D.to_json()
+    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
+
+    return s.to_json(), G.to_json()
 
 
 @app.callback(
@@ -86,25 +84,22 @@ def initial_call(dummy):
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("basic-interactions", "clickData"),
     State("radio-items", "value"),
     State("click-data", "children"),
     State("basic-interactions", "hoverData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
-    State("holes-data", "data"),
     prevent_initial_call=True,
 )
 def display_click_data(
-    clickData, measurementChoice, clickLog, hoverData, browser_data, graphData, holeData
+    clickData, measurementChoice, clickLog, hoverData, browser_data, graphData
 ):
     """
     Updates the browser state if there is a click.
     """
     if not clickData:
         return (
-            no_update,
             no_update,
             no_update,
             no_update,
@@ -121,23 +116,17 @@ def display_click_data(
             no_update,
             no_update,
             no_update,
-            no_update,
         )
     else:
+        print(browser_data)
         s = jsonpickle.decode(browser_data)
         G = ClusterState.from_json(graphData)
-        D = NetworkXState.from_json(holeData)
-
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)
 
         # Click is local complementation
         if measurementChoice == "LC":
-            G.lc(i)
+            G.LC(i)
             ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
-        # Click is qubit measurement
-        elif measurementChoice == "Erasure":
-            D.add_node(i)
-            measurementChoice = "Z"  # Handle it as if it was Z measurement
 
         if measurementChoice in ["X", "Y", "Z"] and not s.removed_nodes[i]:
             s.removed_nodes[i] = True
@@ -150,8 +139,8 @@ def display_click_data(
 
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
+        return html.P(s.log), i, ui, s.to_json(), G.to_json()
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

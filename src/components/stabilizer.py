@@ -1,10 +1,8 @@
 from textwrap import dedent as d
-from dash import dcc, html, Input, Output, State, callback
-from cluster_sim.simulator import ClusterState
+from dash import dcc, html
 
 import dash_bootstrap_components as dbc
-import jsonpickle
-import networkx as nx
+
 import numpy as np
 
 stabilizer = dbc.Card(
@@ -60,50 +58,6 @@ Click on points in the graph. Can be copied to clipboard to load a graph state.
         ]
     )
 )
-
-
-@callback(
-    Output("download-stab", "data"),
-    Input("download-stab-btn", "n_clicks"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
-    prevent_initial_call=True,
-)
-def download_stab(n_clicks, browserData, graphData):
-    G = ClusterState.from_json(graphData)
-    G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
-    adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)
-    adjacency_matrix += np.diag(2 * np.ones(adjacency_matrix.shape[0])).astype(int)
-
-    stabs = adjacency_mat_to_stabilizer(adjacency_matrix, newline=False)
-
-    return dict(content=stabs, filename="stabilizers.txt")
-
-
-@callback(
-    Output("stabilizer-data", "children"),
-    Output("browser-data", "data", allow_duplicate=True),
-    Input("compute-stabilizers", "n_clicks"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
-    prevent_initial_call=True,
-)
-def stabilizer_data(n_clicks, browserData, graphData):
-    """
-    Updates stabilizer data.
-    """
-
-    s = jsonpickle.decode(browserData)
-    G = ClusterState.from_json(graphData)
-    G.graph.remove_nodes_from(list(nx.isolates(G.graph)))
-
-    adjacency_matrix = nx.to_numpy_array(G.graph).astype(int)
-
-    adjacency_matrix += np.diag(2 * np.ones(adjacency_matrix.shape[0])).astype(int)
-
-    s.stabilizer = adjacency_mat_to_stabilizer(adjacency_matrix)
-
-    return html.P(s.stabilizer), s.to_json()
 
 
 def adjacency_mat_to_stabilizer(adjacency_matrix, newline=True):
