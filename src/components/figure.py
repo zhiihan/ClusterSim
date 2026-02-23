@@ -24,41 +24,16 @@ figure = dcc.Graph(
     style={"width": "100%", "height": "100%"},
 )
 
-display_options = dbc.Card(
-    dbc.CardBody(
-        [
-            dcc.Markdown(
-                d(
-                    """
-        **Display Options**
-
-        Select what to display in the graph.
-        """
-                )
-            ),
-            dbc.Checklist(
-                options=[
-                    {"label": "Qubits", "value": "Qubits"},
-                ],
-                value=["Qubits"],
-                id="plotoptions",
-                inline=True,
-                switch=True,
-            ),
-        ]
-    )
-)
 
 
 @callback(
     Output("basic-interactions", "figure"),
     Input("draw-plot", "data"),
-    Input("plotoptions", "value"),
     State("basic-interactions", "relayoutData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
 )
-def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData):
+def draw_plot(draw_plot, relayoutData, browser_data, graphData):
     """
     Called when ever the plot needs to be drawn.
     """
@@ -66,7 +41,6 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData):
         return no_update
 
     s = BrowserState.from_json(browser_data)
-
     G = ClusterState.from_json(graphData)
 
     fig = update_plot(s, G)

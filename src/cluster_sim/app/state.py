@@ -1,4 +1,4 @@
-import jsons
+import jsonpickle
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -37,9 +37,17 @@ class BrowserState:
     offset: tuple = (0, 0, 0)
     xoffset, yoffset, zoffset = offset
 
+    plot_options: Dict[str, bool] = field(
+        default_factory=lambda: 
+            {'stabilizer' : False, 
+            'coord': True, 
+            'vop': True,
+            'index': True}
+    )
+
     def to_json(self):
-        return jsons.dumps(self)
+        return jsonpickle.encode(self)
 
     @classmethod
     def from_json(cls, json_str):
-        return jsons.loads(json_str, cls=BrowserState)
+        return jsonpickle.decode(json_str)

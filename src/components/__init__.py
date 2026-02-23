@@ -5,7 +5,8 @@ from .hover_data import hover_data
 from .zoom_data import zoom_data
 from .load_graph import load_graph
 from .measurementbasis import measurementbasis
-from .figure import display_options, figure
+from .figure import figure
+from .plot_options import plotoptions
 from .stabilizer import stabilizer
 from .tab_ui import tab_ui
 
@@ -16,7 +17,6 @@ __all__ = [
     "zoom_data",
     "load_graph",
     "measurementbasis",
-    "display_options",
     "figure",
     "stabilizer",
     "tab_ui",

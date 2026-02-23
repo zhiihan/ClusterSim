@@ -2,7 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Output, Input, State, no_update
 from cluster_sim.app import BrowserState
 import dash_bootstrap_components as dbc
-import jsons
+import jsonpickle
 
 hover_data = dbc.Card(
     dbc.CardBody(
@@ -27,7 +27,7 @@ hover_data = dbc.Card(
 
 @callback(Output("hover-data", "children"), [Input("basic-interactions", "hoverData")])
 def display_hover_data(hoverData):
-    return jsons.dumps(hoverData, indent=2)
+    return jsonpickle.encode(hoverData, indent=2)
 
 
 @callback(
@@ -49,6 +49,6 @@ def display_relayout_data(relayoutData, camera, browser_data):
 
     if relayoutData and "scene.camera" in relayoutData:
         browser_state.camera_state = relayoutData
-        return jsons.dumps(relayoutData, indent=2), browser_state.to_json()
+        return jsonpickle.encode(relayoutData, indent=2), browser_state.to_json()
     else:
         return camera, browser_state.to_json()

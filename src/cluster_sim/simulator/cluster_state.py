@@ -135,6 +135,10 @@ class ClusterState:
     def vertex_operators(self):
         return self.simulator.vop_list()
 
+    @property
+    def vop(self):
+        return self.vop()
+
     def _sync_graph(self):
         """This function should apply the VOPs to a graph state."""
 
@@ -142,7 +146,7 @@ class ClusterState:
             vop = graphsim.LocCliffOp(vop_str)
             self.simulator.VOP(index, vop)
 
-    def to_rustworkx(self):
+    def to_rustworkx(self, options = {"stabilizer" : False, "vop": True}):
         """Export data from the underlying state.
 
         Returns:
@@ -156,10 +160,13 @@ class ClusterState:
         g.add_edges_from([edge for edge in self._edge_list_from_adjacency_list()])
 
         for node_index in g.node_indices():
-            g[node_index] = {
-                "stabilizer": self.stabilizers[node_index],
-                "vop": self.vertex_operators[node_index],
-            }
+            node_data = {}
+            if options['stabilizer']:
+                node_data['stabilizer'] = self.stabilizers[node_index]
+            if options['vop']:
+                node_data['vop'] = self.vertex_operators[node_index]
+            
+            g[node_index] = node_data
 
         return g
 

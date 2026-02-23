@@ -30,18 +30,33 @@ class Grid3D:
         """
         return x + y * self.shape[0] + z * self.shape[1] * self.shape[0]
 
+    def _display_hover_text(self, node_index):
+
+        self.browser_state.plot_options
+
+        hover_text = ""
+
+        for keys, value in self.graph[node_index].items():
+            if self.browser_state.plot_options.get(keys):
+                hover_text += f"{keys}: {value} \n"
+
+        return hover_text
+
+
     def graph_to_plot(self, remove_measured=True):
         """
         Convert a rustworkx object to a plotly object.
         """
 
         node_coords = np.zeros((self.graph.num_nodes(), 3))
+        node_hover_data = []
 
         for node_index in self.graph.node_indices():
             if remove_measured and (node_index in self.browser_state.removed_nodes):
                 continue
 
             node_coords[node_index, :] = self.graph[node_index]["coord"]
+            node_hover_data.append(self._display_hover_text(node_index))            
 
         edge_coords = np.zeros((3 * self.graph.num_edges(), 3))
 
@@ -54,7 +69,7 @@ class Grid3D:
                 [np.nan, np.nan, np.nan]
             )  # Required to draw in plotly
 
-        return node_coords, edge_coords
+        return node_coords, edge_coords, node_hover_data
 
 
 layouts = {"Grid3D": Grid3D}
@@ -63,15 +78,16 @@ layouts = {"Grid3D": Grid3D}
 def update_plot(
     browser_state: BrowserState,
     G: ClusterState,
+    **plot_options
 ):
     """
     Main function that updates the plot.
     """
-
+    
     g = G.to_rustworkx()
 
     layout = layouts[browser_state.layout](graph=g, browser_state=browser_state)
-    g_nodes, g_edges = layout.graph_to_plot()
+    g_nodes, g_edges, node_hover_data = layout.graph_to_plot()
 
     trace_edges = go.Scatter3d(
         x=g_edges[:, 0],
@@ -88,15 +104,17 @@ def update_plot(
         z=g_nodes[:, 2],
         mode="markers",
         marker=dict(symbol="circle", size=10, color="skyblue"),
+        hovertemplate="%{text}"
     )
+
+    trace_nodes.text = node_hover_data
 
     # Include the traces we want to plot and create a figure
     data = [trace_nodes, trace_edges]
     fig = go.Figure(data=data)
-    # fig.layout.height = 600
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
-        # autosize=True,
+        autosize=True,
         scene_camera=browser_state.camera_state["scene.camera"],
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
     )

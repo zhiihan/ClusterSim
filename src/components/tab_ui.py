@@ -8,7 +8,7 @@ from components import (
     zoom_data,
     load_graph,
     measurementbasis,
-    display_options,
+    plotoptions,
     stabilizer,
 )
 from dash import dcc
@@ -17,8 +17,7 @@ from dash import dcc
 tab_1 = dbc.Col(
     [
         measurementbasis,
-        reset_graph,
-        display_options,
+        # display_options
     ],
 )
 
@@ -30,14 +29,24 @@ tab_1 = dbc.Col(
 
 tab_3 = dbc.Col(
     [
+        reset_graph,
         load_graph,
         move_log,
-        hover_data,
-        zoom_data,
     ]
 )
 
 tab_4 = dbc.Col([stabilizer])
+
+tab_5 = dbc.Col(
+    [
+        plotoptions,
+    ]
+)
+
+tab_6 = dbc.Col([
+    hover_data,
+    zoom_data,
+])
 
 tab_ui = html.Div(
     [
@@ -59,10 +68,12 @@ tab_ui = html.Div(
         html.Hr(),
         dbc.Tabs(
             [
-                dbc.Tab(tab_1, label="Reset Graph", tab_id="tab-1"),
+                dbc.Tab(tab_1, label="Measurements", tab_id="tab-1"),
                 # dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
-                dbc.Tab(tab_3, label="Hover Data", tab_id="tab-3"),
+                dbc.Tab(tab_3, label="Reset and Load", tab_id="tab-3"),
                 dbc.Tab(tab_4, label="Stabilizers", tab_id="tab-4"),
+                dbc.Tab(tab_5, label="Plot Options", tab_id="tab-5"),
+                dbc.Tab(tab_6, label="Debug", tab_id="tab-6"),
             ],
             id="tabs",
             active_tab="tab-1",
