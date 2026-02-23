@@ -79,12 +79,12 @@ def process_string(input_string):
 def load_graph_from_string(n_clicks, input_string, browser_data):
 
     if input_string is None:
-        return no_update, no_update, no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update
     s = BrowserState.from_json(browser_data)
     shape = s.shape
 
     s = BrowserState()
-    G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
+    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
 
     s.xmax, s.ymax, s.zmax = shape[0], shape[1], shape[2]
     s.shape = shape
@@ -121,7 +121,7 @@ def undo_move(n_clicks, browser_data, graphData):
 
     if s.move_list:
         # Soft reset
-        G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
+        G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
         s.removed_nodes = set()
         s.log = ""
 

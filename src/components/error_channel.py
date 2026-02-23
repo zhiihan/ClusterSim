@@ -94,4 +94,10 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
                 G.measure(i, measurementChoice)
                 s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice};\n"
                 s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
-    return s.log, 1, ui, s.to_json(), G.to_json(), 
+    return (
+        s.log,
+        1,
+        ui,
+        s.to_json(),
+        G.to_json(),
+    )

@@ -143,7 +143,12 @@ def taxicab_metric(x1: np.ndarray, x2: np.ndarray) -> float:
     return np.sum(np.abs(x1 - x2))
 
 
-def update_plot(s, G : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"], remove_measured_qubits : bool = True):
+def update_plot(
+    s,
+    G: ClusterState,
+    plotoptions=["Qubits", "Holes", "Lattice"],
+    remove_measured_qubits: bool = True,
+):
     """
     Main function that updates the plot.
     """
@@ -154,7 +159,7 @@ def update_plot(s, G : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"],
         g.remove_nodes_from(s.removed_nodes)
 
     g_nodes, g_edges = nx_to_plot(g, s.shape)
-    
+
     # create a trace for the edges
     trace_edges = go.Scatter3d(
         x=g_edges[0],
@@ -181,7 +186,6 @@ def update_plot(s, G : ClusterState, plotoptions=["Qubits", "Holes", "Lattice"],
         trace_nodes.visible = "legendonly"
         trace_edges.visible = "legendonly"
 
-
     # Include the traces we want to plot and create a figure
     data = [trace_nodes, trace_edges]
     fig = go.Figure(data=data)
@@ -202,12 +206,35 @@ def grid_graph_3d(shape: tuple[int, int, int]):
         shape (tuple[int, int, int]): the shape
 
     Returns:
-        _type_: rustworkx graph 
+        _type_: rustworkx graph
     """
     Lx, Ly, Lz = shape
     G = rx.PyGraph()
-    G.add_nodes_from([(i,j,k) for k in range(Lz) for j in range(Ly) for i in range(Lx)])
-    G.add_edges_from([(i+j*Lx+k*Lx*Ly,(i+1)+j*Lx+k*Lx*Ly,None) for k in range(Lz) for j in range(Ly) for i in range(Lx-1)])
-    G.add_edges_from([(i+j*Lx+k*Lx*Ly,i+(j+1)*Lx+k*Lx*Ly,None) for k in range(Lz) for j in range(Ly-1) for i in range(Lx)])
-    G.add_edges_from([(i+j*Lx+k*Lx*Ly,i+j*Lx+(k+1)*Lx*Ly,None) for k in range(Lz-1) for j in range(Ly) for i in range(Lx)])
+    G.add_nodes_from(
+        [(i, j, k) for k in range(Lz) for j in range(Ly) for i in range(Lx)]
+    )
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, (i + 1) + j * Lx + k * Lx * Ly, None)
+            for k in range(Lz)
+            for j in range(Ly)
+            for i in range(Lx - 1)
+        ]
+    )
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, i + (j + 1) * Lx + k * Lx * Ly, None)
+            for k in range(Lz)
+            for j in range(Ly - 1)
+            for i in range(Lx)
+        ]
+    )
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, i + j * Lx + (k + 1) * Lx * Ly, None)
+            for k in range(Lz - 1)
+            for j in range(Ly)
+            for i in range(Lx)
+        ]
+    )
     return G

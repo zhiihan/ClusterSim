@@ -117,7 +117,7 @@ def display_click_data(
             no_update,
         )
     else:
-        print(browser_data)
+        print(clickData)
         s = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
         i = get_node_index(point["x"], point["y"], point["z"], s.shape)

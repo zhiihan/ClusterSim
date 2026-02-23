@@ -1,4 +1,3 @@
-
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 from cluster_sim.app import BrowserState, grid_graph_3d
@@ -89,10 +88,10 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     s.ymax = int(yslider)
     s.zmax = int(zslider)
     s.shape = (s.xmax, s.ymax, s.zmax)
-    s.removed_nodes  = set()
+    s.removed_nodes = set()
 
-    G = ClusterState.from_rustworkx(    grid_graph_3d(s.shape))
-    
+    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
+
     # Make sure the view/angle stays the same when updating the figure
     return (
         1,

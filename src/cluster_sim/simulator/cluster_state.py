@@ -3,7 +3,6 @@ import graphsim
 import rustworkx as rx
 
 
-
 class ClusterState:
     """
     Adapter class containing a GraphRegister object.

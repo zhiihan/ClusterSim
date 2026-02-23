@@ -4,6 +4,7 @@ from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 
+
 # Initialize the state of the user's browsing section
 def _init_state():
     """
