@@ -70,34 +70,34 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     """
     Randomly measure qubits.
     """
-    s = BrowserState.from_json(browser_data)
-    s.p = prob
+    browser_state = BrowserState.from_json(browser_data)
+    browser_state.p = prob
 
     G = ClusterState.from_json(graphData)
     if seed_input:
         # The user has inputted a seed
         random.seed(int(seed_input))
-        logging.info(f"Loaded seed : {seed_input}, p = {s.p}")
-        ui = "Loaded seed : {}, p = {}".format(seed_input, s.p)
+        logging.info(f"Loaded seed : {seed_input}, p = {browser_state.p}")
+        ui = "Loaded seed : {}, p = {}".format(seed_input, browser_state.p)
     else:
         # Use a random seed.
         random.seed()
-        logging.info(f"Loaded seed : {s.seed}, p = {s.p}")
-        ui = "Loaded seed : None, p = {}, shape = {}".format(s.p, s.shape)
+        logging.info(f"Loaded seed : {browser_state.seed}, p = {browser_state.p}")
+        ui = "Loaded seed : None, p = {}, shape = {}".format(browser_state.p, browser_state.shape)
     # p is the probability of losing a qubit
 
     measurementChoice = "Z"
 
-    for i in range(s.xmax * s.ymax * s.zmax):
-        if random.random() < s.p:
-            if i not in s.removed_nodes:
+    for i in range(browser_state.xmax * browser_state.ymax * browser_state.zmax):
+        if random.random() < browser_state.p:
+            if i not in browser_state.removed_nodes:
                 G.measure(i, measurementChoice)
-                s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice};\n"
-                s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
+                browser_state.log += f"{get_node_coords(i, browser_state.shape)}, {measurementChoice};\n"
+                browser_state.move_list += f"{get_node_coords(i, browser_state.shape), measurementChoice}"
     return (
-        s.log,
+        browser_state.log,
         1,
         ui,
-        s.to_json(),
+        browser_state.to_json(),
         G.to_json(),
     )

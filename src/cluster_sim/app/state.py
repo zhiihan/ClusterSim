@@ -16,13 +16,14 @@ class BrowserState:
     zmax: int = 4
     shape: tuple[int, int, int] = (xmax, ymax, zmax)
     p: float = 0.09
+    layout: str = "Grid3D"
 
     seed: Optional[int] = None
     path_clicks: int = 0
 
     removed_nodes: set[int] = field(default_factory=set)
     log: str = ""
-    move_list: str = ""
+    move_list: list[str] = field(default_factory=list)
     camera_state: Dict[str, Any] = field(
         default_factory=lambda: {
             "scene.camera": {

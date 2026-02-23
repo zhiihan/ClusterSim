@@ -1,4 +1,4 @@
-from cluster_sim.app import BrowserState, get_node_index, get_node_coords, grid_graph_3d
+from cluster_sim.app import BrowserState, grid_graph_3d, layouts
 from dash import html, Input, Output, State, no_update, Dash
 import time
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
@@ -70,11 +70,11 @@ def initial_call(dummy):
     """
     Initialize the graph in the browser as a JSON object.
     """
-    s = BrowserState()
+    browser_state = BrowserState()
 
-    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
 
-    return s.to_json(), G.to_json()
+    return browser_state.to_json(), G.to_json()
 
 
 @app.callback(
@@ -91,7 +91,7 @@ def initial_call(dummy):
     State("graph-data", "data"),
     prevent_initial_call=True,
 )
-def display_click_data(
+def measure_qubit(
     clickData, measurementChoice, clickLog, hoverData, browser_data, graphData
 ):
     """
@@ -117,28 +117,30 @@ def display_click_data(
             no_update,
         )
     else:
-        print(clickData)
-        s = BrowserState.from_json(browser_data)
+        browser_state = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
-        i = get_node_index(point["x"], point["y"], point["z"], s.shape)
+
+        layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
+
+        i = layout.get_node_index(point["x"], point["y"], point["z"])
 
         # Click is local complementation
         if measurementChoice == "LC":
             G.LC(i)
-            ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
-        if measurementChoice in ["X", "Y", "Z"] and (i not in s.removed_nodes):
-            s.removed_nodes.add(i)
+            ui = f"Applied local complementation to {layout.get_node_coords(i)}"
+        if measurementChoice in ["X", "Y", "Z"] and (i not in browser_state.removed_nodes):
+            browser_state.removed_nodes.add(i)
             G.measure(i, measurementChoice)
-            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
+            ui = f"Measured {layout.get_node_coords(i)} with {measurementChoice}"
         else:
             ui = "Qubit already measured!"
 
-        s.move_list += f"{get_node_coords(i, s.shape), measurementChoice}"
-        s.log += f"{get_node_coords(i, s.shape)}, {measurementChoice}; "
+        browser_state.move_list.append([layout.get_node_coords(i), measurementChoice])
+        browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice}; "
 
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(s.log), i, ui, s.to_json(), G.to_json()
+        return html.P(browser_state.log), i, ui, browser_state.to_json(), G.to_json()
 
 
 if __name__ == "__main__":

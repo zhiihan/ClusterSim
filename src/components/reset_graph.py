@@ -83,20 +83,20 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     """
     Reset the grid.
     """
-    s = BrowserState()
-    s.xmax = int(xslider)
-    s.ymax = int(yslider)
-    s.zmax = int(zslider)
-    s.shape = (s.xmax, s.ymax, s.zmax)
-    s.removed_nodes = set()
+    browser_state = BrowserState()
+    browser_state.xmax = int(xslider)
+    browser_state.ymax = int(yslider)
+    browser_state.zmax = int(zslider)
+    browser_state.shape = (browser_state.xmax, browser_state.ymax, browser_state.zmax)
+    browser_state.removed_nodes = set()
 
-    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
 
     # Make sure the view/angle stays the same when updating the figure
     return (
         1,
-        s.log,
-        "Created grid of shape {}".format(s.shape),
-        s.to_json(),
+        browser_state.log,
+        "Created grid of shape {}".format(browser_state.shape),
+        browser_state.to_json(),
         G.to_json(),
     )

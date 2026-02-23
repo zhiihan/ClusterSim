@@ -1,0 +1,100 @@
+import rustworkx as rx
+import numpy as np
+from cluster_sim.app import BrowserState
+from cluster_sim.simulator import ClusterState
+import plotly.graph_objects as go
+
+
+class Grid3D:
+    def __init__(self, graph: rx.PyGraph, browser_state: BrowserState):
+        self.shape = browser_state.shape
+        self.browser_state = browser_state
+        self.graph = graph
+
+        for i in self.graph.node_indices():
+            self.graph[i]["coord"] = self.get_node_coords(i) 
+
+    def get_node_coords(self, index: int):
+        """
+        Get node coordinates from the grid shape and index.
+        """
+        index_x = index % self.shape[0]
+        index_y = (index // self.shape[0]) % self.shape[1]
+        index_z = (index // (self.shape[0] * self.shape[1])) % self.shape[2]
+        return np.array([index_x, index_y, index_z])
+
+    def get_node_index(self, x: int, y: int, z: int)  -> int:
+        """
+        Get the index from the coordinates.
+        """
+        return x + y * self.shape[0] + z * self.shape[1] * self.shape[0]
+
+    def graph_to_plot(self, remove_measured=True):
+        """
+        Convert a rustworkx object to a plotly object.
+        """
+
+        node_coords = np.zeros((self.graph.num_nodes(), 3))
+
+        for node_index in self.graph.node_indices():
+            if remove_measured and (node_index in self.browser_state.removed_nodes):
+                continue
+
+            node_coords[node_index, :] = self.graph[node_index]["coord"]
+
+        edge_coords = np.zeros((3*self.graph.num_edges(), 3))
+
+        for edge_index, edge in enumerate(self.graph.edge_list()):
+            node_index_1, node_index_2 = edge
+            
+            edge_coords[3*edge_index] = self.graph[node_index_1]["coord"]
+            edge_coords[3*edge_index+1] = self.graph[node_index_2]["coord"]
+            edge_coords[3*edge_index+2] = np.array([np.nan, np.nan, np.nan]) # Required to draw in plotly
+
+        return node_coords, edge_coords
+
+layouts = {
+    "Grid3D" : Grid3D
+}
+
+def update_plot(
+    browser_state: BrowserState,
+    G: ClusterState,
+):
+    """
+    Main function that updates the plot.
+    """
+
+    g = G.to_rustworkx()
+
+    layout = layouts[browser_state.layout](graph = g, browser_state=browser_state)
+    g_nodes, g_edges = layout.graph_to_plot()
+
+    trace_edges = go.Scatter3d(
+        x=g_edges[:, 0],
+        y=g_edges[:, 1],
+        z=g_edges[:, 2],
+        mode="lines",
+        line=dict(color="black", width=2),
+        hoverinfo="none",
+    )
+
+    trace_nodes = go.Scatter3d(
+        x=g_nodes[:, 0],
+        y=g_nodes[:, 1],
+        z=g_nodes[:, 2],
+        mode="markers",
+        marker=dict(symbol="circle", size=10, color="skyblue"),
+    )
+
+    # Include the traces we want to plot and create a figure
+    data = [trace_nodes, trace_edges]
+    fig = go.Figure(data=data)
+    # fig.layout.height = 600
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        # autosize=True,
+        scene_camera=browser_state.camera_state["scene.camera"],
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+    )
+    return fig

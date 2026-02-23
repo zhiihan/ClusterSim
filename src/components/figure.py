@@ -11,10 +11,10 @@ def _init_state():
     Initialize the state of the user's browsing section.
     """
 
-    s = BrowserState()
+    browser_state = BrowserState()
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
 
-    G = ClusterState.from_rustworkx(grid_graph_3d(s.shape))
-    return update_plot(s, G)
+    return update_plot(browser_state, G)
 
 
 figure = dcc.Graph(
@@ -69,7 +69,7 @@ def draw_plot(draw_plot, plotoptions, relayoutData, browser_data, graphData):
 
     G = ClusterState.from_json(graphData)
 
-    fig = update_plot(s, G, plotoptions=plotoptions)
+    fig = update_plot(s, G)
     # Make sure the view/angle stays the same when updating the figure
     if "scene.camera" in relayoutData:
         fig.update_layout(scene_camera=s.camera_state["scene.camera"])

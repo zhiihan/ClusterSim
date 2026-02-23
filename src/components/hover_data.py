@@ -45,10 +45,10 @@ def display_relayout_data(relayoutData, camera, browser_data):
     if browser_data is None:
         return no_update, no_update
 
-    s = BrowserState.from_json(browser_data)
+    browser_state = BrowserState.from_json(browser_data)
 
     if relayoutData and "scene.camera" in relayoutData:
-        s.camera_state = relayoutData
-        return jsons.dumps(relayoutData, indent=2), s.to_json()
+        browser_state.camera_state = relayoutData
+        return jsons.dumps(relayoutData, indent=2), browser_state.to_json()
     else:
-        return camera, s.to_json()
+        return camera, browser_state.to_json()
