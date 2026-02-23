@@ -2,11 +2,9 @@ from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 from cluster_sim.app import BrowserState, grid_graph_3d, layouts
 from cluster_sim.simulator import ClusterState
-import logging
 import re
 
 import dash_bootstrap_components as dbc
-import numpy as np
 
 load_graph = dbc.Card(
     dbc.CardBody(
@@ -84,7 +82,9 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     browser_state = BrowserState.from_json(browser_data)
 
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
-    layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
+    layout = layouts[browser_state.layout](
+        graph=G.to_rustworkx(), browser_state=browser_state
+    )
 
     instructions = process_string(input_string)
     instructions = [
@@ -127,9 +127,9 @@ def undo_move(n_clicks, browser_data, graphData):
 
     move_list = browser_state.log.replace("\n", "").split(";")[:-1]
     undo = move_list.pop(-1)
-    input_string = ";".join(move_list)+';'
+    input_string = ";".join(move_list) + ";"
 
-    print(input_string, undo)
-
-    log, _, ui, browser_statejson, gjson = load_graph_from_string(n_clicks, input_string, browser_data)
+    log, _, ui, browser_statejson, gjson = load_graph_from_string(
+        n_clicks, input_string, browser_data
+    )
     return log, 1, f"Undo: {undo}", browser_statejson, gjson

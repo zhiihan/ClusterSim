@@ -12,7 +12,7 @@ class Grid3D:
         self.graph = graph
 
         for i in self.graph.node_indices():
-            self.graph[i]["coord"] = self.get_node_coords(i) 
+            self.graph[i]["coord"] = self.get_node_coords(i)
 
     def get_node_coords(self, index: int, log=False):
         """
@@ -24,7 +24,7 @@ class Grid3D:
 
         return np.array([index_x, index_y, index_z])
 
-    def get_node_index(self, x: int, y: int, z: int)  -> int:
+    def get_node_index(self, x: int, y: int, z: int) -> int:
         """
         Get the index from the coordinates.
         """
@@ -43,20 +43,22 @@ class Grid3D:
 
             node_coords[node_index, :] = self.graph[node_index]["coord"]
 
-        edge_coords = np.zeros((3*self.graph.num_edges(), 3))
+        edge_coords = np.zeros((3 * self.graph.num_edges(), 3))
 
         for edge_index, edge in enumerate(self.graph.edge_list()):
             node_index_1, node_index_2 = edge
-            
-            edge_coords[3*edge_index] = self.graph[node_index_1]["coord"]
-            edge_coords[3*edge_index+1] = self.graph[node_index_2]["coord"]
-            edge_coords[3*edge_index+2] = np.array([np.nan, np.nan, np.nan]) # Required to draw in plotly
+
+            edge_coords[3 * edge_index] = self.graph[node_index_1]["coord"]
+            edge_coords[3 * edge_index + 1] = self.graph[node_index_2]["coord"]
+            edge_coords[3 * edge_index + 2] = np.array(
+                [np.nan, np.nan, np.nan]
+            )  # Required to draw in plotly
 
         return node_coords, edge_coords
 
-layouts = {
-    "Grid3D" : Grid3D
-}
+
+layouts = {"Grid3D": Grid3D}
+
 
 def update_plot(
     browser_state: BrowserState,
@@ -68,7 +70,7 @@ def update_plot(
 
     g = G.to_rustworkx()
 
-    layout = layouts[browser_state.layout](graph = g, browser_state=browser_state)
+    layout = layouts[browser_state.layout](graph=g, browser_state=browser_state)
     g_nodes, g_edges = layout.graph_to_plot()
 
     trace_edges = go.Scatter3d(

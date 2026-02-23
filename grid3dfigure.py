@@ -121,7 +121,9 @@ def measure_qubit(
         browser_state = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
 
-        layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
+        layout = layouts[browser_state.layout](
+            graph=G.to_rustworkx(), browser_state=browser_state
+        )
 
         i = layout.get_node_index(point["x"], point["y"], point["z"])
 
@@ -129,7 +131,9 @@ def measure_qubit(
         if measurementChoice == "LC":
             G.LC(i)
             ui = f"Applied local complementation to {layout.get_node_coords(i)}"
-        if measurementChoice in ["X", "Y", "Z"] and (i not in browser_state.removed_nodes):
+        if measurementChoice in ["X", "Y", "Z"] and (
+            i not in browser_state.removed_nodes
+        ):
             browser_state.removed_nodes.add(i)
             G.measure(i, measurementChoice)
             ui = f"Measured {layout.get_node_coords(i)} with {measurementChoice}"

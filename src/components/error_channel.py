@@ -83,11 +83,15 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
         # Use a random seed.
         random.seed()
         logging.info(f"Loaded seed : {browser_state.seed}, p = {browser_state.p}")
-        ui = "Loaded seed : None, p = {}, shape = {}".format(browser_state.p, browser_state.shape)
+        ui = "Loaded seed : None, p = {}, shape = {}".format(
+            browser_state.p, browser_state.shape
+        )
     # p is the probability of losing a qubit
 
     measurementChoice = "Z"
-    layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
+    layout = layouts[browser_state.layout](
+        graph=G.to_rustworkx(), browser_state=browser_state
+    )
 
     for i in range(browser_state.xmax * browser_state.ymax * browser_state.zmax):
         if random.random() < browser_state.p:
@@ -102,4 +106,3 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
         browser_state.to_json(),
         G.to_json(),
     )
-
