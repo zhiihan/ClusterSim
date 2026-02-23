@@ -1,7 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import random
-from cluster_sim.app import get_node_coords, BrowserState
+from cluster_sim.app import BrowserState, layouts
 from cluster_sim.simulator import ClusterState
 import dash_bootstrap_components as dbc
 import logging
@@ -87,13 +87,14 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
     # p is the probability of losing a qubit
 
     measurementChoice = "Z"
+    layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
 
     for i in range(browser_state.xmax * browser_state.ymax * browser_state.zmax):
         if random.random() < browser_state.p:
             if i not in browser_state.removed_nodes:
                 G.measure(i, measurementChoice)
-                browser_state.log += f"{get_node_coords(i, browser_state.shape)}, {measurementChoice};\n"
-                browser_state.move_list += f"{get_node_coords(i, browser_state.shape), measurementChoice}"
+                coords = layout.get_node_coords(i)
+                browser_state.log += f"{coords}, {measurementChoice};\n"
     return (
         browser_state.log,
         1,
@@ -101,3 +102,4 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
         browser_state.to_json(),
         G.to_json(),
     )
+

@@ -14,13 +14,14 @@ class Grid3D:
         for i in self.graph.node_indices():
             self.graph[i]["coord"] = self.get_node_coords(i) 
 
-    def get_node_coords(self, index: int):
+    def get_node_coords(self, index: int, log=False):
         """
         Get node coordinates from the grid shape and index.
         """
         index_x = index % self.shape[0]
         index_y = (index // self.shape[0]) % self.shape[1]
         index_z = (index // (self.shape[0] * self.shape[1])) % self.shape[2]
+
         return np.array([index_x, index_y, index_z])
 
     def get_node_index(self, x: int, y: int, z: int)  -> int:

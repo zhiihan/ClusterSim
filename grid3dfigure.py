@@ -1,3 +1,4 @@
+import pprint
 from cluster_sim.app import BrowserState, grid_graph_3d, layouts
 from dash import html, Input, Output, State, no_update, Dash
 import time
@@ -135,12 +136,10 @@ def measure_qubit(
         else:
             ui = "Qubit already measured!"
 
-        browser_state.move_list.append([layout.get_node_coords(i), measurementChoice])
-        browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice}; "
-
+        browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice};\n"
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(browser_state.log), i, ui, browser_state.to_json(), G.to_json()
+        return browser_state.log, i, ui, browser_state.to_json(), G.to_json()
 
 
 if __name__ == "__main__":

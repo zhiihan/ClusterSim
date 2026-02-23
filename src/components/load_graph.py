@@ -1,4 +1,3 @@
-import pprint
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 from cluster_sim.app import BrowserState, grid_graph_3d, layouts
@@ -44,7 +43,7 @@ load_graph = dbc.Card(
 
 def process_string(input_string):
     regex = re.compile(
-        r"\((?P<x>[0-9]+),\s?(?P<y>[0-9]+),\s?(?P<z>[0-9]+)\),\s?(?P<basis>[XYZ]);\s?"
+        r"\[(?P<x>\d+) \s?(?P<y>\d+) \s?(?P<z>\d+)\],\s?(?P<basis>[XYZ]);\s?"
     )
 
     regex_matches = regex.findall(input_string)
@@ -81,25 +80,25 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 
     if input_string is None:
         return no_update, no_update, no_update, no_update, no_update
+
     browser_state = BrowserState.from_json(browser_data)
 
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
-
     layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
 
     instructions = process_string(input_string)
-
     instructions = [
         (layout.get_node_index(*coords), basis) for coords, basis in instructions
     ]
 
+    browser_state.log = ""
+    browser_state.removed_nodes = set()
     print(f"Instructions: {instructions}")
 
     for i, measurementChoice in instructions:
         browser_state.removed_nodes.add(i)
         G.measure(i, measurementChoice)
         browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice};\n"
-        browser_state.move_list.append([layout.get_node_coords(i), measurementChoice])
     return browser_state.log, 1, "Graph loaded!", browser_state.to_json(), G.to_json()
 
 
@@ -116,25 +115,8 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 )
 def undo_move(n_clicks, browser_data, graphData):
     browser_state = BrowserState.from_json(browser_data)
-    pprint.pprint(browser_state)
-    if browser_state.move_list:
-        # Soft reset
-        G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
-        browser_state.removed_nodes = set()
-        browser_state.log = ""
 
-        layout =  layouts[browser_state.layout](graph = G.to_rustworkx(), browser_state=browser_state)
-
-        undo = browser_state.move_list.pop(-1)
-        logging.info(f"Undo: {undo}")
-        for move in browser_state.move_list:
-            coords, measurementChoice = move
-            i = layout.get_node_index(*coords)
-            browser_state.removed_nodes.add(i)
-            G.measure(i, measurementChoice)
-            browser_state.log += f"{coords}, {measurementChoice};\n"
-        return browser_state.log, 1, f"Undo: {undo}", browser_state.to_json(), G.to_json()
-    else:
+    if not browser_state.log:
         return (
             no_update,
             no_update,
@@ -142,3 +124,12 @@ def undo_move(n_clicks, browser_data, graphData):
             no_update,
             no_update,
         )
+
+    move_list = browser_state.log.replace("\n", "").split(";")[:-1]
+    undo = move_list.pop(-1)
+    input_string = ";".join(move_list)+';'
+
+    print(input_string, undo)
+
+    log, _, ui, browser_statejson, gjson = load_graph_from_string(n_clicks, input_string, browser_data)
+    return log, 1, f"Undo: {undo}", browser_statejson, gjson

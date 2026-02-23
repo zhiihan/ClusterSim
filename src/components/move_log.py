@@ -8,10 +8,10 @@ move_log = dbc.Card(
             dcc.Markdown(
                 d(
                     """
-**Move Log**
+                        **Move Log**
 
-Click on points in the graph. Can be copied to clipboard to load a graph state.
-"""
+                        Click on points in the graph. Can be copied to clipboard to load a graph state.
+                        """
                 )
             ),
             html.Div(

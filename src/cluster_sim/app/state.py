@@ -23,7 +23,6 @@ class BrowserState:
 
     removed_nodes: set[int] = field(default_factory=set)
     log: str = ""
-    move_list: list[str] = field(default_factory=list)
     camera_state: Dict[str, Any] = field(
         default_factory=lambda: {
             "scene.camera": {
