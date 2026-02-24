@@ -90,7 +90,7 @@ def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
 
     measurementChoice = "Z"
     layout = layouts[browser_state.layout](
-        graph=G.to_rustworkx(), browser_state=browser_state
+        graph=G.to_rustworkx(), browser_state=browser_state  # ty:ignore[unknown-argument]
     )
 
     for i in range(browser_state.xmax * browser_state.ymax * browser_state.zmax):

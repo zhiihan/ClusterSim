@@ -1,17 +1,40 @@
+from cluster_sim.app import BrowserState, update_plot, grid_graph_3d
+from cluster_sim.simulator import ClusterState
+from dash import dcc, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 from dash import html
 
 from components import (
     move_log,
-    reset_graph,
-    hover_data,
-    zoom_data,
-    load_graph,
     measurementbasis,
     plotoptions,
     stabilizer,
 )
-from dash import dcc
+
+from components.components_3d import (reset_graph,
+    hover_data,
+    zoom_data,
+    load_graph,)
+
+
+# Initialize the state of the user's browsing section
+def _init_state():
+    """
+    Initialize the state of the user's browsing section.
+    """
+
+    browser_state = BrowserState()
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
+
+    return update_plot(browser_state, G)
+
+
+figure_3d = dcc.Graph(
+    id="figure-app",
+    figure=_init_state(),
+    responsive=True,
+    style={"width": "100%", "height": "100%"},
+)
 
 
 tab_1 = dbc.Col(
@@ -48,7 +71,7 @@ tab_6 = dbc.Col([
     zoom_data,
 ])
 
-tab_ui = html.Div(
+tab_ui_3d = html.Div(
     [
         dbc.CardBody(
             [
@@ -80,3 +103,28 @@ tab_ui = html.Div(
         ),
     ]
 )
+
+
+
+@callback(
+    Output("figure-app", "figure"),
+    Input("draw-plot", "data"),
+    State("figure-app", "relayoutData"),
+    State("browser-data", "data"),
+    State("graph-data", "data"),
+)
+def draw_plot(draw_plot, relayoutData, browser_data, graphData):
+    """
+    Called when ever the plot needs to be drawn.
+    """
+    if browser_data is None:
+        return no_update
+
+    s = BrowserState.from_json(browser_data)
+    G = ClusterState.from_json(graphData)
+
+    fig = update_plot(s, G)
+    # Make sure the view/angle stays the same when updating the figure
+    if "scene.camera" in relayoutData:
+        fig.update_layout(scene_camera=s.camera_state["scene.camera"])
+    return fig

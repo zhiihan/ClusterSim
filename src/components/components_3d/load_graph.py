@@ -26,7 +26,6 @@ load_graph = dbc.Card(
             html.Hr(),
             dbc.Button("Load Graph", id="load-graph-button"),
             # dcc.Store stores the intermediate value
-            dcc.Store(id="browser-data"),
             dcc.Store(id="graph-data"),
             dcc.Store(id="draw-plot"),
             html.Div(
@@ -83,7 +82,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
     layout = layouts[browser_state.layout](
-        graph=G.to_rustworkx(), browser_state=browser_state
+        browser_state=browser_state
     )
 
     instructions = process_string(input_string)

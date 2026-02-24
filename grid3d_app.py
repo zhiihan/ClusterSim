@@ -1,10 +1,9 @@
 from cluster_sim.app import BrowserState, grid_graph_3d, layouts
-from dash import html, Input, Output, State, no_update, Dash
+from dash import html, Input, Output, State, no_update, Dash, dcc
 import time
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
-from components import (
-    figure_3d,
-    tab_ui,
+from components.components_3d import (
+    figure_3d, tab_ui_3d
 )
 from cluster_sim.simulator import ClusterState
 
@@ -50,13 +49,14 @@ app.layout = html.Div(
                 ),
                 Panel(
                     id="resize_info",
-                    children=tab_ui,
+                    children=tab_ui_3d,
                     style={"overflowY": "scroll"},
                 ),
             ],
             direction="horizontal",
             style={"height": "100vh"},
-        )
+        ),
+        dcc.Store(id="browser-data"),
     ]
 )
 
@@ -83,10 +83,10 @@ def initial_call(dummy):
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Input("basic-interactions", "clickData"),
+    Input("figure-app", "clickData"),
     State("radio-items", "value"),
     State("click-data", "children"),
-    State("basic-interactions", "hoverData"),
+    State("figure-app", "hoverData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
     prevent_initial_call=True,

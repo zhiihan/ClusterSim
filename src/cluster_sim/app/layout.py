@@ -75,7 +75,6 @@ def update_plot(
         z=g_nodes[:, 2],
         mode="markers",
         marker=dict(symbol="circle", size=10, color="skyblue"),
-        hovertemplate="%{text}"
     )
 
     trace_nodes.text = node_hover_data

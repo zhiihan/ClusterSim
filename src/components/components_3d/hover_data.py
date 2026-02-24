@@ -25,7 +25,7 @@ hover_data = dbc.Card(
 )
 
 
-@callback(Output("hover-data", "children"), [Input("basic-interactions", "hoverData")])
+@callback(Output("hover-data", "children"), [Input("figure-app", "hoverData")])
 def display_hover_data(hoverData):
     return jsons.dumps(hoverData, indent=2)
 
@@ -33,7 +33,7 @@ def display_hover_data(hoverData):
 @callback(
     Output("relayout-data", "children"),
     Output("browser-data", "data", allow_duplicate=True),
-    Input("basic-interactions", "relayoutData"),
+    Input("figure-app", "relayoutData"),
     State("relayout-data", "children"),
     State("browser-data", "data"),
     prevent_initial_call=True,
