@@ -145,11 +145,12 @@ def measure_qubit(
             ui = f"Measured {layout.get_node_coords(i)} with {measurementChoice}"
         else:
             ui = "Qubit already measured!"
+            return no_update, no_update, ui, no_update, no_update
 
         browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice};\n"
         # This solves the double click issue
         time.sleep(0.1)
-        return browser_state.log, i, ui, browser_state.to_json(), G.to_json()
+        return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()
 
 
 if __name__ == "__main__":

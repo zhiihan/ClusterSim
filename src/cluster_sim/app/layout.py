@@ -95,18 +95,18 @@ def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
     """
     Convert a rustworkx object to a plotly object.
     """
-    num_nodes = graph.num_nodes()
+    
+    if browser_state.plot_options['remove_isolated']:
+        graph.remove_nodes_from(browser_state.removed_nodes)
 
+    num_nodes = graph.num_nodes()
+    
     node_coords = np.zeros((num_nodes, 3))
     node_hover_data = []
 
-    for node_index in graph.node_indices():
-        node_coords[node_index, :] = graph[node_index]["coord"]
-        node_hover_data.append(_display_hover_text(graph, browser_state, node_index))
-
-    if browser_state.plot_options['remove_isolated']:
-        # FIXME: does not do anything yet
-        pass 
+    for i, node_index in enumerate(graph.node_indices()):
+        node_coords[i, :] = graph[node_index]["coord"] # i is used to relabel the 0, 1, ...
+        node_hover_data.append(_display_hover_text(graph, browser_state, node_index)) # node_index is used to access the payload
 
     edge_coords = np.zeros((3 * graph.num_edges(), 3))
 
