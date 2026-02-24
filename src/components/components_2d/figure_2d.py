@@ -1,14 +1,16 @@
-
 from dash import dcc, html, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
-from cluster_sim.app import BrowserState
+from cluster_sim.app import BrowserState, update_plot_cytoscape
 import dash_cytoscape as cyto
 from components import (
     move_log,
-    measurementbasis,
     plotoptions,
 )
+from components.components_2d import qubit_panel
+from typing import List, Dict, Any
+
+import logging
 
 # Initialize the figure of the user's browsing section
 def _init_state():
@@ -27,7 +29,7 @@ figure_2d = cyto.Cytoscape(
 
 tab_1 = dbc.Col(
     [
-        measurementbasis,
+        qubit_panel,
         # display_options
     ],
 )
@@ -85,9 +87,6 @@ def draw_plot(draw_plot, browser_data, graphData):
     """
     Called when ever the plot needs to be drawn.
     """
-
-    print(browser_data)
-
     if browser_data is None:
         return no_update
 
@@ -97,3 +96,16 @@ def draw_plot(draw_plot, browser_data, graphData):
     fig = update_plot_cytoscape(browser_state, G)
     # Make sure the view/angle stays the same when updating the figure
     return fig
+
+
+@callback(
+    Output("ui", "children", allow_duplicate=True),
+    Input("figure-app", "selectedNodeData"),
+    prevent_initial_call=True,
+)
+def displaySelectedNodeData(data_list : List[Dict[str, Any]]):
+    if not data_list:
+        return "Click on the graph to select nodes, or SHIFT+click to select multiple nodes."
+    else:
+        logging.debug(data_list)
+        return f"Selected {[i["value"] for i in data_list]}"

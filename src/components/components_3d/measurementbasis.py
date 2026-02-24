@@ -27,7 +27,6 @@ measurementbasis = dbc.Card(
     )
 )
 
-
 @callback(
     Output("ui", "children", allow_duplicate=True),
     Input("radio-items", "value"),

@@ -6,7 +6,7 @@ from dash import html
 
 from components import (
     move_log,
-    measurementbasis,
+
     plotoptions,
     stabilizer,
 )
@@ -14,7 +14,8 @@ from components import (
 from components.components_3d import (reset_graph,
     hover_data,
     zoom_data,
-    load_graph,)
+    load_graph,
+        measurementbasis,)
 
 
 # Initialize the state of the user's browsing section
@@ -113,9 +114,12 @@ tab_ui_3d = html.Div(
     State("browser-data", "data"),
     State("graph-data", "data"),
 )
-def draw_plot(draw_plot, relayoutData, browser_data, graphData):
+def draw_plot(draw_plot : int, relayoutData, browser_data, graphData):
     """
     Called when ever the plot needs to be drawn.
+
+    draw-plot is a dummy variable. It is only to trigger the drawing of the figure after
+    another component triggers it.
     """
     if browser_data is None:
         return no_update

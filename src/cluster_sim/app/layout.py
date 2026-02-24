@@ -146,7 +146,6 @@ def update_plot_cytoscape(
     Main function that updates the plot.
     """
 
-    g = G.to_cytoscape()
+    cyto_data = G.to_cytoscape()
 
-    raise NotImplementedError
-    return 
+    return cyto_data["elements"]
