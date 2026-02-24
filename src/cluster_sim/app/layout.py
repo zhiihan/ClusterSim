@@ -55,8 +55,10 @@ def update_plot_plotly(
     layout = layouts[browser_state.layout](
         browser_state=browser_state
     )
-
     g = layout.update_graph_with_layout(g)
+
+    if browser_state.plot_options['remove_isolated']:
+        g.remove_nodes_from(browser_state.removed_nodes)
 
     g_nodes, g_edges, node_hover_data = rx_graph_to_plot(g, browser_state)
 
@@ -95,9 +97,6 @@ def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
     """
     Convert a rustworkx object to a plotly object.
     """
-    
-    if browser_state.plot_options['remove_isolated']:
-        graph.remove_nodes_from(browser_state.removed_nodes)
 
     num_nodes = graph.num_nodes()
     

@@ -1,10 +1,11 @@
+from networkx.drawing.nx_agraph import from_agraph
 from cluster_sim import ClusterState
-from cluster_sim.app import BrowserState, layouts
+from cluster_sim.app import BrowserState, layouts, rx_graph_to_plot
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
 import numpy as np
 import plotly.graph_objects as go
-import networkx as nx
+import rustworkx as rx
 import itertools
 import dash_bootstrap_components as dbc
 import logging
@@ -25,7 +26,7 @@ algorithms = dbc.Card(
             dbc.Stack(
                 [
                     dbc.Button("RHG Lattice", id="alg1"),
-                    dbc.Button("Reduction", id="reduction"),
+                    dbc.Button("Find Percolation", id="Percolation"),
                 ],
                 direction="horizontal",
                 gap=3,
@@ -83,141 +84,89 @@ def rhg_lattice_scale(nclicks, browser_data, graphData):
     return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()
 
 
-# @callback(
-#     Output("click-data", "children", allow_duplicate=True),
-#     Output("draw-plot", "data", allow_duplicate=True),
-#     Output("ui", "children", allow_duplicate=True),
-#     Output("browser-data", "data", allow_duplicate=True),
-#     Output("graph-data", "data", allow_duplicate=True),
-#     Output("holes-data", "data", allow_duplicate=True),
-#     Input("reduction", "n_clicks"),
-#     State("browser-data", "data"),
-#     State("graph-data", "data"),
-#     State("holes-data", "data"),
-#     State("select-cubes", "value"),
-#     prevent_initial_call=True,
-# )
-# def reduce_lattice(
-#     nclicks, browser_data, graphData, holeData, select_cubes, algorithm="line"
-# ):
+@callback(
+    Output("click-data", "children", allow_duplicate=True),
+    Output("draw-plot", "data", allow_duplicate=True),
+    Output("ui", "children", allow_duplicate=True),
+    Output("browser-data", "data", allow_duplicate=True),
+    Output("graph-data", "data", allow_duplicate=True),
+    Output("holes-data", "data", allow_duplicate=True),
+    Input("percolation", "n_clicks"),
+    State("browser-data", "data"),
+    State("graph-data", "data"),
+    State("select-cubes", "value"),
+    prevent_initial_call=True,
+)
+def find_unit_cells(
+    nclicks, browser_data, graphData, select_cubes,
+):
 
-#     s = jsonpickle.decode(browser_data)
-#     G = Grid(s.shape, json_data=graphData)
-#     D = Holes(s.shape, json_data=holeData)
+    browser_state = BrowserState.from_json(browser_data)
+    G = ClusterState.from_json(graphData)
 
-#     if getattr(s, "scale_factor", None) is None:
-#         ui = "Find Cluster: Run RHG Lattice first."
-#         return no_update, no_update, ui, no_update, no_update, no_update
+    click_number = nclicks % (len(browser_state.valid_unit_cells))
 
-#     s.valid_unit_cells, s.unit_cell_shape = generate_unit_cell_global_coords(
-#         s.shape, s.scale_factor, s.offset
-#     )
+    generate_unit_cell_global_coords(browser_state.shape)
 
-#     if not s.valid_unit_cells:
-#         return (
-#             no_update,
-#             no_update,
-#             "No valid unit cells found.",
-#             jsonpickle.encode(s),
-#             G.encode(),
-#             D.encode(),
-#         )
+    H = rx.PyGraph()
 
-#     click_number = nclicks % (len(s.valid_unit_cells))
+    if select_cubes == "Select One Cube":
+        
+    elif select_cubes == "Select All Cubes":
+        pass
+    elif select_cubes == "Select All Connected Cubes":
+        pass 
 
-#     if select_cubes == "Select One Cube":
-#         H, imperfection_score = find_rings(
-#             G,
-#             s.scale_factor,
-#             unit_cell_coord=s.valid_unit_cells[click_number],
-#         )
-#         ui = f"Reduction: Imperfection score = {imperfection_score}"
+    nodes, edges = rx_graph_to_plot(H, browser_state=)
 
-#     elif select_cubes == "Select All Cubes":
-#         graphs = []
-#         imperfection_score = 0
-#         for unit_cell_coord in s.valid_unit_cells:
-#             H, _ = find_rings(
-#                 G,
-#                 s.scale_factor,
-#                 unit_cell_coord=unit_cell_coord,
-#             )
-#             graphs.append(H)
-#         H = nx.compose_all(graphs)
+    lattice = go.Scatter3d(
+        x=nodes[0],
+        y=nodes[1],
+        z=nodes[2],
+        mode="markers",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
 
-#         imperfection_score = nx.number_of_isolates(H)
+    lattice_edges = go.Scatter3d(
+        x=edges[0],
+        y=edges[1],
+        z=edges[2],
+        mode="lines",
+        line=dict(color="blue", width=2),
+        hoverinfo="none",
+    )
 
-#         logging.info(f"Total Imperfection score: {imperfection_score}")
+    s.lattice = lattice.to_json()
+    s.lattice_edges = lattice_edges.to_json()
 
-#         ui = f"Reduction: Total Imperfection score = {imperfection_score}, Equivalent 1-cell deletion ratio = {100 * imperfection_score / H.number_of_nodes()}%"
-#     elif select_cubes == "Select All Connected Cubes":
+    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
 
-#         C = nx.Graph()
-#         graphs_hashmap = {}
-#         imperfect_cells = 0
 
-#         for unit_cell_coord in s.valid_unit_cells:
-#             H_subgraph, imperfection_score = find_rings(
-#                 G, s.scale_factor, unit_cell_coord=unit_cell_coord
-#             )
-#             if imperfection_score == 0:
-#                 C.add_node(tuple(unit_cell_coord))
-#                 graphs_hashmap[tuple(unit_cell_coord)] = H_subgraph
+def generate_unit_cell_global_coords(shape) -> list[np.ndarray]:
+    """
+    Find the bottom left corner of each unit cell in a 3D grid.
+    """
 
-#                 for c in C.nodes:
-#                     if taxicab_metric(c, unit_cell_coord) <= (s.scale_factor + 1):
-#                         C.add_edge(c, tuple(unit_cell_coord))
-#             else:
-#                 imperfect_cells += 1
+    num_cubes = np.array(shape) // 2
+    unit_cell_locations = []
 
-#         connected_clusters = [C.subgraph(c).copy() for c in nx.connected_components(C)]
+    unit_cell_shape = np.array([0, 0, 0], dtype=int)
+    for i in itertools.product(
+        range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
+    ):
+        # print(f"Unit cell location: {i}, scale factor: {scale_factor}")
 
-#         if not connected_clusters:
-#             ui = "Reduction: No connected clusters found."
-#             s.lattice = None
-#             s.lattice_edges = None
-#             return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+        if any(
+            np.array(i) * 2 + 3
+            > np.array(shape)
+        ):
+            # print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
+            continue
 
-#         connected_cluster_graph = connected_clusters[nclicks % len(connected_clusters)]
+        unit_cell_locations.append(np.array(i) * 2)
 
-#         graphs = [
-#             graphs_hashmap[unit_cell_coord]
-#             for unit_cell_coord in connected_cluster_graph.nodes
-#         ]
+    return unit_cell_locations
 
-#         H = nx.compose_all(graphs)
 
-#         imperfection_score = nx.number_of_isolates(H)
-#         perfect_cells = len(graphs)
-
-#         logging.info(
-#             f"Finding connected components: {perfect_cells} perfect cells, {imperfect_cells} imperfect cells."
-#         )
-
-#         ui = f"Reduction: Displaying cluster {nclicks % len(connected_clusters) + 1}/{len(connected_clusters)}, perfect cells = {perfect_cells}, imperfect cells = {imperfect_cells}"
-
-#     nodes, edges = nx_to_plot(H, shape=s.shape, index=False)
-
-#     lattice = go.Scatter3d(
-#         x=nodes[0],
-#         y=nodes[1],
-#         z=nodes[2],
-#         mode="markers",
-#         line=dict(color="blue", width=2),
-#         hoverinfo="none",
-#     )
-
-#     lattice_edges = go.Scatter3d(
-#         x=edges[0],
-#         y=edges[1],
-#         z=edges[2],
-#         mode="lines",
-#         line=dict(color="blue", width=2),
-#         hoverinfo="none",
-#     )
-
-#     s.lattice = lattice.to_json()
-#     s.lattice_edges = lattice_edges.to_json()
-
-#     return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
-
+def unit_cell_check():
