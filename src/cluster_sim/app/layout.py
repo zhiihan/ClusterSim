@@ -3,6 +3,7 @@ import numpy as np
 from cluster_sim.app import BrowserState
 from cluster_sim.simulator import ClusterState
 import plotly.graph_objects as go
+from typing import List, Tuple
 
 
 class Grid3D:
@@ -40,16 +41,7 @@ class Grid3D:
 
 layouts = {"Grid3D": Grid3D}
 
-
-def update_plot_plotly(
-    browser_state: BrowserState,
-    G: ClusterState,
-    **plot_options
-):
-    """
-    Main function that updates the plot.
-    """
-    
+def update_plot_from_simulator(G: ClusterState, browser_state: BrowserState) -> List[go.Scatter3d]:
     g = G.to_rustworkx(options={"stabilizer" : browser_state.plot_options['stabilizer'], "vop": True, 'neighbors': browser_state.plot_options['neighbors']})
 
     layout = layouts[browser_state.layout](
@@ -81,8 +73,18 @@ def update_plot_plotly(
 
     trace_nodes.text = node_hover_data
 
+    plot_data = [trace_nodes, trace_edges]
+    return plot_data
+
+
+def update_plot_plotly(
+    plot_data : List[go.Scatter3d], browser_state: BrowserState
+):
+    """
+    Main function that updates the plot.
+    """
     # Include the traces we want to plot and create a figure
-    data = [trace_nodes, trace_edges]
+    data = plot_data
     fig = go.Figure(data=data)
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
@@ -90,10 +92,11 @@ def update_plot_plotly(
         scene_camera=browser_state.camera_state["scene.camera"],
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
     )
+
     return fig
 
 
-def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
+def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
     Convert a rustworkx object to a plotly object.
     """
@@ -143,7 +146,6 @@ def _display_hover_text(graph : rx.PyGraph, browser_state: BrowserState, node_in
 def update_plot_cytoscape(
     browser_state: BrowserState,
     G: ClusterState,
-    **plot_options
 ):
     """
     Main function that updates the plot.

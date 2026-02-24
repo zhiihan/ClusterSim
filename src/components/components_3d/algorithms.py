@@ -1,15 +1,13 @@
-from networkx.drawing.nx_agraph import from_agraph
+from cluster_sim.app.layout import update_plot_from_simulator
+
 from cluster_sim import ClusterState
-from cluster_sim.app import BrowserState, layouts, rx_graph_to_plot
+from cluster_sim.app import BrowserState, layouts, rx_graph_to_plot, update_plot_plotly
 from textwrap import dedent as d
-from dash import dcc, html, callback, Input, Output, State, no_update
-import numpy as np
+from dash import dcc, html, callback, Input, Output, State
 import plotly.graph_objects as go
 import rustworkx as rx
-import itertools
 import dash_bootstrap_components as dbc
-import logging
-
+from .holes_rx import find_lattice, find_max_connected_lattice, build_centers_graph, connected_cube_to_nodes
 
 algorithms = dbc.Card(
     dbc.CardBody(
@@ -26,7 +24,7 @@ algorithms = dbc.Card(
             dbc.Stack(
                 [
                     dbc.Button("RHG Lattice", id="alg1"),
-                    dbc.Button("Find Percolation", id="Percolation"),
+                    dbc.Button("Find Percolation", id="percolation"),
                 ],
                 direction="horizontal",
                 gap=3,
@@ -38,6 +36,7 @@ algorithms = dbc.Card(
                 id="select-cubes",
                 className="dash-bootstrap",
             ),
+            dcc.Store('holes-data')
         ],
     )
 )
@@ -86,87 +85,70 @@ def rhg_lattice_scale(nclicks, browser_data, graphData):
 
 @callback(
     Output("click-data", "children", allow_duplicate=True),
-    Output("draw-plot", "data", allow_duplicate=True),
+    Output("figure-app", "figure", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("percolation", "n_clicks"),
+    State("figure-app", "relayoutData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
     State("select-cubes", "value"),
     prevent_initial_call=True,
 )
 def find_unit_cells(
-    nclicks, browser_data, graphData, select_cubes,
+    nclicks, relayoutData, browser_data, graphData, select_cubes,
 ):
 
     browser_state = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
+    layout = layouts[browser_state.layout](
+        browser_state=browser_state
+    )
 
-    click_number = nclicks % (len(browser_state.valid_unit_cells))
-
-    generate_unit_cell_global_coords(browser_state.shape)
-
-    H = rx.PyGraph()
+    
+    cubes = find_lattice(layout, browser_state.removed_nodes)
+    click_number = 0
+    # click_number = nclicks % (len(browser_state.valid_unit_cells))
 
     if select_cubes == "Select One Cube":
-        
-    elif select_cubes == "Select All Cubes":
         pass
+    elif select_cubes == "Select All Cubes":
+        C = build_centers_graph(cubes, layout)
+        connected_cubes = [C.subgraph(list(c)) for c in rx.connected_components(C)]
+
+        click_number = nclicks % (len(connected_cubes))
+        X = connected_cube_to_nodes(connected_cubes[click_number])
+
+        ui = f"FindCluster: Displaying {click_number+1}/{len(connected_cubes)}"
     elif select_cubes == "Select All Connected Cubes":
         pass 
 
-    nodes, edges = rx_graph_to_plot(H, browser_state=)
+    nodes, edges, _ = rx_graph_to_plot(X, browser_state=browser_state)
 
     lattice = go.Scatter3d(
-        x=nodes[0],
-        y=nodes[1],
-        z=nodes[2],
+        x=nodes[:, 0],
+        y=nodes[:, 1],
+        z=nodes[:, 2],
         mode="markers",
         line=dict(color="blue", width=2),
         hoverinfo="none",
     )
 
     lattice_edges = go.Scatter3d(
-        x=edges[0],
-        y=edges[1],
-        z=edges[2],
+        x=edges[:, 0],
+        y=edges[:, 1],
+        z=edges[:, 2],
         mode="lines",
         line=dict(color="blue", width=2),
         hoverinfo="none",
     )
 
-    s.lattice = lattice.to_json()
-    s.lattice_edges = lattice_edges.to_json()
+    # Perform a manual update
+    plotdata = update_plot_from_simulator(G, browser_state)
 
-    return s.log, 1, ui, jsonpickle.encode(s), G.encode(), D.encode()
+    plotdata += [lattice, lattice_edges]
 
+    fig = update_plot_plotly(plotdata, browser_state)
 
-def generate_unit_cell_global_coords(shape) -> list[np.ndarray]:
-    """
-    Find the bottom left corner of each unit cell in a 3D grid.
-    """
-
-    num_cubes = np.array(shape) // 2
-    unit_cell_locations = []
-
-    unit_cell_shape = np.array([0, 0, 0], dtype=int)
-    for i in itertools.product(
-        range(num_cubes[0]), range(num_cubes[1]), range(num_cubes[2])
-    ):
-        # print(f"Unit cell location: {i}, scale factor: {scale_factor}")
-
-        if any(
-            np.array(i) * 2 + 3
-            > np.array(shape)
-        ):
-            # print(f"Skipping unit cell {i} as it exceeds grid dimensions.")
-            continue
-
-        unit_cell_locations.append(np.array(i) * 2)
-
-    return unit_cell_locations
-
-
-def unit_cell_check():
+    return browser_state.log, fig, "placeholder", browser_state.to_json(), G.to_json()

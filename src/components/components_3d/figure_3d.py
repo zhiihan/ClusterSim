@@ -1,3 +1,4 @@
+from cluster_sim.app.layout import update_plot_from_simulator
 from components.components_3d import algorithms
 from cluster_sim.app import BrowserState, update_plot_plotly, grid_graph_3d
 from cluster_sim.simulator import ClusterState
@@ -28,7 +29,8 @@ def _init_state():
     browser_state = BrowserState()
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
 
-    return update_plot_plotly(browser_state, G)
+    plotdata = update_plot_from_simulator(G, browser_state)
+    return update_plot_plotly(plotdata, browser_state)
 
 
 figure_3d = dcc.Graph(
@@ -126,11 +128,9 @@ def draw_plot(draw_plot : int, relayoutData, browser_data, graphData):
     if browser_data is None:
         return no_update
 
-    s = BrowserState.from_json(browser_data)
+    browser_state = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
 
-    fig = update_plot_plotly(s, G)
-    # Make sure the view/angle stays the same when updating the figure
-    if "scene.camera" in relayoutData:
-        fig.update_layout(scene_camera=s.camera_state["scene.camera"])
+    plotdata = update_plot_from_simulator(G, browser_state)
+    fig = update_plot_plotly(plotdata, browser_state)
     return fig
