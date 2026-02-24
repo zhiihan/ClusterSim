@@ -135,7 +135,7 @@ def measure_qubit(
 
         # Click is local complementation
         if measurementChoice == "LC":
-            G.LC(i)
+            G.local_complementation(i)
             ui = f"Applied local complementation to {layout.get_node_coords(i)}"
         if measurementChoice in ["X", "Y", "Z"] and (
             i not in browser_state.removed_nodes

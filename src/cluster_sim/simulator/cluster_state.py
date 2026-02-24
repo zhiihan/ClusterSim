@@ -38,6 +38,9 @@ class ClusterState:
     def __str__(self):
         return str(self.stabilizers)
 
+    def __len__(self):
+        return self.num_nodes
+
     def measure(self, qubit: int, basis: str):
         """
         Measure a node in the graph state.
@@ -83,13 +86,24 @@ class ClusterState:
     def CZ(self, control: int, qubit: int):
         self.simulator.CZ(control, qubit)
 
-    def LC(self, qubit):
+    def local_complementation(self, qubit):
         """Apply a local complementation.
 
         Args:
             qubit (int): which qubit to apply
         """
         self.simulator.invert_neighborhood(qubit)
+
+    def apply_VOP(self, qubit, vop: tuple[int, int] | int | str):
+        """Apply vertex operators.
+
+        Args:
+            qubit (int): which vertex operator to apply
+        """
+        if isinstance(vop, tuple):
+            self.simulator.VOP(qubit, graphsim.LocCliffOp(*vop))
+        else:
+            self.simulator.VOP(qubit, graphsim.LocCliffOp(vop))
 
     @classmethod
     def from_json(cls, json_data):
@@ -129,10 +143,6 @@ class ClusterState:
     @property
     def vertex_operators(self):
         return self.simulator.vop_list()
-
-    @property
-    def vop(self):
-        return self.vop()
 
     def to_rustworkx(self, options = {"stabilizer" : False, "vop": True, 'neighbors': False}):
         """Export data from the underlying state.

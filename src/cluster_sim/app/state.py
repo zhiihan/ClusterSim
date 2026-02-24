@@ -15,7 +15,7 @@ class BrowserState:
     ymax: int = 4
     zmax: int = 4
     shape: tuple[int, int, int] = (xmax, ymax, zmax)
-    p: float = 0.09
+    p_err: float = 0.09 # Probability of losing a qubit
     layout: str = "Grid3D"
 
     seed: Optional[int] = None

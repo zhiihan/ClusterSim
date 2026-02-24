@@ -1,11 +1,10 @@
+from cluster_sim import ClusterState
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import random
-from cluster_sim.app import BrowserState, layouts
-from cluster_sim.simulator import ClusterState
+from cluster_sim.app import layouts, BrowserState
 import dash_bootstrap_components as dbc
 import logging
-
 
 error_channel = dbc.Card(
     dbc.CardBody(
@@ -28,7 +27,7 @@ error_channel = dbc.Card(
                     "placement": "bottom",
                 },
                 marks={i / 100: str(i) for i in range(0, 31, 3)},
-                id="prob",
+                id="p_err",
                 className="dash-bootstrap",
             ),
             html.Hr(),
@@ -61,48 +60,33 @@ error_channel = dbc.Card(
     Output("graph-data", "data", allow_duplicate=True),
     Input("reset-seed", "n_clicks"),
     State("load-graph-seed", "value"),
-    State("prob", "value"),
+    State("p_err", "value"),
     State("browser-data", "data"),
     State("graph-data", "data"),
     prevent_initial_call=True,
 )
-def apply_error_channel(nclicks, seed_input, prob, browser_data, graphData):
+def apply_error_channel(nclicks, seed_input, p_err, browser_data, graphData):
     """
     Randomly measure qubits.
     """
     browser_state = BrowserState.from_json(browser_data)
-    browser_state.p = prob
-
+    browser_state.p_err = p_err
     G = ClusterState.from_json(graphData)
-    if seed_input:
-        # The user has inputted a seed
-        random.seed(int(seed_input))
-        logging.info(f"Loaded seed : {seed_input}, p = {browser_state.p}")
-        ui = "Loaded seed : {}, p = {}".format(seed_input, browser_state.p)
-    else:
-        # Use a random seed.
-        random.seed()
-        logging.info(f"Loaded seed : {browser_state.seed}, p = {browser_state.p}")
-        ui = "Loaded seed : None, p = {}, shape = {}".format(
-            browser_state.p, browser_state.shape
-        )
-    # p is the probability of losing a qubit
 
-    measurementChoice = "Z"
+    random.seed = seed_input
+    logging.info(f"Loaded seed : {seed_input}, p = {browser_state.p_err}")
+    ui = "Loaded seed : {}, p = {}".format(seed_input, browser_state.p_err)
     layout = layouts[browser_state.layout](
-        graph=G.to_rustworkx(), browser_state=browser_state  # ty:ignore[unknown-argument]
+        browser_state=browser_state
     )
+    num_qubits = len(G)
 
-    for i in range(browser_state.xmax * browser_state.ymax * browser_state.zmax):
-        if random.random() < browser_state.p:
+    for i in range(num_qubits):
+        if random.random() < browser_state.p_err:
             if i not in browser_state.removed_nodes:
-                G.measure(i, measurementChoice)
-                coords = layout.get_node_coords(i)
-                browser_state.log += f"{coords}, {measurementChoice};\n"
-    return (
-        browser_state.log,
-        1,
-        ui,
-        browser_state.to_json(),
-        G.to_json(),
-    )
+                browser_state.removed_nodes.add(i)
+                # FIXME: Add VOP to log here
+                G.measure(i, 'Z')
+                browser_state.log += f"{layout.get_node_coords(i)}, Z;\n"
+                
+    return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()
