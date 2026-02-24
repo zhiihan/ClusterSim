@@ -1,6 +1,6 @@
-import jsonpickle
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
+import jsons
 
 
 @dataclass
@@ -42,12 +42,13 @@ class BrowserState:
             {'stabilizer' : False, 
             'coord': True, 
             'vop': True,
-            'index': True}
+            'index': True,
+            'neighbors': False}
     )
 
     def to_json(self):
-        return jsonpickle.encode(self)
+        return jsons.dumps(self)
 
     @classmethod
     def from_json(cls, json_str):
-        return jsonpickle.decode(json_str)
+        return jsons.loads(json_str, cls)

@@ -17,7 +17,7 @@ def _init_state():
     return update_plot(browser_state, G)
 
 
-figure = dcc.Graph(
+figure_3d = dcc.Graph(
     id="basic-interactions",
     figure=_init_state(),
     responsive=True,

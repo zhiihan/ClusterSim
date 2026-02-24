@@ -1,10 +1,9 @@
-import pprint
 from cluster_sim.app import BrowserState, grid_graph_3d, layouts
 from dash import html, Input, Output, State, no_update, Dash
 import time
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components import (
-    figure,
+    figure_3d,
     tab_ui,
 )
 from cluster_sim.simulator import ClusterState
@@ -37,7 +36,7 @@ app.layout = html.Div(
                 Panel(
                     id="resize_figure",
                     children=[
-                        figure,
+                        figure_3d,
                     ],
                 ),
                 PanelResizeHandle(
@@ -122,7 +121,7 @@ def measure_qubit(
         G = ClusterState.from_json(graphData)
 
         layout = layouts[browser_state.layout](
-            graph=G.to_rustworkx(), browser_state=browser_state
+            browser_state=browser_state
         )
 
         i = layout.get_node_index(point["x"], point["y"], point["z"])

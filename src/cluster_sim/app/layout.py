@@ -6,13 +6,9 @@ import plotly.graph_objects as go
 
 
 class Grid3D:
-    def __init__(self, graph: rx.PyGraph, browser_state: BrowserState):
+    def __init__(self, browser_state: BrowserState):
         self.shape = browser_state.shape
-        self.browser_state = browser_state
-        self.graph = graph
-
-        for i in self.graph.node_indices():
-            self.graph[i]["coord"] = self.get_node_coords(i)
+        self.browser_state = browser_state    
 
     def get_node_coords(self, index: int, log=False):
         """
@@ -30,47 +26,17 @@ class Grid3D:
         """
         return x + y * self.shape[0] + z * self.shape[1] * self.shape[0]
 
-    def _display_hover_text(self, node_index):
 
-        self.browser_state.plot_options
+    def update_graph_with_layout(self, g: rx.PyGraph):
+        """Add the current layout to the PyGraph.
 
-        hover_text = ""
-
-        for keys, value in self.graph[node_index].items():
-            if self.browser_state.plot_options.get(keys):
-                hover_text += f"{keys}: {value} \n"
-
-        return hover_text
-
-
-    def graph_to_plot(self, remove_measured=True):
+        Args:
+            g (rx.PyGraph): PyGraph
         """
-        Convert a rustworkx object to a plotly object.
-        """
-
-        node_coords = np.zeros((self.graph.num_nodes(), 3))
-        node_hover_data = []
-
-        for node_index in self.graph.node_indices():
-            if remove_measured and (node_index in self.browser_state.removed_nodes):
-                continue
-
-            node_coords[node_index, :] = self.graph[node_index]["coord"]
-            node_hover_data.append(self._display_hover_text(node_index))            
-
-        edge_coords = np.zeros((3 * self.graph.num_edges(), 3))
-
-        for edge_index, edge in enumerate(self.graph.edge_list()):
-            node_index_1, node_index_2 = edge
-
-            edge_coords[3 * edge_index] = self.graph[node_index_1]["coord"]
-            edge_coords[3 * edge_index + 1] = self.graph[node_index_2]["coord"]
-            edge_coords[3 * edge_index + 2] = np.array(
-                [np.nan, np.nan, np.nan]
-            )  # Required to draw in plotly
-
-        return node_coords, edge_coords, node_hover_data
-
+        for node in g.node_indices():
+            g[node]["coord"] = self.get_node_coords(node)
+           
+        return g
 
 layouts = {"Grid3D": Grid3D}
 
@@ -84,17 +50,22 @@ def update_plot(
     Main function that updates the plot.
     """
     
-    g = G.to_rustworkx()
+    g = G.to_rustworkx(options={"stabilizer" : browser_state.plot_options['stabilizer'], "vop": True, 'neighbors': browser_state.plot_options['neighbors']})
 
-    layout = layouts[browser_state.layout](graph=g, browser_state=browser_state)
-    g_nodes, g_edges, node_hover_data = layout.graph_to_plot()
+    layout = layouts[browser_state.layout](
+        browser_state=browser_state
+    )
+
+    g = layout.update_graph_with_layout(g)
+
+    g_nodes, g_edges, node_hover_data = rx_graph_to_plot(g, browser_state)
 
     trace_edges = go.Scatter3d(
         x=g_edges[:, 0],
         y=g_edges[:, 1],
         z=g_edges[:, 2],
         mode="lines",
-        line=dict(color="black", width=2),
+        line=dict(color="black", width=4),
         hoverinfo="none",
     )
 
@@ -119,3 +90,49 @@ def update_plot(
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
     )
     return fig
+
+
+def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
+    """
+    Convert a rustworkx object to a plotly object.
+    """
+    num_nodes = graph.num_nodes()
+
+    node_coords = np.zeros((num_nodes, 3))
+    node_hover_data = []
+
+    for node_index in graph.node_indices():
+        node_coords[node_index, :] = graph[node_index]["coord"]
+        node_hover_data.append(_display_hover_text(graph, browser_state, node_index))            
+
+    edge_coords = np.zeros((3 * graph.num_edges(), 3))
+
+    for edge_index, edge in enumerate(graph.edge_list()):
+        node_index_1, node_index_2 = edge
+
+        edge_coords[3 * edge_index] = graph[node_index_1]["coord"]
+        edge_coords[3 * edge_index + 1] = graph[node_index_2]["coord"]
+        edge_coords[3 * edge_index + 2] = np.array(
+            [np.nan, np.nan, np.nan]
+        )  # Required to draw in plotly
+
+    return node_coords, edge_coords, node_hover_data
+
+def _display_hover_text(graph : rx.PyGraph, browser_state: BrowserState, node_index : int) -> str:
+    """Used in graph_to_plot as part of update_plot.
+
+    Args:
+        graph (rx.PyGraph): rustworkx Pygraph
+        browser_state (BrowserState): Browser state
+        node_index (int): node index 
+
+    Returns:
+        str: text displayed on hover when in plotly
+    """
+    hover_text = ""
+
+    for keys, value in graph[node_index].items():
+        if browser_state.plot_options.get(keys):
+            hover_text += f"{keys}: {value} \n"
+
+    return hover_text

@@ -1,7 +1,7 @@
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
-
+import networkx as nx
 
 class ClusterState:
     """
@@ -20,11 +20,6 @@ class ClusterState:
         self.num_nodes = num_nodes
         self.simulator = graphsim.GraphRegister(self.num_nodes)
 
-        # if any(not isinstance(n, int) for n in graph.nodes):
-        #     self.graph = rx.convert_node_labels_to_integers(graph)
-        # else:
-        #     self.graph = graph
-
     def __repr__(self):
         rep = "Adjacency List:\n"
         rep += self.simulator.print_adjacency_list()
@@ -34,7 +29,7 @@ class ClusterState:
 
     def __eq__(self, other):
         if not isinstance(other, ClusterState):
-            return NotImplementedError
+            raise NotImplementedError
         else:
             return (self.vertex_operators == other.vertex_operators) and (
                 self.adjacency_list == other.adjacency_list
@@ -105,10 +100,10 @@ class ClusterState:
             A JSON-serializable representation of the graph state.
         """
 
-        g = cls.from_rustworkx(rx.parse_node_link_json(json_data))
-        g._sync_graph()
+        rx_graph = rx.parse_node_link_json(json_data)
 
-        return g
+        G = cls.from_rustworkx(rx_graph)
+        return G
 
     def to_json(self):
         """
@@ -139,20 +134,18 @@ class ClusterState:
     def vop(self):
         return self.vop()
 
-    def _sync_graph(self):
-        """This function should apply the VOPs to a graph state."""
-
-        for index, vop_str in enumerate(self.vertex_operators):
-            vop = graphsim.LocCliffOp(vop_str)
-            self.simulator.VOP(index, vop)
-
-    def to_rustworkx(self, options = {"stabilizer" : False, "vop": True}):
+    def to_rustworkx(self, options = {"stabilizer" : False, "vop": True, 'neighbors': False}):
         """Export data from the underlying state.
+
+        Turning off vop = True may lead to unintended behaviour when recreating the state.
+
+        Args:
+            options (dict, optional): Default options. Defaults to {"stabilizer" : False, "vop": True}.
 
         Returns:
             rx.PyGraph: rustworkx representation
-        """
-
+        """        
+    
         g = rx.PyGraph(multigraph=False)
 
         g.add_nodes_from(range(self.num_nodes))
@@ -160,11 +153,13 @@ class ClusterState:
         g.add_edges_from([edge for edge in self._edge_list_from_adjacency_list()])
 
         for node_index in g.node_indices():
-            node_data = {}
+            node_data = {"id": str(node_index)}
             if options['stabilizer']:
                 node_data['stabilizer'] = self.stabilizers[node_index]
             if options['vop']:
                 node_data['vop'] = self.vertex_operators[node_index]
+            if options['neighbors']:
+                node_data['neighbors'] = self.adjacency_list[node_index]
             
             g[node_index] = node_data
 
@@ -193,7 +188,79 @@ class ClusterState:
         for e in graph.edge_list():
             c.CZ(e[0], e[1])
 
+        for node in graph.node_indices():
+            if graph[node] and 'vop' in graph[node]:
+                vop = graphsim.LocCliffOp(graph[node]['vop'])
+                c.simulator.VOP(node, vop)
         return c
+
+    @classmethod
+    def from_networkx(cls, graph: nx.Graph):
+        graph = nx.convert_node_labels_to_integers(graph)
+        c = cls(len(graph))
+        for i in graph.nodes():
+            c.H(i)
+
+        for e in graph.edges():
+            c.CZ(e[0], e[1])
+
+        for node in graph.nodes():
+            if graph.nodes[node].get("vop"):
+                vop = graphsim.LocCliffOp(graph.nodes[node]['vop'])
+                c.simulator.VOP(node, vop)
+        return c
+
+    def to_networkx(self, options = {"stabilizer" : False, "vop": True, 'neighbors': False}):
+        """Export data from the underlying state.
+
+        Turning off vop = True may lead to unintended behaviour when recreating the state.
+
+        Args:
+            options (dict, optional): Default options. Defaults to {"stabilizer" : False, "vop": True}.
+
+        Returns:
+            nx.Graph: networkx representation
+        """     
+        g = nx.Graph()
+
+        g.add_nodes_from(range(self.num_nodes))
+        g.add_edges_from([(edge[0], edge[1]) for edge in self._edge_list_from_adjacency_list()])
+
+        for node_index in g.nodes():
+            node_data = {"id": str(node_index)}
+            if options['stabilizer']:
+                node_data['stabilizer'] = self.stabilizers[node_index]
+            if options['vop']:
+                node_data['vop'] = self.vertex_operators[node_index]
+            if options['neighbors']:
+                node_data['neighbors'] = self.adjacency_list[node_index]
+            
+            g.add_node(node_index, **node_data)
+
+        return g
+
+    def to_cytoscape(self):
+        """
+        Export to cytoscape.
+        """
+        graph = self.to_networkx()
+        cyto_data = nx.cytoscape_data(graph)
+
+        # Processing so that labels show up properly
+        for i in cyto_data["elements"]["nodes"]:
+            i["data"]["label"] = i["data"].pop("name")
+
+        return cyto_data
+
+    @classmethod
+    def from_cytoscape(cls, data):
+        """
+        Load a simulator from cytoscape.
+        """
+        graph = nx.cytoscape_graph(data)
+
+        G = cls.from_networkx(graph)
+        return G
 
     def draw(self, label_func=lambda node: str(node), **kwargs):
         g = self.to_rustworkx()

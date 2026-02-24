@@ -1,5 +1,5 @@
 import numpy as np
-from cluster_sim.app import Grid3D, BrowserState
+from cluster_sim.app import Grid3D, BrowserState, rx_graph_to_plot
 import rustworkx as rx
 from cluster_sim.simulator import ClusterState
 
@@ -31,6 +31,11 @@ def test_plotting():
 
     g = rx.generators.grid_graph(2, 2)
     g = ClusterState.from_rustworkx(g).to_rustworkx()
-    g_nodes, g_edges, _ = Grid3D(g, browser_state=b).graph_to_plot()
+
+    layout = Grid3D(browser_state=b)
+
+    g = layout.update_graph_with_layout(g)
+
+    g_nodes, g_edges, _ = rx_graph_to_plot(g, browser_state=b)
     assert np.allclose(g_nodes, nodes, equal_nan=True)
     assert np.allclose(g_edges, edges, equal_nan=True)
