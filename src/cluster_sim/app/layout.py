@@ -102,7 +102,11 @@ def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
 
     for node_index in graph.node_indices():
         node_coords[node_index, :] = graph[node_index]["coord"]
-        node_hover_data.append(_display_hover_text(graph, browser_state, node_index))            
+        node_hover_data.append(_display_hover_text(graph, browser_state, node_index))
+
+    if browser_state.plot_options['remove_isolated']:
+        # FIXME: does not do anything yet
+        pass 
 
     edge_coords = np.zeros((3 * graph.num_edges(), 3))
 

@@ -1,3 +1,4 @@
+from components.components_3d import algorithms
 from cluster_sim.app import BrowserState, update_plot_plotly, grid_graph_3d
 from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
@@ -47,15 +48,16 @@ tab_1 = dbc.Col(
 
 tab_2 = dbc.Col(
     [
-        error_channel,
+        reset_graph,
+        load_graph,
+        move_log,
     ]
 )
 
 tab_3 = dbc.Col(
     [
-        reset_graph,
-        load_graph,
-        move_log,
+        error_channel,
+        algorithms,
     ]
 )
 
@@ -93,8 +95,8 @@ tab_ui_3d = html.Div(
         dbc.Tabs(
             [
                 dbc.Tab(tab_1, label="Measurements", tab_id="tab-1"),
-                dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
-                dbc.Tab(tab_3, label="Reset and Load", tab_id="tab-3"),
+                dbc.Tab(tab_2, label="Reset and Load", tab_id="tab-2"),
+                dbc.Tab(tab_3, label="Algorithms", tab_id="tab-3"),
                 dbc.Tab(tab_4, label="Stabilizers", tab_id="tab-4"),
                 dbc.Tab(tab_5, label="Plot Options", tab_id="tab-5"),
                 dbc.Tab(tab_6, label="Debug", tab_id="tab-6"),

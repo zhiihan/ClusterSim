@@ -4,6 +4,7 @@ from .reset_graph import reset_graph
 from .zoom_data import zoom_data
 from .measurementbasis import measurementbasis
 from .error_channel import error_channel
+from .algorithms import algorithms
 
 from .figure_3d import figure_3d, tab_ui_3d
 
@@ -12,6 +13,7 @@ __all__ = [
     "tab_ui_3d",
     "hover_data",
     "load_graph",
+    "algorithms",
     "error_channel",
     "reset_graph",
     "measurementbasis",

@@ -88,7 +88,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
 
     for i, measurementChoice in instructions:
         browser_state.removed_nodes.add(i)
-        G.measure(i, measurementChoice)
+        G.measure(i, basis=measurementChoice)
         browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice};\n"
     return browser_state.log, 1, "Graph loaded!", browser_state.to_json(), G.to_json()
 

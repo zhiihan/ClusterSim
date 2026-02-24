@@ -11,10 +11,7 @@ class BrowserState:
     This class contains a local state of the web app, representing a persistent state on the user's local browsing section.
     """
 
-    xmax: int = 4
-    ymax: int = 4
-    zmax: int = 4
-    shape: tuple[int, int, int] = (xmax, ymax, zmax)
+    shape: tuple[int, int, int] = (5, 5, 5)
     p_err: float = 0.09 # Probability of losing a qubit
     layout: str = "Grid3D"
 
@@ -43,7 +40,8 @@ class BrowserState:
             'coord': True, 
             'vop': True,
             'index': True,
-            'neighbors': False}
+            'neighbors': False,
+            'remove_isolated': True}
     )
 
     def to_json(self):

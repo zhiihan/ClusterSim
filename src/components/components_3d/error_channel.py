@@ -86,7 +86,7 @@ def apply_error_channel(nclicks, seed_input, p_err, browser_data, graphData):
             if i not in browser_state.removed_nodes:
                 browser_state.removed_nodes.add(i)
                 # FIXME: Add VOP to log here
-                G.measure(i, 'Z')
+                G.measure(i, force=0, basis='Z')
                 browser_state.log += f"{layout.get_node_coords(i)}, Z;\n"
                 
     return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()

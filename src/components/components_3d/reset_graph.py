@@ -21,7 +21,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -33,7 +33,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -45,7 +45,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -83,10 +83,7 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     Reset the grid.
     """
     browser_state = BrowserState()
-    browser_state.xmax = int(xslider)
-    browser_state.ymax = int(yslider)
-    browser_state.zmax = int(zslider)
-    browser_state.shape = (browser_state.xmax, browser_state.ymax, browser_state.zmax)
+    browser_state.shape = (int(xslider), int(yslider), int(zslider))
     browser_state.removed_nodes = set()
 
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))

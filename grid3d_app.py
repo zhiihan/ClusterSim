@@ -141,7 +141,7 @@ def measure_qubit(
             i not in browser_state.removed_nodes
         ):
             browser_state.removed_nodes.add(i)
-            G.measure(i, measurementChoice)
+            G.measure(i, basis=measurementChoice)
             ui = f"Measured {layout.get_node_coords(i)} with {measurementChoice}"
         else:
             ui = "Qubit already measured!"

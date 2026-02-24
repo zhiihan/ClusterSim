@@ -41,7 +41,7 @@ class ClusterState:
     def __len__(self):
         return self.num_nodes
 
-    def measure(self, qubit: int, basis: str):
+    def measure(self, qubit: int, force: int = -1, basis: str = 'Z'):
         """
         Measure a node in the graph state.
 
@@ -50,15 +50,7 @@ class ClusterState:
             basis: The basis to measure in, which is either 'X', 'Y' or 'Z'.
         """
 
-        if basis == "Z":
-            pass
-        elif basis == "X":
-            self.H(qubit)
-        elif basis == "Y":
-            self.S_DAG(qubit)
-            self.H(qubit)
-
-        return self.simulator.measure(qubit)
+        return self.simulator.measure(qubit, force, basis)
 
     def X(self, qubit: int):
         self.simulator.X(qubit)
