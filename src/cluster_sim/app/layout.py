@@ -41,7 +41,7 @@ class Grid3D:
 layouts = {"Grid3D": Grid3D}
 
 
-def update_plot(
+def update_plot_plotly(
     browser_state: BrowserState,
     G: ClusterState,
     **plot_options
@@ -118,7 +118,7 @@ def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState):
     return node_coords, edge_coords, node_hover_data
 
 def _display_hover_text(graph : rx.PyGraph, browser_state: BrowserState, node_index : int) -> str:
-    """Used in graph_to_plot as part of update_plot.
+    """Used in graph_to_plot as part of update_plot_plotly.
 
     Args:
         graph (rx.PyGraph): rustworkx Pygraph
@@ -135,3 +135,18 @@ def _display_hover_text(graph : rx.PyGraph, browser_state: BrowserState, node_in
             hover_text += f"{keys}: {value} \n"
 
     return hover_text
+
+
+def update_plot_cytoscape(
+    browser_state: BrowserState,
+    G: ClusterState,
+    **plot_options
+):
+    """
+    Main function that updates the plot.
+    """
+
+    g = G.to_cytoscape()
+
+    raise NotImplementedError
+    return 

@@ -1,7 +1,8 @@
 
-from dash import dcc, html
+from dash import dcc, html, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
-from cluster_sim import ClusterState
+from cluster_sim.simulator import ClusterState
+from cluster_sim.app import BrowserState
 import dash_cytoscape as cyto
 from components import (
     move_log,
@@ -74,3 +75,25 @@ tab_ui_2d = html.Div(
     ]
 )
 
+@callback(
+    Output("figure-app", "elements"),
+    Input("draw-plot", "data"),
+    State("browser-data", "data"),
+    State("graph-data", "data"),
+)
+def draw_plot(draw_plot, browser_data, graphData):
+    """
+    Called when ever the plot needs to be drawn.
+    """
+
+    print(browser_data)
+
+    if browser_data is None:
+        return no_update
+
+    browser_state = BrowserState.from_json(browser_data)
+    G = ClusterState.from_json(graphData)
+
+    fig = update_plot_cytoscape(browser_state, G)
+    # Make sure the view/angle stays the same when updating the figure
+    return fig

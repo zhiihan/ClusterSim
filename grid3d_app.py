@@ -57,6 +57,13 @@ app.layout = html.Div(
             style={"height": "100vh"},
         ),
         dcc.Store(id="browser-data"),
+        dcc.Store(id="graph-data"),
+        dcc.Store(id="draw-plot"), # This is a dummy variable
+        html.Div(
+            id="none",
+            children=[],
+            style={"display": "none"},
+        ),
     ]
 )
 

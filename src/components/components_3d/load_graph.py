@@ -25,14 +25,6 @@ load_graph = dbc.Card(
             ),
             html.Hr(),
             dbc.Button("Load Graph", id="load-graph-button"),
-            # dcc.Store stores the intermediate value
-            dcc.Store(id="graph-data"),
-            dcc.Store(id="draw-plot"),
-            html.Div(
-                id="none",
-                children=[],
-                style={"display": "none"},
-            ),
         ]
     )
 )

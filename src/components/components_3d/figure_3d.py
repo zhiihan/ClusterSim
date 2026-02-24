@@ -1,4 +1,4 @@
-from cluster_sim.app import BrowserState, update_plot, grid_graph_3d
+from cluster_sim.app import BrowserState, update_plot_plotly, grid_graph_3d
 from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
@@ -26,7 +26,7 @@ def _init_state():
     browser_state = BrowserState()
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
 
-    return update_plot(browser_state, G)
+    return update_plot_plotly(browser_state, G)
 
 
 figure_3d = dcc.Graph(
@@ -123,7 +123,7 @@ def draw_plot(draw_plot, relayoutData, browser_data, graphData):
     s = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
 
-    fig = update_plot(s, G)
+    fig = update_plot_plotly(s, G)
     # Make sure the view/angle stays the same when updating the figure
     if "scene.camera" in relayoutData:
         fig.update_layout(scene_camera=s.camera_state["scene.camera"])
