@@ -15,21 +15,22 @@ import logging
 # Initialize the figure of the user's browsing section
 def _init_state():
     G = ClusterState(5)
+    
     for i in range(5):
         G.H(i)
 
+    for i in range(5):
+        G.CZ(i, (i+1)%5)
+
     cyto_data = G.to_cytoscape(export_elements=True)
-
     positions= [{'x': random.randint(0, 300), 'y': random.randint(0, 300)} for i in range(len(G))]
-
     cyto_data = postprocess_cyto_data_elements(cyto_data, positions)
-
     return cyto_data
     
 
 figure_2d = cyto.Cytoscape(
     id="figure-app", 
-    layout={"name": "random"}, 
+    layout={"name": "preset"}, 
     style={"width": "100%", "height": "100%"}, 
     stylesheet=[
         {
