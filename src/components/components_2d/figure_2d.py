@@ -1,30 +1,51 @@
-from dash import dcc, html, callback, Input, Output, State, no_update
+from dash import dcc, html, callback, Input, Output
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
-from cluster_sim.app import BrowserState, update_plot_cytoscape
 import dash_cytoscape as cyto
 from components import (
     move_log,
     plotoptions,
 )
-from components.components_2d import qubit_panel
+from components.components_2d import qubit_panel, postprocess_cyto_data_elements
 from typing import List, Dict, Any
+import random
 
 import logging
 
 # Initialize the figure of the user's browsing section
 def _init_state():
     G = ClusterState(5)
-    cyto_data = G.to_cytoscape()
+    for i in range(5):
+        G.H(i)
 
-    return cyto_data["elements"]
+    cyto_data = G.to_cytoscape(export_elements=True)
+
+    positions= [{'x': random.randint(0, 300), 'y': random.randint(0, 300)} for i in range(len(G))]
+
+    cyto_data = postprocess_cyto_data_elements(cyto_data, positions)
+
+    return cyto_data
     
 
 figure_2d = cyto.Cytoscape(
     id="figure-app", 
     layout={"name": "random"}, 
     style={"width": "100%", "height": "100%"}, 
-    elements=_init_state()
+    stylesheet=[
+        {
+            'selector': 'node',
+            'style': {
+                'label': 'data(vop)'
+            }
+        }],
+    elements= _init_state(),
+    selectedNodeData=[]
+)
+
+layout_dropdown = dcc.Dropdown(
+    ["random", "grid", "circle", "breadthfirst", "cose", "concentric", "preset"],
+    "preset",
+    id="graph_layout_dropdown",
 )
 
 tab_1 = dbc.Col(
@@ -43,6 +64,7 @@ tab_3 = dbc.Col(
 tab_5 = dbc.Col(
     [
         plotoptions,
+        layout_dropdown
     ]
 )
 
@@ -77,25 +99,6 @@ tab_ui_2d = html.Div(
     ]
 )
 
-@callback(
-    Output("figure-app", "elements"),
-    Input("draw-plot", "data"),
-    State("browser-data", "data"),
-    State("graph-data", "data"),
-)
-def draw_plot(draw_plot, browser_data, graphData):
-    """
-    Called when ever the plot needs to be drawn.
-    """
-    if browser_data is None:
-        return no_update
-
-    browser_state = BrowserState.from_json(browser_data)
-    G = ClusterState.from_json(graphData)
-
-    fig = update_plot_cytoscape(browser_state, G)
-    # Make sure the view/angle stays the same when updating the figure
-    return fig
 
 
 @callback(
@@ -107,5 +110,13 @@ def displaySelectedNodeData(data_list : List[Dict[str, Any]]):
     if not data_list:
         return "Click on the graph to select nodes, or SHIFT+click to select multiple nodes."
     else:
-        logging.debug(data_list)
+        logging.debug(f"Selected {[i["value"] for i in data_list]}")
         return f"Selected {[i["value"] for i in data_list]}"
+
+@callback(
+    Output("figure-app", "layout"),
+    Input("graph_layout_dropdown", "value"),
+    prevent_initial_call=True,
+)
+def update_layout(value):
+    return {"name": value}

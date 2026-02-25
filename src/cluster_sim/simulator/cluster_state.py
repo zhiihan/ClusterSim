@@ -241,16 +241,31 @@ class ClusterState:
 
         return g
 
-    def to_cytoscape(self):
+    def to_cytoscape(self, export_elements = False):
         """
         Export to cytoscape.
         """
-        graph = self.to_networkx()
-        cyto_data = nx.cytoscape_data(graph)
+        
+        # Subsequent calls to modify the elements in dash-cytoscape use a very specialized format
+        if export_elements:
+            graph = self.to_rustworkx()
+            cyto_data_elements = []
+            for node_index in graph.node_indices():
+                cyto_data_elements.append({'data': {'id': str(node_index), 'label': str(node_index), 'value': node_index, 'vop': self.vertex_operators[node_index]}})
 
-        # Processing so that labels show up properly
-        for i in cyto_data["elements"]["nodes"]:
-            i["data"]["label"] = i["data"].pop("name")
+            for edge_index in graph.edge_list():
+                cyto_data_elements.append({'data': {
+                        'source': str(edge_index[0]),
+                        'target': str(edge_index[1])}})
+
+            return cyto_data_elements
+        else:
+            graph = self.to_networkx()
+            cyto_data = nx.cytoscape_data(graph)
+
+            # Processing so that labels show up properly
+            for i in cyto_data["elements"]["nodes"]:
+                i["data"]["label"] = i["data"].pop("name")
 
         return cyto_data
 
@@ -259,10 +274,18 @@ class ClusterState:
         """
         Load a simulator from cytoscape.
         """
-        graph = nx.cytoscape_graph(data)
+        graph = rx.PyGraph()
 
-        G = cls.from_networkx(graph)
+        # This is the usual case when exporting from Networkx
+        for d in data['elements']['nodes']:
+            graph.add_node({'vop': d['data']['vop']})
+
+        for d in data['elements']['edges']:
+            graph.add_edge(int(d['data']['source']), int(d['data']['target']), None)
+
+        G = cls.from_rustworkx(graph)
         return G
+
 
     def draw(self, label_func=lambda node: str(node), **kwargs):
         g = self.to_rustworkx()

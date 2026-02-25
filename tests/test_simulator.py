@@ -56,3 +56,15 @@ def test_import_export_networkx():
 
     c2 = ClusterState.from_networkx(d)
     assert c == c2
+
+def test_import_export_cytoscape():
+    g = nx.grid_2d_graph(3, 2)
+
+    c = ClusterState.from_networkx(g)
+    c.H(0)
+    c.measure(4, basis='Y')
+    d = c.to_cytoscape()
+    c2 = ClusterState.from_cytoscape(d)
+    d2 = c2.to_cytoscape()
+    c3 = ClusterState.from_cytoscape(d2)
+    assert c3 == c2
