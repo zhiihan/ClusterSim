@@ -56,7 +56,12 @@ class ClusterState:
         self.simulator.X(qubit)
 
     def Y(self, qubit: int):
-        self.simulator.Y(qubit)
+        self.simulator.S(qubit)
+        self.simulator.S(qubit)
+        self.simulator.H(qubit)
+        self.simulator.S(qubit)
+        self.simulator.S(qubit)
+        self.simulator.H(qubit)
 
     def Z(self, qubit: int):
         self.simulator.Z(qubit)
