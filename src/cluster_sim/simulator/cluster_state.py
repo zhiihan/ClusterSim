@@ -97,6 +97,15 @@ class ClusterState:
         else:
             self.simulator.VOP(qubit, graphsim.LocCliffOp(vop))
 
+    def add_edge(self, qubit1, qubit2):
+        self.simulator.add_edge(qubit1, qubit2)
+
+    def remove_edge(self, qubit1, qubit2):
+        self.simulator.del_edge(qubit1, qubit2)
+
+    def toggle_edge(self, qubit1, qubit2):
+        self.simulator.toggle_edge(qubit1, qubit2)
+
     @classmethod
     def from_json(cls, json_data):
         """
