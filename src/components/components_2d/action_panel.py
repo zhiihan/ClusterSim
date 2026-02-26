@@ -1,11 +1,9 @@
-import pprint
 import itertools
 from cluster_sim import ClusterState
 from textwrap import dedent as d
 from dash import dcc, callback, Input, Output, State, no_update, callback_context
-import random
 import dash_bootstrap_components as dbc
-from typing import List, Dict, Any, Tuple
+from typing import Any
 
 qubit_panel = dbc.Card(
     dbc.CardBody(
@@ -34,8 +32,8 @@ qubit_panel = dbc.Card(
                             {"label": "Random measurement", "value": -1},
                         ],
                         placeholder="Force outcome 0 (default)",
-                        value=0
-                    )
+                        value=0,
+                    ),
                 ],
             ),
             dcc.Markdown(
@@ -110,14 +108,15 @@ button_operations = {
     "add-edge": ("add_edge", {}),
     "remove-edge": ("remove_edge", {}),
     "toggle-edge": ("toggle_edge", {}),
-    "add-node": ("add_node", {'vop': 'IA'}),
-    "remove-node": ("remove_node", {})
+    "add-node": ("add_node", {"vop": "IA"}),
+    "remove-node": ("remove_node", {}),
 }
 
 
 @callback(
     Output("ui", "children", allow_duplicate=True),
     Output("figure-app", "elements", allow_duplicate=True),
+    Output("simulator-representation", "children", allow_duplicate=True),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     State("force-measurement", "value"),
     State("figure-app", "selectedNodeData"),
@@ -135,15 +134,19 @@ def handle_buttons(*args):
         raise NotImplementedError
 
     method_name, method_args = button_operations[triggered_id]
-    if method_name == 'measure':
-        method_args['force'] = int(args[-3]) # Force measurement is equal to the selected
+    if method_name == "measure":
+        method_args["force"] = int(
+            args[-3]
+        )  # Force measurement is equal to the selected
 
     return apply_operation_wrapper(
         method_name, selected_node_data, cyto_data, **method_args
     )
 
 
-def apply_operation_wrapper(method_name : str, selected_node_data, cyto_data, **method_args):
+def apply_operation_wrapper(
+    method_name: str, selected_node_data, cyto_data, **method_args
+):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
     Args:
@@ -156,21 +159,23 @@ def apply_operation_wrapper(method_name : str, selected_node_data, cyto_data, **
     """
     selected_nodes = [i["value"] for i in selected_node_data]
 
-    if not selected_nodes and method_name != 'add_node':
-        return no_update, no_update
+    if not selected_nodes and method_name != "add_node":
+        return no_update, no_update, no_update
 
     cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
     g = ClusterState.from_cytoscape(cyto_data)
 
-    if method_name in ["CX", "CZ", "add_edge", "remove_edge", "toggle_edge"]:
+    if method_name in ["add_edge", "remove_edge", "toggle_edge"]:
+        for pair in itertools.combinations(selected_nodes, 2):
+            getattr(g, method_name)(*pair, **method_args)
+        ui = f"Applied {method_name} to {selected_nodes}"
+    elif method_name in ["CX", "CZ"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of gates!", no_update
-
+                return "Odd number of gates!", no_update, no_update
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
-
     elif method_name in ["X", "Y", "Z", "local_complementation", "H", "S"]:
         for i in selected_nodes:
             getattr(g, method_name)(i, **method_args)
@@ -182,19 +187,26 @@ def apply_operation_wrapper(method_name : str, selected_node_data, cyto_data, **
             outcomes.append(getattr(g, method_name)(i, **method_args))
 
         ui = f"Measured selected nodes {selected_nodes} with outcomes {outcomes}"
-    elif method_name in ['add_node']:
+    elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
-        ui = f'Added node {len(g) - 1}!'
-    elif method_name in ['remove_node']:
+        ui = f"Added node {len(g) - 1}!"
+    elif method_name in ["remove_node"]:
+        if len(g) == 1:
+            return "Cannot remove last node!", no_update, no_update
+
         getattr(g, method_name)(selected_nodes, **method_args)
-        ui = f'Removed nodes {selected_nodes} (currently only works for last index)!'
-        ## FIXME: cytoscape and the simulator are out of sync
-        ## I think only positions and labels need to be adjusted
+        ui = f"Removed nodes {selected_nodes} (currently only works for last index)!"
+
+        # When a node is removed, the positions need to be updated to adjust
+        new_positions = []
+        for cyto_index, pos in enumerate(positions):
+            if cyto_index not in selected_nodes:
+                new_positions.append(pos)
 
         cyto_data_new = g.to_cytoscape(export_elements=True)
-        cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
+        cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, new_positions)
 
-        pprint.pprint(cyto_data_new)
+        return ui, cyto_data_new, repr(g)
 
     else:
         raise NotImplementedError(f"Do not know {method_name}")
@@ -202,12 +214,12 @@ def apply_operation_wrapper(method_name : str, selected_node_data, cyto_data, **
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
-    return ui, cyto_data_new
+    return ui, cyto_data_new, repr(g)
 
 
 def preprocess_cyto_data_elements(
-    cyto_data: List[Dict[str, Any]],
-) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    cyto_data: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     nodes = []
     edges = []
     positions = []
@@ -228,7 +240,7 @@ def preprocess_cyto_data_elements(
 
 
 def postprocess_cyto_data_elements(
-    cyto_data: Dict[str, Any], positions: List[Dict[str, Any]]
+    cyto_data: dict[str, Any], positions: list[dict[str, Any]]
 ):
     for item, pos in zip(cyto_data, positions):
         if item.get("data"):

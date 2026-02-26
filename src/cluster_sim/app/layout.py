@@ -3,7 +3,6 @@ import numpy as np
 from cluster_sim.app import BrowserState
 from cluster_sim.simulator import ClusterState
 import plotly.graph_objects as go
-from typing import List, Tuple
 
 
 class Grid3D:
@@ -44,7 +43,7 @@ layouts = {"Grid3D": Grid3D}
 
 def update_plot_from_simulator(
     G: ClusterState, browser_state: BrowserState
-) -> List[go.Scatter3d]:
+) -> list[go.Scatter3d]:
     g = G.to_rustworkx(
         options={
             "stabilizer": browser_state.plot_options["stabilizer"],
@@ -84,7 +83,7 @@ def update_plot_from_simulator(
     return plot_data
 
 
-def update_plot_plotly(plot_data: List[go.Scatter3d], browser_state: BrowserState):
+def update_plot_plotly(plot_data: list[go.Scatter3d], browser_state: BrowserState):
     """
     Main function that updates the plot.
     """
@@ -103,7 +102,7 @@ def update_plot_plotly(plot_data: List[go.Scatter3d], browser_state: BrowserStat
 
 def rx_graph_to_plot(
     graph: rx.PyGraph, browser_state: BrowserState
-) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """
     Convert a rustworkx object to a plotly object.
     """

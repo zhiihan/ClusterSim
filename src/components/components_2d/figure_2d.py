@@ -1,4 +1,4 @@
-from dash import dcc, html, callback, Input, Output
+from dash import dcc, html, callback, Input, Output, State
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
@@ -30,7 +30,7 @@ def _init_state():
         for i in range(len(G))
     ]
     cyto_data = postprocess_cyto_data_elements(cyto_data, positions)
-    return cyto_data
+    return cyto_data, repr(G)
 
 
 figure_2d = cyto.Cytoscape(
@@ -38,7 +38,7 @@ figure_2d = cyto.Cytoscape(
     layout={"name": "preset"},
     style={"width": "100%", "height": "100%"},
     stylesheet=[{"selector": "node", "style": {"label": "data(vop)"}}],
-    elements=_init_state(),
+    elements=_init_state()[0],
     selectedNodeData=[],
 )
 
@@ -48,10 +48,34 @@ layout_dropdown = dcc.Dropdown(
     id="graph_layout_dropdown",
 )
 
+node_labels = dbc.Select(
+    id="node_labels",
+    options=[
+        {"label": "Value", "value": "data(value)"},
+        {"label": "ID", "value": "data(id)"},
+        {"label": "Label", "value": "data(label)"},
+        {"label": "VOP", "value": "data(vop)"},
+    ],
+    placeholder="Value",
+    value="data(value)",
+)
+
+
 tab_1 = dbc.Col(
     [
         qubit_panel,
-        # display_options
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    dcc.Markdown("**Simulator Representation**"),
+                    html.Pre(
+                        id="simulator-representation",
+                        style={"whiteSpace": "pre-wrap"},
+                        children=_init_state()[1],
+                    ),
+                ]
+            )
+        ),
     ],
 )
 
@@ -61,7 +85,33 @@ tab_3 = dbc.Col(
     ]
 )
 
-tab_5 = dbc.Col([plotoptions, layout_dropdown])
+tab_5 = dbc.Col(
+    [
+        plotoptions,
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    dcc.Markdown(
+                        d("""
+            **Select Layout**
+
+            Select the graph layout. Only preset doesn't change the graph after interaction.
+            """)
+                    ),
+                    layout_dropdown,
+                    dcc.Markdown(
+                        d("""
+            **Select Node Labels**
+
+            Select what should be displayed on top of each node.
+            """)
+                    ),
+                    node_labels,
+                ]
+            )
+        ),
+    ]
+)
 
 tab_6 = dbc.Col(
     [
@@ -110,25 +160,27 @@ tab_6 = dbc.Col(
 
 tab_ui_2d = html.Div(
     [
-        dbc.CardBody(
-            [
-                html.H2("Cluster Sim"),
-                dcc.Loading(
-                    dbc.Alert(
-                        "Click on the graph to measure nodes.",
-                        color="primary",
-                        id="ui",
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H2("Cluster Sim"),
+                    dcc.Loading(
+                        dbc.Alert(
+                            "Click on the graph to measure nodes.",
+                            color="primary",
+                            id="ui",
+                        ),
+                        delay_show=100,
+                        delay_hide=100,
+                        custom_spinner=dbc.Spinner(color="primary"),
                     ),
-                    delay_show=100,
-                    delay_hide=100,
-                    custom_spinner=dbc.Spinner(color="primary"),
-                ),
-            ]
+                ]
+            )
         ),
         html.Hr(),
         dbc.Tabs(
             [
-                dbc.Tab(tab_1, label="Measurements", tab_id="tab-1"),
+                dbc.Tab(tab_1, label="Operations", tab_id="tab-1"),
                 # dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Reset and Load", tab_id="tab-3"),
                 dbc.Tab(tab_5, label="Plot Options", tab_id="tab-5"),
@@ -166,10 +218,11 @@ def update_layout(value):
 @callback(
     Output("figure-app", "stylesheet"),
     Input("figure-app", "elements"),
+    Input("node_labels", "value"),
 )
-def update_stylesheet(_):
+def update_stylesheet(_, node_labels: str):
 
-    label_style = [{"selector": "node", "style": {"label": "data(vop)"}}]
+    label_style = [{"selector": "node", "style": {"label": node_labels}}]
 
     # Operators are applied from right to left. (right applied first)
     local_clifford = {
