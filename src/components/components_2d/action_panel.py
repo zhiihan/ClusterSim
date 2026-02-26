@@ -1,7 +1,8 @@
+from cffi.pkgconfig import call
 import itertools
 from cluster_sim import ClusterState
 from textwrap import dedent as d
-from dash import dcc, callback, Input, Output, State, no_update, callback_context
+from dash import dcc, callback, Input, Output, State, no_update, callback_context, html
 import dash_bootstrap_components as dbc
 from typing import Any
 
@@ -36,6 +37,7 @@ qubit_panel = dbc.Card(
                     ),
                 ],
             ),
+            html.Br(),
             dcc.Markdown(
                 d(
                     """
@@ -56,6 +58,7 @@ qubit_panel = dbc.Card(
                     dbc.Button("CZ", outline=True, color="primary", id="CZ"),
                 ]
             ),
+            html.Br(),
             dcc.Markdown(
                 d(
                     """
@@ -114,16 +117,20 @@ button_operations = {
 
 
 @callback(
-    Output("ui", "children", allow_duplicate=True),
+    Output("ui", "children"),
     Output("figure-app", "elements", allow_duplicate=True),
-    Output("simulator-representation", "children", allow_duplicate=True),
+    Output("simulator-representation", "children"),
+    Output("click-data", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     State("force-measurement", "value"),
+    State("click-data", "children"),
     State("figure-app", "selectedNodeData"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
+    log = args[-3]
+
     # The last two args are selectedNodeData and elements
     selected_node_data = args[-2]
     cyto_data = args[-1]
@@ -136,16 +143,21 @@ def handle_buttons(*args):
     method_name, method_args = button_operations[triggered_id]
     if method_name == "measure":
         method_args["force"] = int(
-            args[-3]
+            args[-4]
         )  # Force measurement is equal to the selected
 
+    selected_nodes = [i["value"] for i in selected_node_data]
+
+    if not selected_nodes and method_name != "add_node":
+        return no_update, no_update, no_update, no_update
+
     return apply_operation_wrapper(
-        method_name, selected_node_data, cyto_data, **method_args
+        method_name, selected_nodes, cyto_data, log, **method_args
     )
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_node_data, cyto_data, **method_args
+    method_name: str, selected_nodes : list[int], cyto_data, log, **method_args
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -157,10 +169,6 @@ def apply_operation_wrapper(
     Returns:
         _type_: processed cyto_data for use in figure-app.elements
     """
-    selected_nodes = [i["value"] for i in selected_node_data]
-
-    if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update
 
     cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
     g = ClusterState.from_cytoscape(cyto_data)
@@ -172,7 +180,7 @@ def apply_operation_wrapper(
     elif method_name in ["CX", "CZ"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of gates!", no_update, no_update
+                return "Odd number of gates!", no_update, no_update, no_update
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
@@ -192,7 +200,7 @@ def apply_operation_wrapper(
         ui = f"Added node {len(g) - 1}!"
     elif method_name in ["remove_node"]:
         if len(g) == 1:
-            return "Cannot remove last node!", no_update, no_update
+            return "Cannot remove last node!", no_update, no_update, no_update
 
         getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Removed nodes {selected_nodes} (currently only works for last index)!"
@@ -206,7 +214,9 @@ def apply_operation_wrapper(
         cyto_data_new = g.to_cytoscape(export_elements=True)
         cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, new_positions)
 
-        return ui, cyto_data_new, repr(g)
+        log += f"REMOVE_NODE {selected_nodes}\n"
+
+        return ui, cyto_data_new, repr(g), log
 
     else:
         raise NotImplementedError(f"Do not know {method_name}")
@@ -214,7 +224,17 @@ def apply_operation_wrapper(
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
-    return ui, cyto_data_new, repr(g)
+    if method_name == "measure":
+        log += f"M{method_args['basis']} {selected_nodes}\n"
+        log += f"# OUTCOME {outcomes}\n"
+    elif method_name == "local_complementation":
+        log += f"LC {selected_nodes}\n"
+    elif method_name == "add_node":
+        log += f"ADD_NODE [{len(g)-1}]\n"
+    else:
+        log += f"{method_name.upper()} {selected_nodes}\n"
+
+    return ui, cyto_data_new, repr(g), log
 
 
 def preprocess_cyto_data_elements(
@@ -249,3 +269,12 @@ def postprocess_cyto_data_elements(
         else:
             raise NotImplementedError("Unknown or no data")
     return cyto_data
+
+@callback(
+    Output("figure-app", "elements"),
+    Input("reset", "n_clicks"),
+    State("click-data", "children"),
+    prevent_initial_call=True,
+)
+def load_graph(_, log):
+    return no_update

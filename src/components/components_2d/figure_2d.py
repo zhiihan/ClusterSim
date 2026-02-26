@@ -80,8 +80,21 @@ tab_1 = dbc.Col(
 
 tab_3 = dbc.Col(
     [
+            dbc.Card(
+dbc.CardBody(
+                [
+            dbc.Input(type="text", id="load-graph", placeholder="Load a graph state"),
+            html.Br(),
+            dbc.Stack(
+                [
+                    dbc.Button("Load", id="reset"),
+                    dbc.Button("Undo", id="undo"),
+                ],
+        gap=3,
+        direction="horizontal",)
+    ])),
         move_log,
-    ]
+]
 )
 
 tab_5 = dbc.Col(

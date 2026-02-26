@@ -142,6 +142,12 @@ class ClusterState:
         self.simulator = ClusterState.from_rustworkx(new_graph).simulator
         self.num_nodes -= len(qubits)
 
+    def load_text(self, text):
+        
+
+        return 
+
+
     @classmethod
     def from_json(cls, json_data):
         """
