@@ -1,6 +1,6 @@
-import jsonpickle
 from dataclasses import dataclass, field
-from typing import Any, List, Dict
+from typing import Any, Optional, Dict
+import jsons
 
 
 @dataclass
@@ -11,22 +11,15 @@ class BrowserState:
     This class contains a local state of the web app, representing a persistent state on the user's local browsing section.
     """
 
-    xmax: int = 4
-    ymax: int = 4
-    zmax: int = 4
-    shape: tuple = (xmax, ymax, zmax)
-    p: float = 0.09
+    shape: tuple[int, int, int] = (5, 5, 5)
+    p_err: float = 0.09  # Probability of losing a qubit
+    layout: str = "Grid3D"
 
-    seed: None | int = None
+    seed: Optional[int] = None
     path_clicks: int = 0
 
-    lattice: dict[str, Any] = None
-    lattice_edges: dict[str, Any] = None
-    connected_cubes: dict[str, Any] = None
-
-    removed_nodes: List[int] = field(init=False)
-    log: List[Any] = field(default_factory=list)
-    move_list: List[Any] = field(default_factory=list)
+    removed_nodes: set[int] = field(default_factory=set)
+    log: str = ""
     camera_state: Dict[str, Any] = field(
         default_factory=lambda: {
             "scene.camera": {
@@ -41,8 +34,20 @@ class BrowserState:
     offset: tuple = (0, 0, 0)
     xoffset, yoffset, zoffset = offset
 
-    def __post_init__(self) -> None:
-        self.removed_nodes = [0] * (self.xmax * self.ymax * self.zmax)
+    plot_options: Dict[str, bool] = field(
+        default_factory=lambda: {
+            "stabilizer": False,
+            "coord": True,
+            "vop": True,
+            "index": True,
+            "neighbors": False,
+            "remove_isolated": True,
+        }
+    )
 
     def to_json(self):
-        return jsonpickle.encode(self)
+        return jsons.dumps(self)
+
+    @classmethod
+    def from_json(cls, json_str):
+        return jsons.loads(json_str, cls)

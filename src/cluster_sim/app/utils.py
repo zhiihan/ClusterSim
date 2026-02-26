@@ -1,250 +1,42 @@
-import numpy as np
-import plotly.graph_objects as go
-from plotly.io import from_json
-from numba import jit
+import rustworkx as rx
 
 
-@jit(nopython=True)
-def get_node_index(x: int, y: int, z: int, shape: tuple[int, int, int]) -> int:
+def grid_graph_3d(shape: tuple[int, int, int]):
+    """Generate a Grid graph in rustworkx
+
+    Args:
+        shape (tuple[int, int, int]): the shape
+
+    Returns:
+        _type_: rustworkx graph
     """
-    Get the index from the coordinates.
-
-    :param x: x coordinate
-    :type x: int
-    :param y: y coordinate
-    :type y: int
-    :param z: z coordinate
-    :type z: int
-    :param shape: the length, width, height of the grid
-    :type shape: tuple[int, int, int]
-    :return: the index
-    :rtype: int
-    """
-    return x + y * shape[0] + z * shape[1] * shape[0]
-
-
-@jit(nopython=True)
-def get_node_coords(index: int, shape: tuple[int, int, int]) -> tuple[int, int, int]:
-    """
-    Get node coordinates from the grid shape and index.
-
-    :param index: index
-    :type index: int
-    :param shape: the grid shape
-    :type shape: tuple[int, int, int]
-    :return: the x, y, z coordinates
-    :rtype: tuple[int, int, int]
-    """
-    index_x = index % shape[0]
-    index_y = (index // shape[0]) % shape[1]
-    index_z = (index // (shape[0] * shape[1])) % shape[2]
-    return (index_x, index_y, index_z)
-
-
-def nx_to_plot(graph, shape, index=True):
-    nodes = graph.nodes
-    edges = graph.edges
-    # we need to seperate the X,Y,Z coordinates for Plotly
-    # NOTE: g.node_coords is a dictionary where the keys are 1,...,6
-
-    x_nodes = []
-    y_nodes = []
-    z_nodes = []
-
-    # if we pass in the index
-    for j in nodes:
-        if index:
-            x, y, z = get_node_coords(j, shape)
-        else:
-            x = j[0]
-            y = j[1]
-            z = j[2]
-        x_nodes.append(x)  # x-coordinates of nodes
-        y_nodes.append(y)  # y-coordinates
-        z_nodes.append(z)  # z-coordinate
-
-    # we need to create lists that contain the starting and ending coordinates of each edge.
-    x_edges = []
-    y_edges = []
-    z_edges = []
-
-    # need to fill these with all of the coordinates
-    for edge in edges:
-        # format: [beginning,ending,None]
-        if index:
-            x1 = get_node_coords(edge[0], shape)
-            x2 = get_node_coords(edge[1], shape)
-        else:
-            x1 = edge[0]
-            x2 = edge[1]
-
-        x_coords = [x1[0], x2[0], None]
-        x_edges += x_coords
-
-        y_coords = [x1[1], x2[1], None]
-        y_edges += y_coords
-
-        z_coords = [x1[2], x2[2], None]
-        z_edges += z_coords
-
-    return [x_nodes, y_nodes, z_nodes], [x_edges, y_edges, z_edges]
-
-
-def path_to_plot(path, shape, index=True):
-    # we need to seperate the X,Y,Z coordinates for Plotly
-    # NOTE: g.node_coords is a dictionary where the keys are 1,...,6
-
-    x_nodes = []
-    y_nodes = []
-    z_nodes = []
-
-    # if we pass in the index
-    for j in path:
-        if index:
-            x, y, z = get_node_coords(j, shape)
-        else:
-            x = j[0]
-            y = j[1]
-            z = j[2]
-        x_nodes.append(x)  # x-coordinates of nodes
-        y_nodes.append(y)  # y-coordinates
-        z_nodes.append(z)  # z-coordinate
-
-    # we need to create lists that contain the starting and ending coordinates of each edge.
-    x_edges = []
-    y_edges = []
-    z_edges = []
-
-    edges = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
-
-    # need to fill these with all of the coordinates
-    for edge in edges:
-        # format: [beginning,ending,None]
-        if index:
-            x1 = get_node_coords(edge[0], shape)
-            x2 = get_node_coords(edge[1], shape)
-        else:
-            x1 = edge[0]
-            x2 = edge[1]
-
-        x_coords = [x1[0], x2[0], None]
-        x_edges += x_coords
-
-        y_coords = [x1[1], x2[1], None]
-        y_edges += y_coords
-
-        z_coords = [x1[2], x2[2], None]
-        z_edges += z_coords
-
-    return [x_nodes, y_nodes, z_nodes], [x_edges, y_edges, z_edges]
-
-
-@jit(nopython=True)
-def taxicab_metric(x1: np.ndarray, x2: np.ndarray) -> float:
-    return np.sum(np.abs(x1 - x2))
-
-
-def update_plot(s, g, d, plotoptions=["Qubits", "Holes", "Lattice"]):
-    """
-    Main function that updates the plot.
-    """
-
-    gnx = g.graph
-    hnx = d.graph
-
-    for i, value in enumerate(s.removed_nodes):
-        if value == True:
-            gnx.remove_node(i)
-
-    g_nodes, g_edges = nx_to_plot(gnx, s.shape)
-    h_nodes, h_edges = nx_to_plot(hnx, s.shape)
-    # x_removed_nodes = [g.node_coords[j][0] for j in removed_nodes]
-    # y_removed_nodes = [g.node_coords[j][1] for j in removed_nodes]
-    # z_removed_nodes = [g.node_coords[j][2] for j in removed_nodes]
-
-    # create a trace for the edges
-    trace_edges = go.Scatter3d(
-        x=g_edges[0],
-        y=g_edges[1],
-        z=g_edges[2],
-        mode="lines",
-        line=dict(color="black", width=2),
-        hoverinfo="none",
+    Lx, Ly, Lz = shape
+    G = rx.PyGraph()
+    G.add_nodes_from(
+        [(i, j, k) for k in range(Lz) for j in range(Ly) for i in range(Lx)]
     )
-
-    # create a trace for the nodes
-    trace_nodes = go.Scatter3d(
-        x=g_nodes[0],
-        y=g_nodes[1],
-        z=g_nodes[2],
-        mode="markers",
-        marker=dict(symbol="circle", size=10, color="skyblue"),
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, (i + 1) + j * Lx + k * Lx * Ly, None)
+            for k in range(Lz)
+            for j in range(Ly)
+            for i in range(Lx - 1)
+        ]
     )
-
-    trace_holes = go.Scatter3d(
-        x=h_nodes[0],
-        y=h_nodes[1],
-        z=h_nodes[2],
-        mode="markers",
-        marker=dict(symbol="circle", size=10, color="green"),
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, i + (j + 1) * Lx + k * Lx * Ly, None)
+            for k in range(Lz)
+            for j in range(Ly - 1)
+            for i in range(Lx)
+        ]
     )
-
-    trace_holes_edges = go.Scatter3d(
-        x=h_edges[0],
-        y=h_edges[1],
-        z=h_edges[2],
-        mode="lines",
-        line=dict(color="forestgreen", width=2),
-        hoverinfo="none",
+    G.add_edges_from(
+        [
+            (i + j * Lx + k * Lx * Ly, i + j * Lx + (k + 1) * Lx * Ly, None)
+            for k in range(Lz - 1)
+            for j in range(Ly)
+            for i in range(Lx)
+        ]
     )
-
-    if "Qubits" in plotoptions:
-        trace_nodes.visible = True
-        trace_edges.visible = True
-    else:
-        trace_nodes.visible = "legendonly"
-        trace_edges.visible = "legendonly"
-
-    if "Holes" in plotoptions:
-        trace_holes.visible = True
-        trace_holes_edges.visible = True
-    else:
-        trace_holes.visible = "legendonly"
-        trace_holes_edges.visible = "legendonly"
-
-    # Include the traces we want to plot and create a figure
-    data = [trace_nodes, trace_edges, trace_holes, trace_holes_edges]
-    if s.lattice:
-        lattice_nodes = go.Scatter3d(
-            from_json(s.lattice_edges).data[0],
-            mode="markers",
-            line=dict(color="blue", width=2),
-            hoverinfo="none",
-        )
-        if "Lattice" in plotoptions:
-            lattice_nodes.visible = True
-        else:
-            lattice_nodes.visible = "legendonly"
-        data.append(lattice_nodes)
-    if s.lattice_edges:
-        lattice_edges = go.Scatter3d(
-            from_json(s.lattice_edges).data[0],
-            mode="lines",
-            line=dict(color="blue", width=2),
-            hoverinfo="none",
-        )
-        if "Lattice" in plotoptions:
-            lattice_edges.visible = True
-        else:
-            lattice_edges.visible = "legendonly"
-        data.append(lattice_edges)
-
-    fig = go.Figure(data=data)
-    # fig.layout.height = 600
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=0, b=0),
-        # autosize=True,
-        scene_camera=s.camera_state["scene.camera"],
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-    )
-    return fig
+    return G

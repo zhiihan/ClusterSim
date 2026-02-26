@@ -1,10 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
-from cluster_sim.app import BrowserState
-from cluster_sim.simulator import ClusterState, NetworkXState
-import networkx as nx
-
-import numpy as np
+from cluster_sim.app import BrowserState, grid_graph_3d
+from cluster_sim.simulator import ClusterState
 import dash_bootstrap_components as dbc
 
 reset_graph = dbc.Card(
@@ -24,7 +21,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -36,7 +33,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -48,7 +45,7 @@ reset_graph = dbc.Card(
                 min=1,
                 max=16,
                 step=1,
-                value=4,
+                value=5,
                 tooltip={
                     "placement": "bottom",
                 },
@@ -75,7 +72,6 @@ reset_graph = dbc.Card(
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
     Input("reset", "n_clicks"),
     State("xmax", "value"),
     State("ymax", "value"),
@@ -86,20 +82,17 @@ def reset_grid(n_clicks, xslider, yslider, zslider):
     """
     Reset the grid.
     """
-    s = BrowserState()
-    s.xmax = int(xslider)
-    s.ymax = int(yslider)
-    s.zmax = int(zslider)
-    s.shape = [s.xmax, s.ymax, s.zmax]
-    s.removed_nodes = np.zeros(s.xmax * s.ymax * s.zmax, dtype=bool)
-    G = ClusterState(nx.grid_graph(s.shape))
-    D = NetworkXState(nx.Graph())
+    browser_state = BrowserState()
+    browser_state.shape = (int(xslider), int(yslider), int(zslider))
+    browser_state.removed_nodes = set()
+
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
+
     # Make sure the view/angle stays the same when updating the figure
     return (
         1,
-        s.log,
-        "Created grid of shape {}".format(s.shape),
-        s.to_json(),
+        browser_state.log,
+        "Created grid of shape {}".format(browser_state.shape),
+        browser_state.to_json(),
         G.to_json(),
-        D.to_json(),
     )

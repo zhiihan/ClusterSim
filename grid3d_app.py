@@ -1,14 +1,9 @@
-from cluster_sim.app import BrowserState, get_node_index, get_node_coords
-from dash import html, Input, Output, State, no_update, Dash
+from cluster_sim.app import BrowserState, grid_graph_3d, layouts
+from dash import html, Input, Output, State, no_update, Dash, dcc
 import time
-import jsonpickle
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
-from components import (
-    figure,
-    tab_ui,
-)
-from cluster_sim.simulator import ClusterState, NetworkXState
-import networkx as nx
+from components.components_3d import figure_3d, tab_ui_3d
+from cluster_sim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
 import logging
@@ -38,7 +33,7 @@ app.layout = html.Div(
                 Panel(
                     id="resize_figure",
                     children=[
-                        figure,
+                        figure_3d,
                     ],
                 ),
                 PanelResizeHandle(
@@ -52,13 +47,21 @@ app.layout = html.Div(
                 ),
                 Panel(
                     id="resize_info",
-                    children=tab_ui,
+                    children=tab_ui_3d,
                     style={"overflowY": "scroll"},
                 ),
             ],
             direction="horizontal",
             style={"height": "100vh"},
-        )
+        ),
+        dcc.Store(id="browser-data"),
+        dcc.Store(id="graph-data"),
+        dcc.Store(id="draw-plot"),  # This is a dummy variable
+        html.Div(
+            id="none",
+            children=[],
+            style={"display": "none"},
+        ),
     ]
 )
 
@@ -66,18 +69,17 @@ app.layout = html.Div(
 @app.callback(
     Output("browser-data", "data"),
     Output("graph-data", "data"),
-    Output("holes-data", "data"),
     Input("none", "children"),
 )
 def initial_call(dummy):
     """
     Initialize the graph in the browser as a JSON object.
     """
-    s = BrowserState()
-    G = ClusterState(nx.grid_graph(s.shape))
-    D = NetworkXState(nx.Graph())
+    browser_state = BrowserState()
 
-    return s.to_json(), G.to_json(), D.to_json()
+    G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
+
+    return browser_state.to_json(), G.to_json()
 
 
 @app.callback(
@@ -86,25 +88,22 @@ def initial_call(dummy):
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     Output("graph-data", "data", allow_duplicate=True),
-    Output("holes-data", "data", allow_duplicate=True),
-    Input("basic-interactions", "clickData"),
+    Input("figure-app", "clickData"),
     State("radio-items", "value"),
     State("click-data", "children"),
-    State("basic-interactions", "hoverData"),
+    State("figure-app", "hoverData"),
     State("browser-data", "data"),
     State("graph-data", "data"),
-    State("holes-data", "data"),
     prevent_initial_call=True,
 )
-def display_click_data(
-    clickData, measurementChoice, clickLog, hoverData, browser_data, graphData, holeData
+def measure_qubit(
+    clickData, measurementChoice, clickLog, hoverData, browser_data, graphData
 ):
     """
     Updates the browser state if there is a click.
     """
     if not clickData:
         return (
-            no_update,
             no_update,
             no_update,
             no_update,
@@ -121,37 +120,34 @@ def display_click_data(
             no_update,
             no_update,
             no_update,
-            no_update,
         )
     else:
-        s = jsonpickle.decode(browser_data)
+        browser_state = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
-        D = NetworkXState.from_json(holeData)
 
-        i = get_node_index(point["x"], point["y"], point["z"], s.shape)
+        layout = layouts[browser_state.layout](browser_state=browser_state)
+
+        i = layout.get_node_index(point["x"], point["y"], point["z"])
 
         # Click is local complementation
         if measurementChoice == "LC":
-            G.lc(i)
-            ui = f"Applied local complementation to {get_node_coords(i, s.shape)}"
-        # Click is qubit measurement
-        elif measurementChoice == "Erasure":
-            D.add_node(i)
-            measurementChoice = "Z"  # Handle it as if it was Z measurement
+            G.local_complementation(i)
+            ui = f"Applied local complementation to {layout.get_node_coords(i)}"
+        if measurementChoice in ["X", "Y", "Z"] and (
+            i not in browser_state.removed_nodes
+        ):
+            browser_state.removed_nodes.add(i)
+            G.measure(i, basis=measurementChoice)
+            ui = f"Measured {layout.get_node_coords(i)} with {measurementChoice}"
+        else:
+            ui = "Qubit already measured!"
+            return no_update, no_update, ui, no_update, no_update
 
-        if measurementChoice in ["X", "Y", "Z"] and not s.removed_nodes[i]:
-            s.removed_nodes[i] = True
-            G.measure(i, measurementChoice)
-            ui = f"Measured {get_node_coords(i, s.shape)} with {measurementChoice}"
-
-        s.move_list.append([get_node_coords(i, s.shape), measurementChoice])
-        s.log.append(f"{get_node_coords(i, s.shape)}, {measurementChoice}; ")
-        s.log.append(html.Br())
-
+        browser_state.log += f"{layout.get_node_coords(i)}, {measurementChoice};\n"
         # This solves the double click issue
         time.sleep(0.1)
-        return html.P(s.log), i, ui, s.to_json(), G.to_json(), D.to_json()
+        return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
