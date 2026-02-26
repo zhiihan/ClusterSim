@@ -1,3 +1,5 @@
+from typing import Iterable
+from fontTools.otlLib.optimize.gpos import Cluster
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
@@ -111,6 +113,36 @@ class ClusterState:
 
     def toggle_edge(self, qubit1, qubit2):
         self.simulator.toggle_edge(qubit1, qubit2)
+
+    def add_node(self, vop : str = 'YC'):        
+        
+        graph = self.to_rustworkx()
+        graph.add_node({"id": self.num_nodes + 1, "vop": vop})
+        
+        self.simulator = ClusterState.from_rustworkx(graph).simulator
+        self.num_nodes += 1
+
+    def remove_node(self, qubits : int | Iterable[int]):
+        graph = self.to_rustworkx()
+
+        if isinstance(qubits, int):
+            qubits = [qubits]
+
+        graph.remove_nodes_from(qubits)
+
+        index_map = {}
+        new_graph = rx.PyGraph()
+        for old_index in graph.node_indices():
+            new_index = new_graph.add_node(graph[old_index])
+
+            new_graph[new_index]['id'] = new_index
+            index_map[old_index] = new_index
+
+        for u, v in graph.edge_list():
+            new_graph.add_edge(index_map[u], index_map[v], None)
+    
+        self.simulator = ClusterState.from_rustworkx(new_graph).simulator
+        self.num_nodes -= 1
 
     @classmethod
     def from_json(cls, json_data):

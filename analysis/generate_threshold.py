@@ -5,16 +5,16 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-SEED = 1
+SEED = None
 random.seed(SEED)
 
 # n_target_shape = (3, 3, 3)
 n_target_cubes = 27
 
 shapes = []
-p_err_array = np.linspace(0, 0.12, 13)
+p_err_array = np.linspace(0, 0.1, 10)
 
-n_samples = 3
+n_samples = 40
 
 size_array = np.arange(0, 30, 2)
 

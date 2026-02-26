@@ -1,8 +1,9 @@
+import pprint
 import itertools
 from cluster_sim import ClusterState
 from textwrap import dedent as d
 from dash import dcc, callback, Input, Output, State, no_update, callback_context
-
+import random
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any, Tuple
 
@@ -14,7 +15,9 @@ qubit_panel = dbc.Card(
                     """
                 **Select Measurement Basis**
 
-                Click points in the graph, then press the button to measure.
+                Click points in the graph, then press the button to measure. 
+                
+                Forcing measurement only applies if the state is 50/50.
                 """
                 )
             ),
@@ -23,6 +26,16 @@ qubit_panel = dbc.Card(
                     dbc.Button("MZ", outline=True, color="primary", id="MZ"),
                     dbc.Button("MY", outline=True, color="primary", id="MY"),
                     dbc.Button("MX", outline=True, color="primary", id="MX"),
+                    dbc.Select(
+                        id="force-measurement",
+                        options=[
+                            {"label": "Force outcome 0 (default)", "value": 0},
+                            {"label": "Force outcome 1", "value": 1},
+                            {"label": "Random measurement", "value": -1},
+                        ],
+                        placeholder="Force outcome 0 (default)",
+                        value=0
+                    )
                 ],
             ),
             dcc.Markdown(
@@ -56,6 +69,12 @@ qubit_panel = dbc.Card(
             ),
             dbc.ButtonGroup(
                 [
+                    dbc.Button(
+                        "Add Node", outline=True, color="primary", id="add-node"
+                    ),
+                    dbc.Button(
+                        "Remove Node", outline=True, color="primary", id="remove-node"
+                    ),
                     dbc.Button(
                         "Add Edge", outline=True, color="primary", id="add-edge"
                     ),
@@ -91,6 +110,8 @@ button_operations = {
     "add-edge": ("add_edge", {}),
     "remove-edge": ("remove_edge", {}),
     "toggle-edge": ("toggle_edge", {}),
+    "add-node": ("add_node", {'vop': 'IA'}),
+    "remove-node": ("remove_node", {})
 }
 
 
@@ -98,6 +119,7 @@ button_operations = {
     Output("ui", "children", allow_duplicate=True),
     Output("figure-app", "elements", allow_duplicate=True),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
+    State("force-measurement", "value"),
     State("figure-app", "selectedNodeData"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
@@ -112,18 +134,20 @@ def handle_buttons(*args):
     if not triggered_id or triggered_id not in button_operations:
         raise NotImplementedError
 
-    operation, method_args = button_operations[triggered_id]
+    method_name, method_args = button_operations[triggered_id]
+    if method_name == 'measure':
+        method_args['force'] = int(args[-3]) # Force measurement is equal to the selected
 
     return apply_operation_wrapper(
-        operation, selected_node_data, cyto_data, **method_args
+        method_name, selected_node_data, cyto_data, **method_args
     )
 
 
-def apply_operation_wrapper(method_name, selected_node_data, cyto_data, **method_args):
+def apply_operation_wrapper(method_name : str, selected_node_data, cyto_data, **method_args):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
     Args:
-        operation_name (_type_): ClusterState.method_name
+        operation_name (str): ClusterState.method_name
         selected_node_data (_type_): selected_node_data
         cyto_data (_type_): cyto_data directly from figure-app.elements
 
@@ -132,7 +156,7 @@ def apply_operation_wrapper(method_name, selected_node_data, cyto_data, **method
     """
     selected_nodes = [i["value"] for i in selected_node_data]
 
-    if not selected_nodes:
+    if not selected_nodes and method_name != 'add_node':
         return no_update, no_update
 
     cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
@@ -158,6 +182,20 @@ def apply_operation_wrapper(method_name, selected_node_data, cyto_data, **method
             outcomes.append(getattr(g, method_name)(i, **method_args))
 
         ui = f"Measured selected nodes {selected_nodes} with outcomes {outcomes}"
+    elif method_name in ['add_node']:
+        getattr(g, method_name)(**method_args)
+        ui = f'Added node {len(g) - 1}!'
+    elif method_name in ['remove_node']:
+        getattr(g, method_name)(selected_nodes, **method_args)
+        ui = f'Removed nodes {selected_nodes} (currently only works for last index)!'
+        ## FIXME: cytoscape and the simulator are out of sync
+        ## I think only positions and labels need to be adjusted
+
+        cyto_data_new = g.to_cytoscape(export_elements=True)
+        cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
+
+        pprint.pprint(cyto_data_new)
+
     else:
         raise NotImplementedError(f"Do not know {method_name}")
 
