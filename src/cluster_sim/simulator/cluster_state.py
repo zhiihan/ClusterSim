@@ -3,7 +3,6 @@ import graphsim
 import rustworkx as rx
 import networkx as nx
 import re
-import json
 import itertools
 
 
@@ -151,34 +150,31 @@ class ClusterState:
         Create a cluster state from a text-based representation of operations.
         """
 
-        lines = [
-            line.strip()
-            for line in text.strip().splitlines()
-            if line.strip() and not line.strip().startswith("#")
-        ]
+        lines = []
+        for line in text.strip().splitlines():
+            line = line.split("#", 1)[0].strip()
+            if line:
+                lines.append(line)
 
-        if not lines:
+        full_text = " ".join(lines)
+
+        if not full_text:
             raise ValueError("Cannot construct ClusterState from empty text.")
 
         parsed_ops = []
         max_qubit = -1
         add_node_count = 0
 
-        # ---------- First pass: parse & size ----------
-        for line in lines:
-            parts = line.split(maxsplit=1)
-            op_name = parts[0].upper()
+        # Regex to find commands: NAME followed optionally by [numbers]
+        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[([^\]]*)\])?")
+
+        for match in pattern.finditer(full_text):
+            op_name = match.group(1).upper()
+            args_str = match.group(2)
 
             qubits = []
-            if len(parts) > 1:
-                match = re.search(r"\[(.*?)\]", parts[1])
-                if match:
-                    content = match.group(1).strip()
-                    if content:
-                        qubits = json.loads(f"[{content}]")
-
-            if not all(isinstance(q, int) for q in qubits):
-                raise ValueError(f"Invalid qubit list in line: {line}")
+            if args_str:
+                qubits = [int(x.strip()) for x in args_str.split(',') if x.strip()]
 
             if op_name == "ADD_NODE" and not qubits:
                 add_node_count += 1
@@ -197,11 +193,9 @@ class ClusterState:
         # ---------- Second pass: apply ops ----------
         for op_name, qubits in parsed_ops:
 
-            if op_name == "ADD_NODE" and not qubits:
-                new_state.add_node()
-
-            elif op_name == "ADD_NODE":
-                pass  # already ensured
+            if op_name == "ADD_NODE":
+                for i in qubits:
+                    new_state.add_node()
 
             elif op_name == "REMOVE_NODE":
                 for q in sorted(qubits, reverse=True):
