@@ -9,7 +9,6 @@ import rustworkx as rx
 import dash_bootstrap_components as dbc
 from .holes_rx import (
     find_lattice,
-    find_max_connected_lattice,
     build_centers_graph,
     connected_cube_to_nodes,
 )
@@ -124,7 +123,7 @@ def find_unit_cells(
         click_number = nclicks % (len(connected_cubes))
         X = connected_cube_to_nodes(connected_cubes[click_number])
 
-        ui = f"FindCluster: Displaying {click_number + 1}/{len(connected_cubes)}"
+        ui = f"FindCluster: Displaying {click_number + 1}/{len(connected_cubes)}"  # noqa: F841
     elif select_cubes == "Select All Connected Cubes":
         pass
 

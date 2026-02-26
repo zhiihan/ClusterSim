@@ -1,4 +1,4 @@
-from dash import dcc, html, callback, Input, Output, State
+from dash import dcc, html, callback, Input, Output
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
@@ -223,7 +223,7 @@ def update_stylesheet(_, node_labels: str):
     label_style = [{"selector": "node", "style": {"label": node_labels}}]
 
     # Operators are applied from right to left. (right applied first)
-    local_clifford = {
+    local_clifford = {  # noqa: F841
         "IA": "I",
         "XA": "X",  # HSSH
         "YA": "Y",  # SSHSSH

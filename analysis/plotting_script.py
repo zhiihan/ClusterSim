@@ -1,13 +1,11 @@
 import rustworkx as rx
 from cluster_sim.app import (
     rx_graph_to_plot,
-    grid_graph_3d,
     Grid3D,
     BrowserState,
     update_plot_plotly,
 )
 import plotly.graph_objects as go
-from cluster_sim import ClusterState
 from algorithms import find_lattice, connected_cube_to_nodes, build_centers_graph
 import random
 import numpy as np

@@ -1,4 +1,3 @@
-import pytest
 from cluster_sim.simulator import ClusterState
 import rustworkx as rx
 import networkx as nx
