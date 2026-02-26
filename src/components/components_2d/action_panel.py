@@ -271,10 +271,16 @@ def postprocess_cyto_data_elements(
     return cyto_data
 
 @callback(
-    Output("figure-app", "elements"),
+    Output("figure-app", "elements", allow_duplicate=True),
     Input("reset", "n_clicks"),
-    State("click-data", "children"),
+    State("load-graph", "value"),
     prevent_initial_call=True,
 )
-def load_graph(_, log):
-    return no_update
+def load_graph(_, log : str):
+    if not log:
+        return no_update
+    print(log)
+    g = ClusterState.load_text(log)
+    cyto_data_new = g.to_cytoscape(export_elements=True)
+
+    return cyto_data_new
