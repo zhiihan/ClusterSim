@@ -1,11 +1,10 @@
 import itertools
-from cycler import L
 from cluster_sim import ClusterState
 from textwrap import dedent as d
-from dash import dcc, callback, Input, Output, State, no_update, html
+from dash import dcc, callback, Input, Output, State, no_update, callback_context
+
 import dash_bootstrap_components as dbc
 from typing import List, Dict, Any, Tuple
-import pprint
 
 qubit_panel = dbc.Card(
     dbc.CardBody(
@@ -67,175 +66,46 @@ qubit_panel = dbc.Card(
     )
 )
 
+button_operations = {
+    # measure buttons with basis
+    "MX": ("measure", {"force": 0, "basis": "X"}),
+    "MY": ("measure", {"force": 0, "basis": "Y"}),
+    "MZ": ("measure", {"force": 0, "basis": "Z"}),
+
+    # simple operations with no extra args
+    "LC": ("local_complementation", {}),
+    "X": ("X", {}),
+    "Y": ("Y", {}),
+    "Z": ("Z", {}),
+    "H": ("H", {}),
+    "S": ("S", {}),
+    "CX": ("CX", {}),
+    "CZ": ("CZ", {}),
+    "add-edge": ("add_edge", {}),
+    "remove-edge": ("remove_edge", {}),
+    "toggle-edge": ("toggle_edge", {}),
+}
 @callback(
     Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("MZ", "n_clicks"),
+    Output("figure-app", "elements", allow_duplicate=True),
+    *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
+    State("figure-app", "elements"),
     prevent_initial_call=True,
 )
-def MZ(n_clicks, selected_node_data, cyto_data):
-    method_args = {'force': 0, 'basis' : 'Z'}
-    return apply_operation_wrapper('measure', selected_node_data, cyto_data, **method_args)
+def handle_buttons(*args):
+    # The last two args are selectedNodeData and elements
+    selected_node_data = args[-2]
+    cyto_data = args[-1]
 
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("MY", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def MY(n_clicks, selected_node_data, cyto_data):
-    method_args = {'force': 0, 'basis' : 'Y'}
-    return apply_operation_wrapper('measure', selected_node_data, cyto_data, **method_args)
+    # Determine which button triggered the callback
+    triggered_id = callback_context.triggered_id
+    if not triggered_id or triggered_id not in button_operations:
+        raise NotImplementedError
 
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("MX", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def MX(n_clicks, selected_node_data, cyto_data):
-    method_args = {'force': 0, 'basis' : 'X'}
-    return apply_operation_wrapper('measure', selected_node_data, cyto_data, **method_args)
+    operation, method_args = button_operations[triggered_id]
 
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("LC", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def LC(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('local_complementation', selected_node_data, cyto_data, **method_args)
-
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("X", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def X(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('X', selected_node_data, cyto_data, **method_args)
-
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("Y", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def Y(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('Y', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("Z", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def Z(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('Z', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("H", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def H(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('H', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("S", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def S(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('S', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("CX", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def CX(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('CX', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("CZ", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def CZ(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('CZ', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("add-edge", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def add_edge(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('add_edge', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("remove-edge", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def remove_edge(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('remove_edge', selected_node_data, cyto_data, **method_args)
-
-@callback(
-    Output("ui", "children", allow_duplicate=True),
-    Output('figure-app', component_property="elements", allow_duplicate=True),
-    Input("toggle-edge", "n_clicks"),
-    State("figure-app", "selectedNodeData"),
-    State('figure-app', component_property="elements"),
-    prevent_initial_call=True,
-)
-def toggle_edge(n_clicks, selected_node_data, cyto_data):
-    method_args = {}
-    return apply_operation_wrapper('toggle_edge', selected_node_data, cyto_data, **method_args)
+    return apply_operation_wrapper(operation, selected_node_data, cyto_data, **method_args)
 
 def apply_operation_wrapper(method_name, selected_node_data, cyto_data, **method_args):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.

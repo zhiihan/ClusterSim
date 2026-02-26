@@ -1,4 +1,5 @@
 from dash import dcc, html, callback, Input, Output
+from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
 import dash_cytoscape as cyto
@@ -69,6 +70,48 @@ tab_5 = dbc.Col(
     ]
 )
 
+tab_6 = dbc.Col(
+    [
+        dbc.Card(
+    dbc.CardBody(dcc.Markdown(
+                                d("""
+                    **Local Clifford**
+
+                    Local Clifford gates have the following decomposition:
+
+                        ```
+                        local_clifford = {
+                            'IA': 'I',
+                            'XA': 'X', # HSSH
+                            'YA': 'Y', # SSHSSH
+                            'ZA': 'Z', # SS
+                            'IB': 'HSSHS', 
+                            'XB': 'SSS',
+                            'YB': 'S',
+                            'ZB': 'HSSHSS',
+                            'IC': 'HSSHSSH',
+                            'XC': 'HSS',
+                            'YC': 'H',
+                            'ZC': 'SSH',
+                            'ID': 'SSSHS',
+                            'XD': 'SSHSH',
+                            'YD': 'SHS',
+                            'ZD': 'HSH',
+                            'IE': 'SHSH',
+                            'XE': 'SSHS',
+                            'YE': 'SSSHSH',
+                            'ZE': 'HS',
+                            'IF': 'SH',
+                            'YF': 'SHSSHSSH',
+                            'XF': 'SSSH',
+                            'ZF': 'SHSS',
+                        }
+                        ```
+                        """)
+        )))
+    ]
+)
+
 tab_ui_2d = html.Div(
     [
         dbc.CardBody(
@@ -93,6 +136,7 @@ tab_ui_2d = html.Div(
                 # dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Reset and Load", tab_id="tab-3"),
                 dbc.Tab(tab_5, label="Plot Options", tab_id="tab-5"),
+                dbc.Tab(tab_6, label="Information", tab_id="tab-6"),
             ],
             id="tabs",
             active_tab="tab-1",
@@ -121,3 +165,99 @@ def displaySelectedNodeData(data_list : List[Dict[str, Any]]):
 )
 def update_layout(value):
     return {"name": value}
+
+
+
+@callback(
+    Output("figure-app", "stylesheet"),
+    Input("figure-app", "elements"),
+)
+def update_stylesheet(_):
+    
+    label_style  = [{
+        'selector': 'node',
+        'style': {
+            'label': 'data(vop)'
+        }
+    }]
+
+    # Operators are applied from right to left. (right applied first)
+    local_clifford = {
+        'IA': 'I',
+        'XA': 'X', # HSSH
+        'YA': 'Y', # SSHSSH
+        'ZA': 'Z', # SS
+        'IB': 'HSSHS', 
+        'XB': 'SSS',
+        'YB': 'S',
+        'ZB': 'HSSHSS',
+        'IC': 'HSSHSSH',
+        'XC': 'HSS',
+        'YC': 'H',
+        'ZC': 'SSH',
+        'ID': 'SSSHS',
+        'XD': 'SSHSH',
+        'YD': 'SHS',
+        'ZD': 'HSH',
+        'IE': 'SHSH',
+        'XE': 'SSHS',
+        'YE': 'SSSHSH',
+        'ZE': 'HS',
+        'IF': 'SH',
+        'YF': 'SHSSHSSH',
+        'XF': 'SSSH',
+        'ZF': 'SHSS',
+    }
+
+    color_palette = {
+        "IA": "#93C5FD",
+        "IB": "#60A5FA",
+        "IC": "#3B82F6",
+        "ID": "#2563EB",
+        "IE": "#1D4ED8",
+        "IF": "#1F3A8A",
+
+        "XA": "#6EE7B7",
+        "XB": "#34D399",
+        "XC": "#10B981",
+        "XD": "#059669",
+        "XE": "#166534",
+        "XF": "#14532D",
+
+        "YA": "#FCD34D",
+        "YB": "#FBBF24",
+        "YC": "#F59E0B",
+        "YD": "#EA580C",
+        "YE": "#C2410C",
+        "YF": "#9A3412",
+
+        "ZA": "#DDD6FE",
+        "ZB": "#C084FC",
+        "ZC": "#A855F7",
+        "ZD": "#9333EA",
+        "ZE": "#7E22CE",
+        "ZF": "#581C87",
+    }
+
+    color_styles = []
+    for label, color in color_palette.items():
+        color_styles.append({
+            "selector": f'[vop *= "{label}"]',
+            "style": {
+                "background-color": color, 
+                "border-width": 2,
+                "border-color": "#000000",
+            },
+        })
+
+
+    selected_style = [
+        {
+            "selector": "node:selected",
+            "style": {
+                "border-width": 3,
+                "border-color": "blue",
+            },
+        }]
+
+    return label_style + color_styles + selected_style
