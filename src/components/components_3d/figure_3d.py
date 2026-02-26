@@ -8,7 +8,6 @@ from dash import html
 
 from components import (
     move_log,
-    plotoptions,
     stabilizer,
 )
 
@@ -19,6 +18,7 @@ from components.components_3d import (
     load_graph,
     measurementbasis,
     error_channel,
+    plotoptions,
 )
 
 

@@ -5,7 +5,6 @@ from cluster_sim.simulator import ClusterState
 import dash_cytoscape as cyto
 from components import (
     move_log,
-    plotoptions,
 )
 from components.components_2d import qubit_panel, postprocess_cyto_data_elements
 from typing import List, Dict, Any
@@ -87,7 +86,6 @@ tab_3 = dbc.Col(
 
 tab_5 = dbc.Col(
     [
-        plotoptions,
         dbc.Card(
             dbc.CardBody(
                 [

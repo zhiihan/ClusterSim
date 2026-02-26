@@ -5,7 +5,7 @@ from .zoom_data import zoom_data
 from .measurementbasis import measurementbasis
 from .error_channel import error_channel
 from .algorithms import algorithms
-
+from .plot_options import plotoptions
 from .figure_3d import figure_3d, tab_ui_3d
 
 __all__ = [
@@ -17,6 +17,7 @@ __all__ = [
     "error_channel",
     "reset_graph",
     "measurementbasis",
+    "plotoptions",
     "zoom_data",
     "tab_ui_3d",
 ]

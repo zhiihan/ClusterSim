@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 import jsons
 
 
@@ -20,7 +20,7 @@ class BrowserState:
 
     removed_nodes: set[int] = field(default_factory=set)
     log: str = ""
-    camera_state: dict[str, Any] = field(
+    camera_state: Dict[str, Any] = field(
         default_factory=lambda: {
             "scene.camera": {
                 "up": {"x": 0, "y": 0, "z": 1},
@@ -34,7 +34,7 @@ class BrowserState:
     offset: tuple = (0, 0, 0)
     xoffset, yoffset, zoffset = offset
 
-    plot_options: dict[str, bool] = field(
+    plot_options: Dict[str, bool] = field(
         default_factory=lambda: {
             "stabilizer": False,
             "coord": True,
