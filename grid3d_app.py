@@ -2,9 +2,7 @@ from cluster_sim.app import BrowserState, grid_graph_3d, layouts
 from dash import html, Input, Output, State, no_update, Dash, dcc
 import time
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
-from components.components_3d import (
-    figure_3d, tab_ui_3d
-)
+from components.components_3d import figure_3d, tab_ui_3d
 from cluster_sim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
@@ -58,7 +56,7 @@ app.layout = html.Div(
         ),
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),
-        dcc.Store(id="draw-plot"), # This is a dummy variable
+        dcc.Store(id="draw-plot"),  # This is a dummy variable
         html.Div(
             id="none",
             children=[],
@@ -127,9 +125,7 @@ def measure_qubit(
         browser_state = BrowserState.from_json(browser_data)
         G = ClusterState.from_json(graphData)
 
-        layout = layouts[browser_state.layout](
-            browser_state=browser_state
-        )
+        layout = layouts[browser_state.layout](browser_state=browser_state)
 
         i = layout.get_node_index(point["x"], point["y"], point["z"])
 

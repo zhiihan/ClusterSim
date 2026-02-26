@@ -44,7 +44,7 @@ app.layout = html.Div(
         ),
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),
-        dcc.Store(id="draw-plot"), # This is a dummy variable
+        dcc.Store(id="draw-plot"),  # This is a dummy variable
         html.Div(
             id="none",
             children=[],
@@ -68,6 +68,7 @@ def initial_call(dummy):
     G = ClusterState(5)
 
     return browser_state.to_json(), G.to_json()
+
 
 if __name__ == "__main__":
     app.run(debug=True)

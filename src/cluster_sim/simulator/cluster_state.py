@@ -3,6 +3,7 @@ import graphsim
 import rustworkx as rx
 import networkx as nx
 
+
 class ClusterState:
     """
     Adapter class containing a GraphRegister object.
@@ -41,7 +42,7 @@ class ClusterState:
     def __len__(self):
         return self.num_nodes
 
-    def measure(self, qubit: int, force: int = -1, basis: str = 'Z'):
+    def measure(self, qubit: int, force: int = -1, basis: str = "Z"):
         """
         Measure a node in the graph state.
 
@@ -150,7 +151,9 @@ class ClusterState:
     def vertex_operators(self):
         return self.simulator.vop_list()
 
-    def to_rustworkx(self, options = {"stabilizer" : False, "vop": True, 'neighbors': False}):
+    def to_rustworkx(
+        self, options={"stabilizer": False, "vop": True, "neighbors": False}
+    ):
         """Export data from the underlying state.
 
         Turning off vop = True may lead to unintended behaviour when recreating the state.
@@ -160,8 +163,8 @@ class ClusterState:
 
         Returns:
             rx.PyGraph: rustworkx representation
-        """        
-    
+        """
+
         g = rx.PyGraph(multigraph=False)
 
         g.add_nodes_from(range(self.num_nodes))
@@ -170,13 +173,13 @@ class ClusterState:
 
         for node_index in g.node_indices():
             node_data = {"id": str(node_index)}
-            if options['stabilizer']:
-                node_data['stabilizer'] = self.stabilizers[node_index]
-            if options['vop']:
-                node_data['vop'] = self.vertex_operators[node_index]
-            if options['neighbors']:
-                node_data['neighbors'] = self.adjacency_list[node_index]
-            
+            if options["stabilizer"]:
+                node_data["stabilizer"] = self.stabilizers[node_index]
+            if options["vop"]:
+                node_data["vop"] = self.vertex_operators[node_index]
+            if options["neighbors"]:
+                node_data["neighbors"] = self.adjacency_list[node_index]
+
             g[node_index] = node_data
 
         return g
@@ -205,8 +208,8 @@ class ClusterState:
             c.CZ(e[0], e[1])
 
         for node in graph.node_indices():
-            if graph[node] and 'vop' in graph[node]:
-                vop = graphsim.LocCliffOp(graph[node]['vop'])
+            if graph[node] and "vop" in graph[node]:
+                vop = graphsim.LocCliffOp(graph[node]["vop"])
                 c.simulator.VOP(node, vop)
         return c
 
@@ -222,11 +225,13 @@ class ClusterState:
 
         for node in graph.nodes():
             if graph.nodes[node].get("vop"):
-                vop = graphsim.LocCliffOp(graph.nodes[node]['vop'])
+                vop = graphsim.LocCliffOp(graph.nodes[node]["vop"])
                 c.simulator.VOP(node, vop)
         return c
 
-    def to_networkx(self, options = {"stabilizer" : False, "vop": True, 'neighbors': False}):
+    def to_networkx(
+        self, options={"stabilizer": False, "vop": True, "neighbors": False}
+    ):
         """Export data from the underlying state.
 
         Turning off vop = True may lead to unintended behaviour when recreating the state.
@@ -236,41 +241,57 @@ class ClusterState:
 
         Returns:
             nx.Graph: networkx representation
-        """     
+        """
         g = nx.Graph()
 
         g.add_nodes_from(range(self.num_nodes))
-        g.add_edges_from([(edge[0], edge[1]) for edge in self._edge_list_from_adjacency_list()])
+        g.add_edges_from(
+            [(edge[0], edge[1]) for edge in self._edge_list_from_adjacency_list()]
+        )
 
         for node_index in g.nodes():
             node_data = {"id": str(node_index)}
-            if options['stabilizer']:
-                node_data['stabilizer'] = self.stabilizers[node_index]
-            if options['vop']:
-                node_data['vop'] = self.vertex_operators[node_index]
-            if options['neighbors']:
-                node_data['neighbors'] = self.adjacency_list[node_index]
-            
+            if options["stabilizer"]:
+                node_data["stabilizer"] = self.stabilizers[node_index]
+            if options["vop"]:
+                node_data["vop"] = self.vertex_operators[node_index]
+            if options["neighbors"]:
+                node_data["neighbors"] = self.adjacency_list[node_index]
+
             g.add_node(node_index, **node_data)
 
         return g
 
-    def to_cytoscape(self, export_elements = False):
+    def to_cytoscape(self, export_elements=False):
         """
         Export to cytoscape.
         """
-        
+
         # Subsequent calls to modify the elements in dash-cytoscape use a very specialized format
         if export_elements:
             graph = self.to_rustworkx()
             cyto_data_elements = []
             for node_index in graph.node_indices():
-                cyto_data_elements.append({'data': {'id': str(node_index), 'label': str(node_index), 'value': node_index, 'vop': self.vertex_operators[node_index]}})
+                cyto_data_elements.append(
+                    {
+                        "data": {
+                            "id": str(node_index),
+                            "label": str(node_index),
+                            "value": node_index,
+                            "vop": self.vertex_operators[node_index],
+                        }
+                    }
+                )
 
             for edge_index in graph.edge_list():
-                cyto_data_elements.append({'data': {
-                        'source': str(edge_index[0]),
-                        'target': str(edge_index[1])}})
+                cyto_data_elements.append(
+                    {
+                        "data": {
+                            "source": str(edge_index[0]),
+                            "target": str(edge_index[1]),
+                        }
+                    }
+                )
 
             return cyto_data_elements
         else:
@@ -291,15 +312,14 @@ class ClusterState:
         graph = rx.PyGraph()
 
         # This is the usual case when exporting from Networkx
-        for d in data['elements']['nodes']:
-            graph.add_node({'vop': d['data']['vop']})
+        for d in data["elements"]["nodes"]:
+            graph.add_node({"vop": d["data"]["vop"]})
 
-        for d in data['elements']['edges']:
-            graph.add_edge(int(d['data']['source']), int(d['data']['target']), None)
+        for d in data["elements"]["edges"]:
+            graph.add_edge(int(d["data"]["source"]), int(d["data"]["target"]), None)
 
         G = cls.from_rustworkx(graph)
         return G
-
 
     def draw(self, label_func=lambda node: str(node), **kwargs):
         g = self.to_rustworkx()

@@ -12,12 +12,14 @@ from components import (
     stabilizer,
 )
 
-from components.components_3d import (reset_graph,
+from components.components_3d import (
+    reset_graph,
     hover_data,
     zoom_data,
     load_graph,
     measurementbasis,
-    error_channel)
+    error_channel,
+)
 
 
 # Initialize the state of the user's browsing section
@@ -71,10 +73,12 @@ tab_5 = dbc.Col(
     ]
 )
 
-tab_6 = dbc.Col([
-    hover_data,
-    zoom_data,
-])
+tab_6 = dbc.Col(
+    [
+        hover_data,
+        zoom_data,
+    ]
+)
 
 tab_ui_3d = html.Div(
     [
@@ -110,7 +114,6 @@ tab_ui_3d = html.Div(
 )
 
 
-
 @callback(
     Output("figure-app", "figure"),
     Input("draw-plot", "data"),
@@ -118,7 +121,7 @@ tab_ui_3d = html.Div(
     State("browser-data", "data"),
     State("graph-data", "data"),
 )
-def draw_plot(draw_plot : int, relayoutData, browser_data, graphData):
+def draw_plot(draw_plot: int, relayoutData, browser_data, graphData):
     """
     Called when ever the plot needs to be drawn.
 

@@ -7,14 +7,14 @@ plotoptions = dbc.Card(
         [
             dbc.Checklist(
                 options=[
-                    {"label": "Stabilizers", "value": 'stabilizer'},
-                    {"label": "VOP", "value": 'vop'},
-                    {"label": "Coord", "value": 'coord'},
-                    {"label": "Neighbors", "value": 'neighbors'},
-                    {"label": "Index", "value": 'index'},
-                    {"label": "Hide Measured", "value": 'remove_isolated'},
+                    {"label": "Stabilizers", "value": "stabilizer"},
+                    {"label": "VOP", "value": "vop"},
+                    {"label": "Coord", "value": "coord"},
+                    {"label": "Neighbors", "value": "neighbors"},
+                    {"label": "Index", "value": "index"},
+                    {"label": "Hide Measured", "value": "remove_isolated"},
                 ],
-                value=['vop', 'index', 'neighbors', 'remove_isolated'],
+                value=["vop", "index", "neighbors", "remove_isolated"],
                 id="plotoptions",
                 inline=True,
                 switch=True,
@@ -29,7 +29,7 @@ plotoptions = dbc.Card(
     Output("ui", "children", allow_duplicate=True),
     Output("browser-data", "data", allow_duplicate=True),
     State(component_id="browser-data", component_property="data"),
-    Input(component_id='plotoptions', component_property="value"),
+    Input(component_id="plotoptions", component_property="value"),
     prevent_initial_call=True,
 )
 def update_plot_options(browser_data, display_options):

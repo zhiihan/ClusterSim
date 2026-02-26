@@ -9,7 +9,7 @@ from typing import List, Tuple
 class Grid3D:
     def __init__(self, browser_state: BrowserState):
         self.shape = browser_state.shape
-        self.browser_state = browser_state    
+        self.browser_state = browser_state
 
     def get_node_coords(self, index: int, log=False):
         """
@@ -27,7 +27,6 @@ class Grid3D:
         """
         return x + y * self.shape[0] + z * self.shape[1] * self.shape[0]
 
-
     def update_graph_with_layout(self, g: rx.PyGraph):
         """Add the current layout to the PyGraph.
 
@@ -36,20 +35,28 @@ class Grid3D:
         """
         for node in g.node_indices():
             g[node]["coord"] = self.get_node_coords(node)
-           
+
         return g
+
 
 layouts = {"Grid3D": Grid3D}
 
-def update_plot_from_simulator(G: ClusterState, browser_state: BrowserState) -> List[go.Scatter3d]:
-    g = G.to_rustworkx(options={"stabilizer" : browser_state.plot_options['stabilizer'], "vop": True, 'neighbors': browser_state.plot_options['neighbors']})
 
-    layout = layouts[browser_state.layout](
-        browser_state=browser_state
+def update_plot_from_simulator(
+    G: ClusterState, browser_state: BrowserState
+) -> List[go.Scatter3d]:
+    g = G.to_rustworkx(
+        options={
+            "stabilizer": browser_state.plot_options["stabilizer"],
+            "vop": True,
+            "neighbors": browser_state.plot_options["neighbors"],
+        }
     )
+
+    layout = layouts[browser_state.layout](browser_state=browser_state)
     g = layout.update_graph_with_layout(g)
 
-    if browser_state.plot_options['remove_isolated']:
+    if browser_state.plot_options["remove_isolated"]:
         g.remove_nodes_from(browser_state.removed_nodes)
 
     g_nodes, g_edges, node_hover_data = rx_graph_to_plot(g, browser_state)
@@ -77,9 +84,7 @@ def update_plot_from_simulator(G: ClusterState, browser_state: BrowserState) -> 
     return plot_data
 
 
-def update_plot_plotly(
-    plot_data : List[go.Scatter3d], browser_state: BrowserState
-):
+def update_plot_plotly(plot_data: List[go.Scatter3d], browser_state: BrowserState):
     """
     Main function that updates the plot.
     """
@@ -96,19 +101,25 @@ def update_plot_plotly(
     return fig
 
 
-def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+def rx_graph_to_plot(
+    graph: rx.PyGraph, browser_state: BrowserState
+) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
     Convert a rustworkx object to a plotly object.
     """
 
     num_nodes = graph.num_nodes()
-    
+
     node_coords = np.zeros((num_nodes, 3))
     node_hover_data = []
 
     for i, node_index in enumerate(graph.node_indices()):
-        node_coords[i, :] = graph[node_index]["coord"] # i is used to relabel the 0, 1, ...
-        node_hover_data.append(_display_hover_text(graph, browser_state, node_index)) # node_index is used to access the payload
+        node_coords[i, :] = graph[node_index][
+            "coord"
+        ]  # i is used to relabel the 0, 1, ...
+        node_hover_data.append(
+            _display_hover_text(graph, browser_state, node_index)
+        )  # node_index is used to access the payload
 
     edge_coords = np.zeros((3 * graph.num_edges(), 3))
 
@@ -123,13 +134,16 @@ def rx_graph_to_plot(graph : rx.PyGraph, browser_state : BrowserState) -> Tuple[
 
     return node_coords, edge_coords, node_hover_data
 
-def _display_hover_text(graph : rx.PyGraph, browser_state: BrowserState, node_index : int) -> str:
+
+def _display_hover_text(
+    graph: rx.PyGraph, browser_state: BrowserState, node_index: int
+) -> str:
     """Used in graph_to_plot as part of update_plot_plotly.
 
     Args:
         graph (rx.PyGraph): rustworkx Pygraph
         browser_state (BrowserState): Browser state
-        node_index (int): node index 
+        node_index (int): node index
 
     Returns:
         str: text displayed on hover when in plotly

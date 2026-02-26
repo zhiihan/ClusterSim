@@ -76,9 +76,7 @@ def apply_error_channel(nclicks, seed_input, p_err, browser_data, graphData):
     random.seed(seed_input)
     logging.info(f"Loaded seed : {seed_input}, p = {browser_state.p_err}")
     ui = "Loaded seed : {}, p = {}".format(seed_input, browser_state.p_err)
-    layout = layouts[browser_state.layout](
-        browser_state=browser_state
-    )
+    layout = layouts[browser_state.layout](browser_state=browser_state)
     num_qubits = len(G)
 
     for i in range(num_qubits):
@@ -87,7 +85,7 @@ def apply_error_channel(nclicks, seed_input, p_err, browser_data, graphData):
                 browser_state.removed_nodes.add(i)
                 # FIXME: Add VOP to log here
                 # FIXME: Force maybe not 0
-                G.measure(i, force=0, basis='Z')
+                G.measure(i, force=0, basis="Z")
                 browser_state.log += f"{layout.get_node_coords(i)}, Z;\n"
-                
+
     return browser_state.log, 1, ui, browser_state.to_json(), G.to_json()

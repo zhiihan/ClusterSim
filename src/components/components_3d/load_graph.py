@@ -73,9 +73,7 @@ def load_graph_from_string(n_clicks, input_string, browser_data):
     browser_state = BrowserState.from_json(browser_data)
 
     G = ClusterState.from_rustworkx(grid_graph_3d(browser_state.shape))
-    layout = layouts[browser_state.layout](
-        browser_state=browser_state
-    )
+    layout = layouts[browser_state.layout](browser_state=browser_state)
 
     instructions = process_string(input_string)
     instructions = [

@@ -7,7 +7,12 @@ from dash import dcc, html, callback, Input, Output, State
 import plotly.graph_objects as go
 import rustworkx as rx
 import dash_bootstrap_components as dbc
-from .holes_rx import find_lattice, find_max_connected_lattice, build_centers_graph, connected_cube_to_nodes
+from .holes_rx import (
+    find_lattice,
+    find_max_connected_lattice,
+    build_centers_graph,
+    connected_cube_to_nodes,
+)
 
 algorithms = dbc.Card(
     dbc.CardBody(
@@ -36,7 +41,7 @@ algorithms = dbc.Card(
                 id="select-cubes",
                 className="dash-bootstrap",
             ),
-            dcc.Store('holes-data')
+            dcc.Store("holes-data"),
         ],
     )
 )
@@ -67,14 +72,12 @@ def rhg_lattice_scale(nclicks, browser_data, graphData):
     browser_state = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
 
-    layout = layouts[browser_state.layout](
-        browser_state=browser_state
-    )
+    layout = layouts[browser_state.layout](browser_state=browser_state)
 
     for node_index in range(len(G)):
         coords = layout.get_node_coords(node_index)
         if (coords[0] % 2) == (coords[1] % 2) == (coords[2] % 2):
-            G.measure(node_index, force=0, basis='Z')
+            G.measure(node_index, force=0, basis="Z")
             browser_state.log += f"{layout.get_node_coords(node_index)}, Z;\n"
             browser_state.removed_nodes.add(node_index)
 
@@ -97,16 +100,17 @@ def rhg_lattice_scale(nclicks, browser_data, graphData):
     prevent_initial_call=True,
 )
 def find_unit_cells(
-    nclicks, relayoutData, browser_data, graphData, select_cubes,
+    nclicks,
+    relayoutData,
+    browser_data,
+    graphData,
+    select_cubes,
 ):
 
     browser_state = BrowserState.from_json(browser_data)
     G = ClusterState.from_json(graphData)
-    layout = layouts[browser_state.layout](
-        browser_state=browser_state
-    )
+    layout = layouts[browser_state.layout](browser_state=browser_state)
 
-    
     cubes = find_lattice(layout, browser_state.removed_nodes)
     click_number = 0
     # click_number = nclicks % (len(browser_state.valid_unit_cells))
@@ -120,9 +124,9 @@ def find_unit_cells(
         click_number = nclicks % (len(connected_cubes))
         X = connected_cube_to_nodes(connected_cubes[click_number])
 
-        ui = f"FindCluster: Displaying {click_number+1}/{len(connected_cubes)}"
+        ui = f"FindCluster: Displaying {click_number + 1}/{len(connected_cubes)}"
     elif select_cubes == "Select All Connected Cubes":
-        pass 
+        pass
 
     nodes, edges, _ = rx_graph_to_plot(X, browser_state=browser_state)
 

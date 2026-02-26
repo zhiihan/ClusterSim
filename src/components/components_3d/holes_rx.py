@@ -73,8 +73,6 @@ box = [
 ]
 
 
-
-
 def find_lattice(layout, removed_nodes, max_scale=1):
     """
     Find a raussendorf lattice.
@@ -94,8 +92,7 @@ def find_lattice(layout, removed_nodes, max_scale=1):
         for z in range(layout.shape[2])
         for y in range(layout.shape[1])
         for x in range(layout.shape[0])
-        if ((x ) % 2 == (z ) % 2)
-        and ((y ) % 2 == (z ) % 2)
+        if ((x) % 2 == (z) % 2) and ((y) % 2 == (z) % 2)
     ]
 
     n_cubes = np.zeros((layout.shape[0] // 2))
@@ -119,11 +116,12 @@ def find_lattice(layout, removed_nodes, max_scale=1):
             """
             cube[0, :] = c
             for i, cube_vec in enumerate(constant_cube):
-                cube[i + 1, :3] = c + cube_vec 
+                cube[i + 1, :3] = c + cube_vec
                 # cube[i,  3] = scale
             n_cubes[0] += 1
             cubes.append(cube)
     return cubes
+
 
 def taxicab_metric(node1, node2):
     x1 = np.array(node1)
@@ -138,17 +136,20 @@ def build_centers_graph(cubes, layout):
 
     Returns: the graph of centers C
     """
-    C = rx.PyGraph(multigraph=False)  # C is an object that contains all the linked centers
+    C = rx.PyGraph(
+        multigraph=False
+    )  # C is an object that contains all the linked centers
 
     for c in cubes:
-        C.add_node({'coord': c[0, :]})
+        C.add_node({"coord": c[0, :]})
 
     for node_index in C.node_indices():
         for node_index2 in C.node_indices():
-            if taxicab_metric(C[node_index]['coord'], C[node_index2]['coord']) == 2:
+            if taxicab_metric(C[node_index]["coord"], C[node_index2]["coord"]) == 2:
                 C.add_edge(node_index, node_index2, None)
 
     return C
+
 
 def find_max_connected_lattice(C):
     """
@@ -162,23 +163,31 @@ def find_max_connected_lattice(C):
         largest_cc = rx.PyGraph()
     return largest_cc
 
+
 def connected_cube_to_nodes(connected_unit_cells_center_graph):
     """
     Expand the graph of centers into full Raussendorf cells.
     """
-    connected_all_node_graph = (
-        rx.PyGraph()
-    ) 
+    connected_all_node_graph = rx.PyGraph()
 
     for node_index in connected_unit_cells_center_graph.node_indices():
         for cube_vec in constant_cube:
-            connected_all_node_graph.add_node({'coord': connected_unit_cells_center_graph[node_index]['coord'] + cube_vec})
-
+            connected_all_node_graph.add_node(
+                {
+                    "coord": connected_unit_cells_center_graph[node_index]["coord"]
+                    + cube_vec
+                }
+            )
 
     for node_index in connected_all_node_graph.node_indices():
         for node_index2 in connected_all_node_graph.node_indices():
-            if taxicab_metric(connected_all_node_graph[node_index]['coord'], connected_all_node_graph[node_index2]['coord']) == 1:
+            if (
+                taxicab_metric(
+                    connected_all_node_graph[node_index]["coord"],
+                    connected_all_node_graph[node_index2]["coord"],
+                )
+                == 1
+            ):
                 connected_all_node_graph.add_edge(node_index, node_index2, None)
 
     return connected_all_node_graph
-

@@ -12,7 +12,7 @@ class BrowserState:
     """
 
     shape: tuple[int, int, int] = (5, 5, 5)
-    p_err: float = 0.09 # Probability of losing a qubit
+    p_err: float = 0.09  # Probability of losing a qubit
     layout: str = "Grid3D"
 
     seed: Optional[int] = None
@@ -35,13 +35,14 @@ class BrowserState:
     xoffset, yoffset, zoffset = offset
 
     plot_options: Dict[str, bool] = field(
-        default_factory=lambda: 
-            {'stabilizer' : False, 
-            'coord': True, 
-            'vop': True,
-            'index': True,
-            'neighbors': False,
-            'remove_isolated': True}
+        default_factory=lambda: {
+            "stabilizer": False,
+            "coord": True,
+            "vop": True,
+            "index": True,
+            "neighbors": False,
+            "remove_isolated": True,
+        }
     )
 
     def to_json(self):
