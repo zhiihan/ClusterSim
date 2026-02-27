@@ -72,3 +72,22 @@ def test_import_export_cytoscape():
     d2 = c2.to_cytoscape()
     c3 = ClusterState.from_cytoscape(d2)
     assert c3 == c2
+
+
+def test_load_text():
+
+    text = "H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\nX 3 4 0\nY 1\nZ 2\nH 3\nS 4\nCZ 4 1\nCX 2 0\n"
+
+    g, log = ClusterState.load_text(text, return_log=True)
+
+    assert log == text
+    assert str(g) == "['+ZZZXY', '-XXZXY', '-XZXXI', '-XZZZI', '+XZIIZ']"
+
+
+def test_load_text_edge():
+    text = 'H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\nADD_EDGE 3 4 0 2 1\n'
+
+    g, log = ClusterState.load_text(text, return_log=True)
+
+    assert log == text
+    assert str(g) == "['+XZZZZ', '+ZXZZZ', '+ZZXZZ', '+ZZZXZ', '+ZZZZX']"

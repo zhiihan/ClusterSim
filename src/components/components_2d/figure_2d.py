@@ -3,10 +3,11 @@ from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
 import dash_cytoscape as cyto
-from components import (
+from components.components_2d import (
+    qubit_panel,
+    postprocess_cyto_data_elements,
     move_log,
 )
-from components.components_2d import qubit_panel, postprocess_cyto_data_elements
 from typing import List, Dict, Any
 import random
 
@@ -80,21 +81,29 @@ tab_1 = dbc.Col(
 
 tab_3 = dbc.Col(
     [
-            dbc.Card(
-dbc.CardBody(
+        dbc.Card(
+            dbc.CardBody(
                 [
-            dbc.Input(type="text", id="load-graph", placeholder="Load a graph state"),
-            html.Br(),
-            dbc.Stack(
-                [
-                    dbc.Button("Load", id="reset"),
-                    dbc.Button("Undo", id="undo"),
-                ],
-        gap=3,
-        direction="horizontal",)
-    ])),
+                    dbc.Input(
+                        type="text",
+                        id="load-graph-input",
+                        placeholder="Load a graph state",
+                        value="",
+                    ),
+                    html.Br(),
+                    dbc.Stack(
+                        [
+                            dbc.Button("Load", id="load-button"),
+                            dbc.Button("Undo", id="undo-button"),
+                        ],
+                        gap=3,
+                        direction="horizontal",
+                    ),
+                ]
+            )
+        ),
         move_log,
-]
+    ]
 )
 
 tab_5 = dbc.Col(

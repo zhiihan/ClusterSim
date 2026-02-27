@@ -145,7 +145,7 @@ class ClusterState:
         self.num_nodes -= len(qubits)
 
     @classmethod
-    def load_text(cls, text: str):
+    def load_text(cls, text: str, return_log: bool = False):
         """
         Create a cluster state from a text-based representation of operations.
         """
@@ -163,10 +163,9 @@ class ClusterState:
 
         parsed_ops = []
         max_qubit = -1
-        add_node_count = 0
 
         # Regex to find commands: NAME followed optionally by [numbers]
-        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[([^\]]*)\])?")
+        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*([^A-Za-z_]*)")
 
         for match in pattern.finditer(full_text):
             op_name = match.group(1).upper()
@@ -174,28 +173,29 @@ class ClusterState:
 
             qubits = []
             if args_str:
-                qubits = [int(x.strip()) for x in args_str.split(',') if x.strip()]
+                qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
-            if op_name == "ADD_NODE" and not qubits:
-                add_node_count += 1
-
-            if qubits:
+            if qubits and op_name != "ADD_NODE":
                 max_qubit = max(max_qubit, max(qubits))
 
             parsed_ops.append((op_name, qubits))
 
-        num_nodes = max_qubit + 1 + add_node_count
+        num_nodes = max_qubit + 1
         if num_nodes <= 0:
             raise ValueError("ClusterState must have at least one node.")
 
         new_state = cls(num_nodes)
 
         # ---------- Second pass: apply ops ----------
+        parsed_log = ""
+
         for op_name, qubits in parsed_ops:
+            parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
 
             if op_name == "ADD_NODE":
-                for i in qubits:
-                    new_state.add_node()
+                print(op_name, qubits)
+                for q in qubits:
+                    new_state.add_node(vop="IA")
 
             elif op_name == "REMOVE_NODE":
                 for q in sorted(qubits, reverse=True):
@@ -216,14 +216,14 @@ class ClusterState:
                     getattr(new_state, op_name)(qubits[i], qubits[i + 1])
 
             elif op_name in {"ADD_EDGE", "REMOVE_EDGE", "TOGGLE_EDGE"}:
-                if len(qubits) % 2 != 0:
-                    raise ValueError(f"{op_name} requires an even number of qubits.")
                 method = getattr(new_state, op_name.lower())
-                for i in range(0, len(qubits), 2):
-                    method(qubits[i], qubits[i + 1])
-
+                for pair in itertools.combinations(qubits, 2):
+                    method(pair[0], pair[1])
             else:
                 raise ValueError(f"Unknown operation: {op_name}")
+
+        if return_log:
+            return new_state, parsed_log
 
         return new_state
 
