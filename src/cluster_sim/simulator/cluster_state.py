@@ -2,6 +2,8 @@ from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
 import networkx as nx
+import re
+import itertools
 
 
 class ClusterState:
@@ -142,11 +144,88 @@ class ClusterState:
         self.simulator = ClusterState.from_rustworkx(new_graph).simulator
         self.num_nodes -= len(qubits)
 
-    def load_text(self, text):
-        
+    @classmethod
+    def load_text(cls, text: str, return_log: bool = False):
+        """
+        Create a cluster state from a text-based representation of operations.
+        """
 
-        return 
+        lines = []
+        for line in text.strip().splitlines():
+            line = line.split("#", 1)[0].strip()
+            if line:
+                lines.append(line)
 
+        full_text = " ".join(lines)
+
+        if not full_text:
+            raise ValueError("Cannot construct ClusterState from empty text.")
+
+        parsed_ops = []
+        max_qubit = -1
+
+        # Regex to find commands: NAME followed optionally by [numbers]
+        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*([^A-Za-z_]*)")
+
+        for match in pattern.finditer(full_text):
+            op_name = match.group(1).upper()
+            args_str = match.group(2)
+
+            qubits = []
+            if args_str:
+                qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
+
+            if qubits and op_name != "ADD_NODE":
+                max_qubit = max(max_qubit, max(qubits))
+
+            parsed_ops.append((op_name, qubits))
+
+        num_nodes = max_qubit + 1
+        if num_nodes <= 0:
+            raise ValueError("ClusterState must have at least one node.")
+
+        new_state = cls(num_nodes)
+
+        # ---------- Second pass: apply ops ----------
+        parsed_log = ""
+
+        for op_name, qubits in parsed_ops:
+            parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
+
+            if op_name == "ADD_NODE":
+                print(op_name, qubits)
+                for q in qubits:
+                    new_state.add_node(vop="IA")
+
+            elif op_name == "REMOVE_NODE":
+                for q in sorted(qubits, reverse=True):
+                    new_state.remove_node(q)
+
+            elif op_name in {"H", "X", "Y", "Z", "S"}:
+                for q in qubits:
+                    getattr(new_state, op_name)(q)
+
+            elif op_name == "LC":
+                for q in qubits:
+                    new_state.local_complementation(q)
+
+            elif op_name in {"CZ", "CX"}:
+                if len(qubits) % 2 != 0:
+                    raise ValueError(f"{op_name} requires an even number of qubits.")
+                for i in range(0, len(qubits), 2):
+                    getattr(new_state, op_name)(qubits[i], qubits[i + 1])
+
+            elif op_name in {"ADD_EDGE", "REMOVE_EDGE", "TOGGLE_EDGE"}:
+                method = getattr(new_state, op_name.lower())
+                for pair in itertools.combinations(qubits, 2):
+                    method(pair[0], pair[1])
+            else:
+                raise ValueError(f"Unknown operation: {op_name}")
+
+        if return_log:
+            return new_state, parsed_log
+
+        return new_state
 
     @classmethod
     def from_json(cls, json_data):

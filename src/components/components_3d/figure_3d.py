@@ -1,5 +1,4 @@
 from cluster_sim.app.layout import update_plot_from_simulator
-from components.components_3d import algorithms
 from cluster_sim.app import BrowserState, update_plot_plotly, grid_graph_3d
 from cluster_sim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
@@ -7,11 +6,12 @@ import dash_bootstrap_components as dbc
 from dash import html
 
 from components import (
-    move_log,
     stabilizer,
 )
 
 from components.components_3d import (
+    algorithms,
+    move_log,
     reset_graph,
     hover_data,
     zoom_data,

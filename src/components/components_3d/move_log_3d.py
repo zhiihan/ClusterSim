@@ -25,7 +25,6 @@ move_log = dbc.Card(
                     html.Pre(
                         id="click-data",
                         style={"border": "thin lightgrey solid", "overflowX": "scroll"},
-                        children="H [0, 1, 2, 3, 4]\nCZ [0, 1, 1, 2, 2, 3, 3, 4]\n"
                     ),
                 ],
                 style={

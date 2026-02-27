@@ -1,1 +1,1 @@
-web: gunicorn grid3dfigure:server
+web: gunicorn graph2d_app:server

@@ -1,4 +1,3 @@
-from cffi.pkgconfig import call
 import itertools
 from cluster_sim import ClusterState
 from textwrap import dedent as d
@@ -157,7 +156,7 @@ def handle_buttons(*args):
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_nodes : list[int], cyto_data, log, **method_args
+    method_name: str, selected_nodes: list[int], cyto_data, log, **method_args
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -214,7 +213,7 @@ def apply_operation_wrapper(
         cyto_data_new = g.to_cytoscape(export_elements=True)
         cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, new_positions)
 
-        log += f"REMOVE_NODE {selected_nodes}\n"
+        log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
 
         return ui, cyto_data_new, repr(g), log
 
@@ -225,14 +224,14 @@ def apply_operation_wrapper(
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
     if method_name == "measure":
-        log += f"M{method_args['basis']} {selected_nodes}\n"
-        log += f"# OUTCOME {outcomes}\n"
+        log += f"M{method_args['basis']} {' '.join(map(str, selected_nodes))}\n"
+        log += f"# OUTCOME {' '.join(map(str, outcomes))}\n"
     elif method_name == "local_complementation":
-        log += f"LC {selected_nodes}\n"
+        log += f"LC {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":
-        log += f"ADD_NODE [{len(g)-1}]\n"
+        log += f"ADD_NODE {len(g) - 1}\n"
     else:
-        log += f"{method_name.upper()} {selected_nodes}\n"
+        log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 
     return ui, cyto_data_new, repr(g), log
 
@@ -270,11 +269,27 @@ def postprocess_cyto_data_elements(
             raise NotImplementedError("Unknown or no data")
     return cyto_data
 
+
 @callback(
-    Output("figure-app", "elements"),
-    Input("reset", "n_clicks"),
-    State("click-data", "children"),
+    Output("figure-app", "elements", allow_duplicate=True),
+    Output("simulator-representation", "children", allow_duplicate=True),
+    Output("click-data", "children", allow_duplicate=True),
+    Output("ui", "children", allow_duplicate=True),
+    Input("undo-button", "n_clicks"),
+    Input("load-button", "n_clicks"),
+    State("load-graph-input", "value"),
     prevent_initial_call=True,
 )
-def load_graph(_, log):
-    return no_update
+def load_graph(_undo: int, _reset: int, log: str):
+
+    triggered_id = callback_context.triggered_id
+
+    if not log and triggered_id == "reset":
+        return no_update, no_update, no_update, "Empty graph!"
+
+    print(log)
+
+    g, parsed_log = ClusterState.load_text(log, return_log=True)
+    cyto_data_new = g.to_cytoscape(export_elements=True)
+
+    return cyto_data_new, repr(g), parsed_log + "\n", "Loaded graph!"
