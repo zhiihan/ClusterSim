@@ -198,11 +198,11 @@ def apply_operation_wrapper(
         getattr(g, method_name)(**method_args)
         ui = f"Added node {len(g) - 1}!"
     elif method_name in ["remove_node"]:
-        if len(g) == 1:
+        if len(selected_nodes) >= len(g):
             return "Cannot remove last node!", no_update, no_update, no_update
 
         getattr(g, method_name)(selected_nodes, **method_args)
-        ui = f"Removed nodes {selected_nodes} (currently only works for last index)!"
+        ui = f"Removed nodes {selected_nodes}"
 
         # When a node is removed, the positions need to be updated to adjust
         new_positions = []
@@ -286,8 +286,6 @@ def load_graph(_undo: int, _reset: int, log: str):
 
     if not log and triggered_id == "reset":
         return no_update, no_update, no_update, "Empty graph!"
-
-    print(log)
 
     g, parsed_log = ClusterState.load_text(log, return_log=True)
     cyto_data_new = g.to_cytoscape(export_elements=True)
