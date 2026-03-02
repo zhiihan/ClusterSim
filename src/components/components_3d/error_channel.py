@@ -1,4 +1,4 @@
-from cluster_sim import ClusterState
+from cluster_sim.simulator import ClusterState
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import random

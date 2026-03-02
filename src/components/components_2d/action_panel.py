@@ -1,5 +1,5 @@
 import itertools
-from cluster_sim import ClusterState
+from cluster_sim.simulator import ClusterState
 from textwrap import dedent as d
 from dash import dcc, callback, Input, Output, State, no_update, callback_context, html
 import dash_bootstrap_components as dbc

@@ -1,6 +1,6 @@
 from cluster_sim.app.layout import update_plot_from_simulator
 
-from cluster_sim import ClusterState
+from cluster_sim.simulator import ClusterState
 from cluster_sim.app import BrowserState, layouts, rx_graph_to_plot, update_plot_plotly
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
