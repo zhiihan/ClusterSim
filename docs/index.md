@@ -3,7 +3,7 @@
 :hidden:
 :caption: API
 
-api/cluster_sim
+api/modules
 ```
 
 ```{include} ../README.md

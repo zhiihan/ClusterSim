@@ -13,6 +13,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+app.title = "Cluster Sim"
+
 server = app.server  # For deployment
 
 app.layout = html.Div(

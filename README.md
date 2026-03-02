@@ -1,6 +1,9 @@
+<!-- SPHINX-START -->
+
 # ClusterSim
 
-A cluster state simulator for measurement-based quantum computation, in browser. Try it here: [https://clustersim.app]
+A cluster state simulator for measurement-based quantum computation, in browser. Try it here: [https://clustersim.app](https://clustersim.app)
+
 
 > Based on the paper 'Fast simulation of stabilizer circuits using a graph state representation' by Simon Anders and Hans J. Briegel ([here](https://arxiv.org/abs/quant-ph/0504117v2))
 

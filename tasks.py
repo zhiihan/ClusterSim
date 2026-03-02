@@ -10,7 +10,7 @@ def clean(c):
 
 @task(clean)
 def docs(c, serve=False):
-    c.run("sphinx-apidoc -o docs/api/ --module-first --force src/")
+    c.run("sphinx-apidoc -o docs/api/ --module-first --force src/cluster_sim")
 
     # MacOS : compile with
     # clang++ -O3 -Wall -shared -std=c++14 -fPIC $(python3 -m pybind11 --includes) bindings.cpp graphsim.cpp loccliff.cpp stabilizer.cpp -o graphsim$(python3-config --extension-suffix)
