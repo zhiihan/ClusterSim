@@ -237,6 +237,7 @@ dependencies = [
     { name = "dash-bootstrap-components" },
     { name = "dash-cytoscape" },
     { name = "dash-resizable-panels" },
+    { name = "graphstatesim" },
     { name = "gunicorn" },
     { name = "jsons" },
     { name = "matplotlib" },
@@ -255,11 +256,13 @@ dev = [
 dev = [
     { name = "furo" },
     { name = "invoke" },
-    { name = "myst-parser" },
-    { name = "nbsphinx" },
     { name = "prek" },
     { name = "pytest" },
     { name = "ruff" },
+]
+docs = [
+    { name = "myst-parser" },
+    { name = "nbsphinx" },
     { name = "sphinx" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
@@ -273,6 +276,7 @@ requires-dist = [
     { name = "dash-bootstrap-components" },
     { name = "dash-cytoscape", specifier = ">=1.0.2" },
     { name = "dash-resizable-panels" },
+    { name = "graphstatesim", specifier = ">=0.2.4" },
     { name = "gunicorn" },
     { name = "jsons", specifier = ">=1.6.3" },
     { name = "matplotlib" },
@@ -288,11 +292,13 @@ provides-extras = ["dev"]
 dev = [
     { name = "furo", specifier = ">=2025.12.19" },
     { name = "invoke", specifier = ">=2.2.1" },
-    { name = "myst-parser", specifier = ">=5.0.0" },
-    { name = "nbsphinx", specifier = ">=0.9.8" },
     { name = "prek", specifier = ">=0.3.3" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.15.0" },
+]
+docs = [
+    { name = "myst-parser", specifier = ">=5.0.0" },
+    { name = "nbsphinx", specifier = ">=0.9.8" },
     { name = "sphinx", specifier = ">=9.1.0" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
@@ -532,6 +538,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ec/20/5f5ad4da6a5a27c80f2ed2ee9aee3f9e36c66e56e21c00fde467b2f8f88f/furo-2025.12.19.tar.gz", hash = "sha256:188d1f942037d8b37cd3985b955839fea62baa1730087dc29d157677c857e2a7", size = 1661473, upload-time = "2025-12-19T17:34:40.889Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/b2/50e9b292b5cac13e9e81272c7171301abc753a60460d21505b606e15cf21/furo-2025.12.19-py3-none-any.whl", hash = "sha256:bb0ead5309f9500130665a26bee87693c41ce4dbdff864dbfb6b0dae4673d24f", size = 339262, upload-time = "2025-12-19T17:34:38.905Z" },
+]
+
+[[package]]
+name = "graphstatesim"
+version = "0.2.4"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/ce/6b3fd4d9be4598a5c35a674dcee5ce6147469e02752a21122bd202ba9154/graphstatesim-0.2.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f3b2d84de9b9a9dcfecf0f645d23ecdfa5e0531da309da3fdc555b38e5f1e8d5", size = 148074, upload-time = "2026-02-24T18:32:03.883Z" },
+    { url = "https://files.pythonhosted.org/packages/01/50/e1a565d93b17356921cd4ea01a03442000ed5b63ddd785d48b19afc2510b/graphstatesim-0.2.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:8a33fd13d6a6d7245068dd884f456d116ea2d895c03b6f0d06e0dc7689de2f65", size = 1182380, upload-time = "2026-02-24T18:31:58.954Z" },
+    { url = "https://files.pythonhosted.org/packages/98/d4/d65e880af375f604652aff0801f37b886e6e8d8b91b67d84c03966495812/graphstatesim-0.2.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d1e501f112bfb8dbab179ff6c8388795d4844dff9ba48a52ac622098092f9352", size = 148135, upload-time = "2026-02-24T18:32:00.717Z" },
+    { url = "https://files.pythonhosted.org/packages/36/1f/f90b97adbe9addee2128ed2fd0d43fd6e799d2c5e7f115791faf2f596175/graphstatesim-0.2.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:2de15fa03d32edc5b0b6bbc8dfd375b47961f59362aab414693788489ba0f789", size = 1182373, upload-time = "2026-02-24T18:32:02.557Z" },
 ]
 
 [[package]]

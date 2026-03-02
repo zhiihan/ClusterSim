@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-server = app.server # For deployment
+server = app.server  # For deployment
 
 app.layout = html.Div(
     [

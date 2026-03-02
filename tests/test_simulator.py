@@ -85,7 +85,7 @@ def test_load_text():
 
 
 def test_load_text_edge():
-    text = 'H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\nADD_EDGE 3 4 0 2 1\n'
+    text = "H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\nADD_EDGE 3 4 0 2 1\n"
 
     g, log = ClusterState.load_text(text, return_log=True)
 
