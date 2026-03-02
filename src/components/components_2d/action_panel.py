@@ -119,10 +119,10 @@ button_operations = {
     Output("ui", "children"),
     Output("figure-app", "elements", allow_duplicate=True),
     Output("simulator-representation", "children"),
-    Output("click-data", "children"),
+    Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     State("force-measurement", "value"),
-    State("click-data", "children"),
+    State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
@@ -273,21 +273,42 @@ def postprocess_cyto_data_elements(
 @callback(
     Output("figure-app", "elements", allow_duplicate=True),
     Output("simulator-representation", "children", allow_duplicate=True),
-    Output("click-data", "children", allow_duplicate=True),
+    Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
     Input("undo-button", "n_clicks"),
     Input("load-button", "n_clicks"),
     State("load-graph-input", "value"),
+    State("move-log", "children"),
     prevent_initial_call=True,
 )
-def load_graph(_undo: int, _reset: int, log: str):
+def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str):
+    """Load or undo from either the move log or a saved text.
+
+    Args:
+        _undo (int): whether the undo button was clicked
+        _load (int): whether the load button was clicked
+        load_graph_input (str): the load graph input
+        move_log (str): the move log
+    """
 
     triggered_id = callback_context.triggered_id
 
-    if not log and triggered_id == "reset":
+    if not load_graph_input and triggered_id == "load-button":
+        return no_update, no_update, no_update, "Cannot load empty input!"
+
+    if not move_log and triggered_id == "undo-button":
         return no_update, no_update, no_update, "Empty graph!"
 
-    g, parsed_log = ClusterState.load_text(log, return_log=True)
+    if triggered_id == "undo-button":
+        move_log_list = [move for move in move_log.split("\n") if move]
+        if not move_log_list[:-1]:
+            return no_update, no_update, no_update, "Cannot undo, empty graph!"
+
+        move_log = "\n".join(move_log_list[:-1])
+        g, parsed_log = ClusterState.load_text(move_log, return_log=True)
+    elif triggered_id == "load-button":
+        g, parsed_log = ClusterState.load_text(load_graph_input, return_log=True)
+
     cyto_data_new = g.to_cytoscape(export_elements=True)
 
-    return cyto_data_new, repr(g), parsed_log + "\n", "Loaded graph!"
+    return cyto_data_new, repr(g), parsed_log, "Loaded graph!"

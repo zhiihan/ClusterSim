@@ -195,13 +195,11 @@ class ClusterState:
 
         for op_name, qubits in parsed_ops:
             parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
-            print(op_name, qubits, repr(new_state))
             if op_name == "ADD_NODE":
                 for q in qubits:
                     new_state.add_node(vop="IA")
 
             elif op_name == "REMOVE_NODE":
-                print(op_name, qubits)
                 for q in sorted(qubits, reverse=True):
                     new_state.remove_node(q)
 

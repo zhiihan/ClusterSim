@@ -17,13 +17,13 @@ move_log = dbc.Card(
             html.Div(
                 [
                     dcc.Clipboard(
-                        target_id="click-data",
+                        target_id="move-log",
                         style={
                             "fontSize": 20,
                         },
                     ),
                     html.Pre(
-                        id="click-data",
+                        id="move-log",
                         style={"border": "thin lightgrey solid", "overflowX": "scroll"},
                         children="H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\n",
                     ),
