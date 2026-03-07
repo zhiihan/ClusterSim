@@ -110,7 +110,7 @@ button_operations = {
     "add-edge": ("add_edge", {}),
     "remove-edge": ("remove_edge", {}),
     "toggle-edge": ("toggle_edge", {}),
-    "add-node": ("add_node", {"vop": "IA"}),
+    "add-node": ("add_node", {"vop": "YC"}),
     "remove-node": ("remove_node", {}),
 }
 

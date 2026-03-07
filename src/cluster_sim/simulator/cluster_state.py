@@ -175,7 +175,7 @@ class ClusterState:
             if args_str:
                 qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
-            if qubits and op_name not in ["ADD_NODE", "REMOVE_NODE"]:
+            if qubits and op_name not in ["REMOVE_NODE", "ADD_NODE"]:
                 max_qubit = max(max_qubit, max(qubits))
             elif op_name == "ADD_NODE":
                 max_qubit += len(qubits) - 1
@@ -197,11 +197,15 @@ class ClusterState:
             parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
             if op_name == "ADD_NODE":
                 for q in qubits:
-                    new_state.add_node(vop="IA")
+                    if q + 1 > num_nodes:
+                        new_state.add_node(vop="YC")
+                        num_nodes += 1
 
             elif op_name == "REMOVE_NODE":
                 for q in sorted(qubits, reverse=True):
-                    new_state.remove_node(q)
+                    if q + 1 <= num_nodes:
+                        new_state.remove_node(q)
+                        num_nodes -= 1
 
             elif op_name in {"H", "X", "Y", "Z", "S"}:
                 for q in qubits:
