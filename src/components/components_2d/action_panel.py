@@ -4,6 +4,7 @@ from textwrap import dedent as d
 from dash import dcc, callback, Input, Output, State, no_update, callback_context, html
 import dash_bootstrap_components as dbc
 from typing import Any
+import random
 
 qubit_panel = dbc.Card(
     dbc.CardBody(
@@ -196,6 +197,7 @@ def apply_operation_wrapper(
         ui = f"Measured selected nodes {selected_nodes} with outcomes {outcomes}"
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
+        positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
         ui = f"Added node {len(g) - 1}!"
     elif method_name in ["remove_node"]:
         if len(selected_nodes) >= len(g):
@@ -279,9 +281,10 @@ def postprocess_cyto_data_elements(
     Input("load-button", "n_clicks"),
     State("load-graph-input", "value"),
     State("move-log", "children"),
+    State("figure-app", "elements"),
     prevent_initial_call=True,
 )
-def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str):
+def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyto_data):
     """Load or undo from either the move log or a saved text.
 
     Args:
@@ -292,6 +295,7 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str):
     """
 
     triggered_id = callback_context.triggered_id
+    _, positions = preprocess_cyto_data_elements(cyto_data)
 
     if not load_graph_input and triggered_id == "load-button":
         return no_update, no_update, no_update, "Cannot load empty input!"
@@ -306,9 +310,15 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str):
 
         move_log = "\n".join(move_log_list[:-1])
         g, parsed_log = ClusterState.load_text(move_log, return_log=True)
+        
+        
     elif triggered_id == "load-button":
         g, parsed_log = ClusterState.load_text(load_graph_input, return_log=True)
+        if len(positions) < len(g):
+            for i in range(len(g) - len(positions)):
+                positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
+    cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
     return cyto_data_new, repr(g), parsed_log, "Loaded graph!"
