@@ -91,3 +91,42 @@ def test_load_text_edge():
 
     assert log == text
     assert str(g) == "['+XZZZZ', '+ZXZZZ', '+ZZXZZ', '+ZZZXZ', '+ZZZZX']"
+
+
+def test_reduced_form():
+    c = ClusterState(24)
+    for i in range(24):
+        c.H(i)
+
+    local_clifford = {
+        'IA': 'I',
+        'XA': 'X', # HSSH
+        'YA': 'Y', # SSHSSH
+        'ZA': 'Z', # SS
+        'IB': 'HSSHS', 
+        'XB': 'SSS',
+        'YB': 'S',
+        'ZB': 'HSSHSS',
+        'IC': 'HSSHSSH',
+        'XC': 'HSS',
+        'YC': 'H',
+        'ZC': 'SSH',
+        'ID': 'SSSHS',
+        'XD': 'SSHSH',
+        'YD': 'SHS',
+        'ZD': 'HSH',
+        'IE': 'SHSH',
+        'XE': 'SSHS',
+        'YE': 'SSSHSH',
+        'ZE': 'HS',
+        'IF': 'SH',
+        'YF': 'SHSSHSSH',
+        'XF': 'SSSH',
+        'ZF': 'SHSS',
+    }
+
+    for i, vop in enumerate(local_clifford):
+        c.apply_VOP(i, vop=vop)
+
+    for i, j in zip(c.stabilizers, c.reduced_form().stabilizers):
+        assert i == j
