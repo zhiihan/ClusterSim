@@ -139,6 +139,7 @@ button_operations = {
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
+    State("reduced-form-switch", "value"),
     State("fusion-mode", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
@@ -147,6 +148,10 @@ button_operations = {
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
+
+    kwargs = {
+        "reduced_form": args[-6]
+    }
     log = args[-3]
 
     # The last two args are selectedNodeData and elements
@@ -160,7 +165,6 @@ def handle_buttons(*args):
 
     method_name, method_args = button_operations[triggered_id]
     if method_name == "fusion_gate":
-        print(args[-5])
         method_args["gate_control"] = args[-5][0]
         method_args["gate_target"] = args[-5][1]
         method_args["force"] = args[-4]
@@ -174,12 +178,12 @@ def handle_buttons(*args):
         return no_update, no_update, no_update, no_update
 
     return apply_operation_wrapper(
-        method_name, selected_nodes, cyto_data, log, **method_args
+        method_name, selected_nodes, cyto_data, log, method_args, **kwargs
     )
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_nodes: list[int], cyto_data, log, **method_args
+    method_name: str, selected_nodes: list[int], cyto_data, log, method_args, **kwargs
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -251,6 +255,9 @@ def apply_operation_wrapper(
 
     else:
         raise NotImplementedError(f"Do not know {method_name}")
+
+    if kwargs.get('reduced_form'):
+        g = g.reduced_form()
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)

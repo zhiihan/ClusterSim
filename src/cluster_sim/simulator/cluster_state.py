@@ -117,6 +117,15 @@ class ClusterState:
         except ImportError:
             raise NotImplementedError
 
+        edges = []
+        for i, edges_i in enumerate(self.adjacency_list):
+            for j in edges_i:
+                if i < j:
+                    edges.append((i, j))
+
+        for edge in edges:
+            self.remove_edge(*edge)
+
         program = str(stim.Tableau.from_stabilizers([stim.PauliString(p) for p in self.stabilizers]).to_circuit('graph_state'))
 
         pattern = r'^([A-Z]+)(?:[^\S\n]+(.+))?$'
@@ -148,6 +157,9 @@ class ClusterState:
                 continue
             else:
                 raise NotImplementedError
+
+        for edge in edges:
+            new_state.add_edge(*edge)
 
         return new_state
 
