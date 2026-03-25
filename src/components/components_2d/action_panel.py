@@ -25,18 +25,34 @@ qubit_panel = dbc.Card(
                     dbc.Button("MZ", outline=True, color="primary", id="MZ"),
                     dbc.Button("MY", outline=True, color="primary", id="MY"),
                     dbc.Button("MX", outline=True, color="primary", id="MX"),
-                    dbc.Select(
-                        id="force-measurement",
-                        options=[
-                            {"label": "Force outcome 0 (default)", "value": 0},
-                            {"label": "Force outcome 1", "value": 1},
-                            {"label": "Random measurement", "value": -1},
-                        ],
-                        placeholder="Force outcome 0 (default)",
-                        value=0,
-                    ),
+                    dbc.Button("Fusion", outline=True, color="primary", id="fusion-gate"),
                 ],
             ),
+            dbc.Select(
+                id="force-measurement",
+                options=[
+                    {"label": "Force outcome 0 (default)", "value": 0},
+                    {"label": "Force outcome 1", "value": 1},
+                    {"label": "Random measurement", "value": -1},
+                ],
+                placeholder="Force outcome 0 (default)",
+                value=0,
+                style={
+                        "minwidth": "300px",
+                        "width": "300px"
+                    }),
+            dbc.Select(
+                id="fusion-mode",
+                options=[
+                    {"label": "XXZZ (default)", "value": 'II'},
+                    {"label": "XZZX", "value": 'HI'},
+                ],
+                placeholder="XXZZ (default)",
+                value='II',
+                style={
+                        "minwidth": "200px",
+                        "width": "200px"
+                    }),
             html.Br(),
             dcc.Markdown(
                 d(
@@ -99,6 +115,7 @@ button_operations = {
     "MX": ("measure", {"force": 0, "basis": "X"}),
     "MY": ("measure", {"force": 0, "basis": "Y"}),
     "MZ": ("measure", {"force": 0, "basis": "Z"}),
+    "fusion-gate": ("fusion_gate", {"force": 0, "mode": "success"}),
     # simple operations with no extra args
     "LC": ("local_complementation", {}),
     "X": ("X", {}),
@@ -122,6 +139,7 @@ button_operations = {
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
+    State("fusion-mode", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
@@ -141,10 +159,14 @@ def handle_buttons(*args):
         raise NotImplementedError
 
     method_name, method_args = button_operations[triggered_id]
-    if method_name == "measure":
-        method_args["force"] = int(
-            args[-4]
-        )  # Force measurement is equal to the selected
+    if method_name == "fusion_gate":
+        print(args[-5])
+        method_args["gate_control"] = args[-5][0]
+        method_args["gate_target"] = args[-5][1]
+        method_args["force"] = args[-4]
+
+    elif method_name == "measure":
+        method_args["force"] = args[-4]
 
     selected_nodes = [i["value"] for i in selected_node_data]
 
@@ -195,6 +217,14 @@ def apply_operation_wrapper(
             outcomes.append(getattr(g, method_name)(i, **method_args))
 
         ui = f"Measured selected nodes {selected_nodes} with outcomes {outcomes}"
+    elif method_name in ["fusion_gate"]:
+        for pair in itertools.batched(selected_nodes, n=2):
+            if len(pair) < 2:
+                return "Odd number of qubits!", no_update, no_update, no_update
+            getattr(g, method_name)(*pair, **method_args)
+
+        ui = f"Applied {method_name} to {selected_nodes}"
+
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
         positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
@@ -231,6 +261,8 @@ def apply_operation_wrapper(
             log += f"[{method_args['force']}]"
         log += f" {' '.join(map(str, selected_nodes))}\n"
         log += f"# OUTCOME {' '.join(map(str, outcomes))}\n"
+    elif method_name == "fusion_gate":
+        log += f"FUSION_GATE[{method_args['gate_control']}{method_args['gate_target']}] {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "local_complementation":
         log += f"LC {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":

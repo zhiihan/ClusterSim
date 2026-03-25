@@ -5,7 +5,7 @@ import rustworkx as rx
 import networkx as nx
 import re
 import itertools
-
+import random
 
 class ClusterState:
     """
@@ -66,6 +66,9 @@ class ClusterState:
     def MZ(self, qubit: int, force: int = -1):
         return self.simulator.measure(qubit, force, "Z")
 
+    def I(self, qubit: int):  # noqa: E743
+        pass
+
     def X(self, qubit: int):
         self.simulator.X(qubit)
 
@@ -86,6 +89,10 @@ class ClusterState:
     def S(self, qubit: int):
         self.simulator.S(qubit)
 
+    def SH(self, qubit: int):
+        self.simulator.H(qubit)
+        self.simulator.S(qubit)
+
     def S_DAG(self, qubit: int):
         self.simulator.S(qubit)
         self.simulator.S(qubit)
@@ -96,6 +103,71 @@ class ClusterState:
 
     def CZ(self, control: int, qubit: int):
         self.simulator.CZ(control, qubit)
+
+    def edge_local_complementation(self, edge: tuple[int, int]):
+        """Apply an edge local complementation.
+
+        Args:
+            edge (tuple[int, int]): _description_
+        """
+        raise NotImplementedError
+
+    def fusion_gate(self, qubit1: int, qubit2: int, gate_control="I", gate_target="I", mode="success", force=0):
+        """Apply a fusion gate.
+
+        Type II fusion of the form XXZZ corresponds to gate_control = I and gate_target = I.
+        Type II fusion of the form XZZX corresponds to gate_control = H and gate_target = I.
+
+        For more details, see https://arxiv.org/pdf/2312.02377.
+
+        Args:
+            qubit1 (int): which qubit to apply
+            qubit2 (int): which qubit to apply
+            gate_control(str): either I or H
+            gate_target(str): either I or H or SH
+            mode (str, optional): Either "success", "failure", or "random". Defaults to "success".
+            force (int): whether to force the measurements to be 0. Defaults to 0.
+        """
+
+        if mode == "random":
+            if random.randint(0, 1) == 0:
+                mode = "success"
+            else:
+                mode = "failure"
+
+        if mode == "success":
+
+            # The gates applied are Rc^\dag and Rt^\dag
+            getattr(self, gate_control)(qubit2)
+            if gate_target == 'SH':
+                self.S_DAG(qubit2)
+                self.H(qubit2)
+            else:
+                getattr(self, gate_target)(qubit2)
+
+            self.CX(qubit1, qubit2)
+            self.H(qubit1)
+            self.MZ(qubit1, force=force)
+            self.MZ(qubit2, force=force)
+        elif mode == "failure":
+            if gate_control == "I" and gate_target == "I":
+                self.MZ(qubit1, force=force)
+                self.X(qubit2)
+                self.MZ(qubit2, force=force)
+            elif gate_control == "H" and gate_target == "I":
+                self.MX(qubit1, force=force)
+                self.X(qubit2)
+                self.MZ(qubit2, force=force)
+            elif gate_control == "H" and gate_target == "H":
+                self.MX(qubit1, force=force)
+                self.Z(qubit2)
+                self.MX(qubit2, force=force)
+            elif gate_control == "H" and gate_target == "SH":
+                self.MZ(qubit1, force=force)
+                self.MY(qubit2, force=force)
+            else:
+                raise NotImplementedError
+
 
     def local_complementation(self, qubit):
         """Apply a local complementation.
@@ -176,7 +248,7 @@ class ClusterState:
         max_qubit = -1
 
         # Regex to find commands: NAME followed optionally by [numbers]
-        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(?:\[(\d+)\])?\s*([^A-Za-z_]*)")
+        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(?:\[([A-Za-z0-9_]+)\])?\s*([^A-Za-z_]*)")
 
         for match in pattern.finditer(full_text):
             op_name = match.group(1).upper()
@@ -241,6 +313,9 @@ class ClusterState:
                 method = getattr(new_state, op_name.lower())
                 for pair in itertools.combinations(qubits, 2):
                     method(pair[0], pair[1])
+            elif op_name in {"FUSION_GATE"}:
+                for pair in itertools.combinations(qubits, 2):
+                    new_state.fusion_gate(*pair, gate_control=optional_args[0], gate_target=optional_args[1])
             else:
                 raise ValueError(f"Unknown operation: {op_name}")
 
