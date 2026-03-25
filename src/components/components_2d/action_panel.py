@@ -226,7 +226,10 @@ def apply_operation_wrapper(
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
     if method_name == "measure":
-        log += f"M{method_args['basis']} {' '.join(map(str, selected_nodes))}\n"
+        log += f"M{method_args['basis']}"
+        if method_args["force"] != -1:
+            log += f"[{method_args['force']}]"
+        log += f" {' '.join(map(str, selected_nodes))}\n"
         log += f"# OUTCOME {' '.join(map(str, outcomes))}\n"
     elif method_name == "local_complementation":
         log += f"LC {' '.join(map(str, selected_nodes))}\n"

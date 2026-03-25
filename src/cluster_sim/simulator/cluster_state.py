@@ -1,3 +1,4 @@
+from click import option
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
@@ -50,10 +51,20 @@ class ClusterState:
 
         Args:
             qubit: The qubit to measure, which is an integer from 0 to n-1.
+            force: Whether to force the measurement outcome.
             basis: The basis to measure in, which is either 'X', 'Y' or 'Z'.
         """
 
         return self.simulator.measure(qubit, force, basis)
+
+    def MX(self, qubit: int, force: int = -1):
+        return self.simulator.measure(qubit, force, "X")
+
+    def MY(self, qubit: int, force: int = -1):
+        return self.simulator.measure(qubit, force, "Y")
+
+    def MZ(self, qubit: int, force: int = -1):
+        return self.simulator.measure(qubit, force, "Z")
 
     def X(self, qubit: int):
         self.simulator.X(qubit)
@@ -165,11 +176,12 @@ class ClusterState:
         max_qubit = -1
 
         # Regex to find commands: NAME followed optionally by [numbers]
-        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*([^A-Za-z_]*)")
+        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(?:\[(\d+)\])?\s*([^A-Za-z_]*)")
 
         for match in pattern.finditer(full_text):
             op_name = match.group(1).upper()
-            args_str = match.group(2)
+            optional_args = match.group(2)
+            args_str = match.group(3)
 
             qubits = []
             if args_str:
@@ -178,7 +190,7 @@ class ClusterState:
             if qubits:
                 max_qubit = max(max_qubit, max(qubits))
 
-            parsed_ops.append((op_name, qubits))
+            parsed_ops.append((op_name, qubits, optional_args))
 
         num_nodes = max_qubit + 1
         if num_nodes <= 0:
@@ -189,8 +201,13 @@ class ClusterState:
         # ---------- Second pass: apply ops ----------
         parsed_log = ""
 
-        for op_name, qubits in parsed_ops:
-            parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
+
+        for op_name, qubits, optional_args in parsed_ops:
+            if optional_args:
+                parsed_log += f"{op_name}[{optional_args}] {' '.join(map(str, qubits))}\n"
+            else:
+                parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
+            
             if op_name == "ADD_NODE":
                 for q in qubits:
                     if q + 1 > num_nodes:
@@ -206,6 +223,9 @@ class ClusterState:
             elif op_name in {"H", "X", "Y", "Z", "S"}:
                 for q in qubits:
                     getattr(new_state, op_name)(q)
+            elif op_name in {"MZ", "MX", "MY"}:
+                for q in qubits:
+                    getattr(new_state, op_name)(q, force=int(optional_args))
 
             elif op_name == "LC":
                 for q in qubits:
