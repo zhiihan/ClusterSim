@@ -588,3 +588,36 @@ class ClusterState:
     def draw(self, label_func=lambda node: str(node), **kwargs):
         g = self.to_rustworkx()
         mpl_draw(g, with_labels=True, labels=label_func, **kwargs)
+
+    @staticmethod
+    def vertex_operator_lookup_table() -> dict[str, str]:
+        """Return the decomposed vertex operator."""
+
+        lookup_table = {
+        'IA': 'I',
+        'XA': 'X', # HSSH
+        'YA': 'Y', # SSHSSH
+        'ZA': 'Z', # SS
+        'IB': 'HSSHS', 
+        'XB': 'SSS',
+        'YB': 'S',
+        'ZB': 'SSHSSHS',
+        'IC': 'HSSHSSH',
+        'XC': 'HSS',
+        'YC': 'H',
+        'ZC': 'SSH',
+        'ID': 'SSSHS',
+        'XD': 'SSHSH',
+        'YD': 'SHS',
+        'ZD': 'HSH',
+        'IE': 'SHSH',
+        'XE': 'SSHS',
+        'YE': 'SSSHSH',
+        'ZE': 'HS',
+        'IF': 'SH',
+        'YF': 'SHSSHSSH',
+        'XF': 'SSSH',
+        'ZF': 'SHSS',
+        }
+
+        return lookup_table

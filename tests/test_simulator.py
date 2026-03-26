@@ -98,34 +98,9 @@ def test_reduced_form():
     for i in range(24):
         c.H(i)
 
-    local_clifford = {
-        'IA': 'I',
-        'XA': 'X', # HSSH
-        'YA': 'Y', # SSHSSH
-        'ZA': 'Z', # SS
-        'IB': 'HSSHS', 
-        'XB': 'SSS',
-        'YB': 'S',
-        'ZB': 'SSHSSHS',
-        'IC': 'HSSHSSH',
-        'XC': 'HSS',
-        'YC': 'H',
-        'ZC': 'SSH',
-        'ID': 'SSSHS',
-        'XD': 'SSHSH',
-        'YD': 'SHS',
-        'ZD': 'HSH',
-        'IE': 'SHSH',
-        'XE': 'SSHS',
-        'YE': 'SSSHSH',
-        'ZE': 'HS',
-        'IF': 'SH',
-        'YF': 'SHSSHSSH',
-        'XF': 'SSSH',
-        'ZF': 'SHSS',
-    }
+    lc_table = c.vertex_operator_lookup_table()
 
-    for i, vop in enumerate(local_clifford):
+    for i, vop in enumerate(lc_table):
         c.apply_VOP(i, vop=vop)
 
     for i, j in zip(c.stabilizers, c.reduced_form().stabilizers):
@@ -140,34 +115,9 @@ def test_local_clifford_table():
         c.H(i)
         c2.H(i)
 
-    local_clifford = {
-        'IA': 'I',
-        'XA': 'X', # HSSH
-        'YA': 'Y', # SSHSSH
-        'ZA': 'Z', # SS
-        'IB': 'HSSHS', 
-        'XB': 'SSS',
-        'YB': 'S',
-        'ZB': 'SSHSSHS',
-        'IC': 'HSSHSSH',
-        'XC': 'HSS',
-        'YC': 'H',
-        'ZC': 'SSH',
-        'ID': 'SSSHS',
-        'XD': 'SSHSH',
-        'YD': 'SHS',
-        'ZD': 'HSH',
-        'IE': 'SHSH',
-        'XE': 'SSHS',
-        'YE': 'SSSHSH',
-        'ZE': 'HS',
-        'IF': 'SH',
-        'YF': 'SHSSHSSH',
-        'XF': 'SSSH',
-        'ZF': 'SHSS',
-    }
+    lc_table = c.vertex_operator_lookup_table()
 
-    for i, (vop, decomposition) in enumerate(local_clifford.items()):
+    for i, (vop, decomposition) in enumerate(lc_table.items()):
         c.apply_VOP(i, vop=vop)
         for gate in decomposition[::-1]:
             getattr(c2, gate)(i)
