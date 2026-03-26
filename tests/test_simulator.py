@@ -106,7 +106,7 @@ def test_reduced_form():
         'IB': 'HSSHS', 
         'XB': 'SSS',
         'YB': 'S',
-        'ZB': 'HSSHSS',
+        'ZB': 'SSHSSHS',
         'IC': 'HSSHSSH',
         'XC': 'HSS',
         'YC': 'H',
@@ -129,4 +129,49 @@ def test_reduced_form():
         c.apply_VOP(i, vop=vop)
 
     for i, j in zip(c.stabilizers, c.reduced_form().stabilizers):
+        assert i == j
+
+
+def test_local_clifford_table():
+    c = ClusterState(24)
+    c2 = ClusterState(24)
+
+    for i in range(24):
+        c.H(i)
+        c2.H(i)
+
+    local_clifford = {
+        'IA': 'I',
+        'XA': 'X', # HSSH
+        'YA': 'Y', # SSHSSH
+        'ZA': 'Z', # SS
+        'IB': 'HSSHS', 
+        'XB': 'SSS',
+        'YB': 'S',
+        'ZB': 'SSHSSHS',
+        'IC': 'HSSHSSH',
+        'XC': 'HSS',
+        'YC': 'H',
+        'ZC': 'SSH',
+        'ID': 'SSSHS',
+        'XD': 'SSHSH',
+        'YD': 'SHS',
+        'ZD': 'HSH',
+        'IE': 'SHSH',
+        'XE': 'SSHS',
+        'YE': 'SSSHSH',
+        'ZE': 'HS',
+        'IF': 'SH',
+        'YF': 'SHSSHSSH',
+        'XF': 'SSSH',
+        'ZF': 'SHSS',
+    }
+
+    for i, (vop, decomposition) in enumerate(local_clifford.items()):
+        c.apply_VOP(i, vop=vop)
+        for gate in decomposition[::-1]:
+            getattr(c2, gate)(i)
+        
+
+    for i, j in zip(c.stabilizers, c2.stabilizers):
         assert i == j

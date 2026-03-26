@@ -157,7 +157,7 @@ tab_6 = dbc.Col(
                             'IB': 'HSSHS', 
                             'XB': 'SSS',
                             'YB': 'S',
-                            'ZB': 'HSSHSS',
+                            'ZB': 'SSHSSHS',
                             'IC': 'HSSHSSH',
                             'XC': 'HSS',
                             'YC': 'H',
