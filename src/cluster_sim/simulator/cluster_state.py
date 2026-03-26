@@ -123,11 +123,12 @@ class ClusterState:
                 if i < j:
                     edges.append((i, j))
 
-        for edge in edges:
-            self.remove_edge(*edge)
-
-        program = str(stim.Tableau.from_stabilizers([stim.PauliString(p) for p in self.stabilizers]).to_circuit('graph_state'))
-
+        c = stim.Circuit()
+        for qubit, vop in enumerate(self.vertex_operators):
+            for gate in self.vertex_operator_lookup_table()[vop][::-1]:
+                c.append(gate, qubit)
+        
+        program = str(c.decomposed())
         pattern = r'^([A-Z]+)(?:[^\S\n]+(.+))?$'
 
         parsed_ops = []
@@ -143,23 +144,19 @@ class ClusterState:
 
         new_state = ClusterState(len(self))
 
-        for instruction, qubits in parsed_ops:
-            if instruction == 'RX':
-                for i in qubits:
-                    new_state.H(i)
-            elif instruction == 'CZ':
-                for pair in itertools.batched(qubits, n=2):
-                    new_state.CZ(*pair)
-            elif instruction in ['H', 'S', 'X', 'Y', 'Z']:
-                for i in qubits:
-                    getattr(new_state, instruction)(i)
-            elif instruction == 'TICK':
-                continue
-            else:
-                raise NotImplementedError
+        # Operations are relative to |+>
+        for i in range(len(self)):
+            new_state.H(i)
 
         for edge in edges:
             new_state.add_edge(*edge)
+
+        for instruction, qubits in parsed_ops:
+            if instruction in ['H', 'S', 'X', 'Y', 'Z']:
+                for i in qubits:
+                    getattr(new_state, instruction)(i)
+            else:
+                raise NotImplementedError
 
         return new_state
 
