@@ -126,7 +126,7 @@ class ClusterState:
         c = stim.Circuit()
         for qubit, vop in enumerate(self.vertex_operators):
             for gate in self.vertex_operator_lookup_table()[vop][::-1]:
-                c.append(gate, qubit)
+                c.append(gate, qubit)  # ty:ignore[no-matching-overload]
         
         program = str(c.decomposed())
         pattern = r'^([A-Z]+)(?:[^\S\n]+(.+))?$'
@@ -616,5 +616,33 @@ class ClusterState:
         'XF': 'SSSH',
         'ZF': 'SHSS',
         }
+
+        return lookup_table
+
+    def reduced_form_lookup_table() -> dict[str, str]:
+        lookup_table = {'YC': 'I',
+        'XC': 'X',
+        'IC': 'Y',
+        'ZC': 'Z',
+        'YF': 'YS',
+        'XF': 'ZS',
+        'IF': 'S',
+        'ZF': 'XS',
+        'YA': 'YH',
+        'XA': 'ZH',
+        'IA': 'H',
+        'ZA': 'XH',
+        'YE': 'YSHS',
+        'XE': 'ZSHS',
+        'IE': 'SHS',
+        'ZE': 'XSHS',
+        'YD': 'ZSH',
+        'XD': 'YSH',
+        'ID': 'XSH',
+        'ZD': 'SH',
+        'YB': 'HS',
+        'IB': 'YHS',
+        'XB': 'XHS',
+        'ZB': 'ZHS'}
 
         return lookup_table
