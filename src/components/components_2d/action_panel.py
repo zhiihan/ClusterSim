@@ -257,7 +257,9 @@ def apply_operation_wrapper(
         raise NotImplementedError(f"Do not know {method_name}")
 
     if kwargs.get('reduced_form'):
-        g = g.reduced_form()
+        # TODO: implement this
+        # g = g.reduced_form()
+        pass
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
