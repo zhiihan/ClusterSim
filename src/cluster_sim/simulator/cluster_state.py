@@ -582,6 +582,29 @@ class ClusterState:
         G = cls.from_rustworkx(graph)
         return G
 
+    @classmethod
+    def random_graph(cls, num_nodes: int, p: float = 0.5, local_cliffords: bool = False):
+        """Generate a random graph.
+
+        Args:
+            num_nodes (int): number of nodes
+            p (float, optional): Probability of generating an edge. Defaults to 0.5.
+            local_cliffords (bool, optional): Randomize local cliffords. Defaults to False.
+        """
+
+        g = rx.undirected_gnp_random_graph(num_nodes, p)
+
+        for i in range(num_nodes):
+            g[i] = None
+
+        c = cls.from_rustworkx(g)
+
+        if local_cliffords:
+            for i in range(num_nodes):
+                rng = random.randint(0, 23)
+                c.apply_VOP(i, rng)
+        return c
+
     def draw(self, label_func=lambda node: str(node), **kwargs):
         g = self.to_rustworkx()
         mpl_draw(g, with_labels=True, labels=label_func, **kwargs)
