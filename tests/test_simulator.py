@@ -93,20 +93,6 @@ def test_load_text_edge():
     assert str(g) == "['+XZZZZ', '+ZXZZZ', '+ZZXZZ', '+ZZZXZ', '+ZZZZX']"
 
 
-def test_reduced_form():
-    c = ClusterState(24)
-    for i in range(24):
-        c.H(i)
-
-    lc_table = c.vertex_operator_lookup_table()
-
-    for i, vop in enumerate(lc_table):
-        c.apply_VOP(i, vop=vop)
-
-    for i, j in zip(c.stabilizers, c.reduced_form().stabilizers):
-        assert i == j
-
-
 def test_local_clifford_table():
     c = ClusterState(24)
     c2 = ClusterState(24)
@@ -122,6 +108,5 @@ def test_local_clifford_table():
         for gate in decomposition[::-1]:
             getattr(c2, gate)(i)
         
-
     for i, j in zip(c.stabilizers, c2.stabilizers):
         assert i == j

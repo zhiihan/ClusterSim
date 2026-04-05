@@ -111,54 +111,6 @@ class ClusterState:
         """
         raise NotImplementedError
 
-    def reduced_form(self):
-        try:
-            import stim
-        except ImportError:
-            raise NotImplementedError
-
-        edges = []
-        for i, edges_i in enumerate(self.adjacency_list):
-            for j in edges_i:
-                if i < j:
-                    edges.append((i, j))
-
-        c = stim.Circuit()
-        for qubit, vop in enumerate(self.vertex_operators):
-            for gate in self.vertex_operator_lookup_table()[vop][::-1]:
-                c.append(gate, qubit)  # ty:ignore[no-matching-overload]
-        
-        program = str(c.decomposed())
-        pattern = r'^([A-Z]+)(?:[^\S\n]+(.+))?$'
-
-        parsed_ops = []
-
-        for match in re.finditer(pattern, program, re.M):
-            cmd = match.group(1)
-            raw_args = match.group(2)
-            if raw_args:
-                args = [int(x) for x in raw_args.split()]
-            else:
-                args = []        
-            parsed_ops.append((cmd, args))
-
-        new_state = ClusterState(len(self))
-
-        # Operations are relative to |+>
-        for i in range(len(self)):
-            new_state.H(i)
-
-        for edge in edges:
-            new_state.add_edge(*edge)
-
-        for instruction, qubits in parsed_ops:
-            if instruction in ['H', 'S', 'X', 'Y', 'Z']:
-                for i in qubits:
-                    getattr(new_state, instruction)(i)
-            else:
-                raise NotImplementedError
-
-        return new_state
 
 
     def fusion_gate(self, qubit1: int, qubit2: int, gate_control="I", gate_target="I", mode="success", force=0):
@@ -642,6 +594,7 @@ class ClusterState:
 
         return lookup_table
 
+    @staticmethod
     def reduced_form_lookup_table() -> dict[str, str]:
         lookup_table = {'YC': 'I',
         'XC': 'X',
