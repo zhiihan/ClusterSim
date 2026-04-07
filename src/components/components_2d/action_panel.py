@@ -147,6 +147,8 @@ button_operations = {
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
+    kwargs = {}
+
     log = args[-3]
 
     # The last two args are selectedNodeData and elements
@@ -162,10 +164,10 @@ def handle_buttons(*args):
     if method_name == "fusion_gate":
         method_args["gate_control"] = args[-5][0]
         method_args["gate_target"] = args[-5][1]
-        method_args["force"] = args[-4]
+        method_args["force"] = int(args[-4])
 
     elif method_name == "measure":
-        method_args["force"] = args[-4]
+        method_args["force"] = int(args[-4])
 
     selected_nodes = [i["value"] for i in selected_node_data]
 
