@@ -127,11 +127,11 @@ tab_5 = dbc.Col(
             """)
                     ),
                     node_labels,
-                    dbc.Switch(
-                        id="reduced-form-switch",
-                        label="Reduced Form",
-                        value=False,
-                    ),
+                    # dbc.Switch(
+                    #     id="reduced-form-switch",
+                    #     label="Reduced Form",
+                    #     value=False,
+                    # ),
                 ]
             )
         ),

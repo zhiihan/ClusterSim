@@ -139,7 +139,6 @@ button_operations = {
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
-    State("reduced-form-switch", "value"),
     State("fusion-mode", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
@@ -148,10 +147,6 @@ button_operations = {
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
-
-    kwargs = {
-        "reduced_form": args[-6]
-    }
     log = args[-3]
 
     # The last two args are selectedNodeData and elements
@@ -255,11 +250,6 @@ def apply_operation_wrapper(
 
     else:
         raise NotImplementedError(f"Do not know {method_name}")
-
-    if kwargs.get('reduced_form'):
-        # TODO: implement this
-        # g = g.reduced_form()
-        pass
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)

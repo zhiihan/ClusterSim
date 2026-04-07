@@ -111,58 +111,6 @@ class ClusterState:
         """
         raise NotImplementedError
 
-    def reduced_form(self):
-        try:
-            import stim
-        except ImportError:
-            raise NotImplementedError
-
-        edges = []
-        for i, edges_i in enumerate(self.adjacency_list):
-            for j in edges_i:
-                if i < j:
-                    edges.append((i, j))
-
-        for edge in edges:
-            self.remove_edge(*edge)
-
-        program = str(stim.Tableau.from_stabilizers([stim.PauliString(p) for p in self.stabilizers]).to_circuit('graph_state'))
-
-        pattern = r'^([A-Z]+)(?:[^\S\n]+(.+))?$'
-
-        parsed_ops = []
-
-        for match in re.finditer(pattern, program, re.M):
-            cmd = match.group(1)
-            raw_args = match.group(2)
-            if raw_args:
-                args = [int(x) for x in raw_args.split()]
-            else:
-                args = []        
-            parsed_ops.append((cmd, args))
-
-        new_state = ClusterState(len(self))
-
-        for instruction, qubits in parsed_ops:
-            if instruction == 'RX':
-                for i in qubits:
-                    new_state.H(i)
-            elif instruction == 'CZ':
-                for pair in itertools.batched(qubits, n=2):
-                    new_state.CZ(*pair)
-            elif instruction in ['H', 'S', 'X', 'Y', 'Z']:
-                for i in qubits:
-                    getattr(new_state, instruction)(i)
-            elif instruction == 'TICK':
-                continue
-            else:
-                raise NotImplementedError
-
-        for edge in edges:
-            new_state.add_edge(*edge)
-
-        return new_state
-
 
     def fusion_gate(self, qubit1: int, qubit2: int, gate_control="I", gate_target="I", mode="success", force=0):
         """Apply a fusion gate.
