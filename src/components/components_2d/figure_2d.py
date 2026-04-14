@@ -7,6 +7,7 @@ from components.components_2d import (
     qubit_panel,
     postprocess_cyto_data_elements,
     move_log,
+    fusion_menu,
 )
 from typing import List, Dict, Any
 import random
@@ -76,6 +77,12 @@ tab_1 = dbc.Col(
                 ]
             )
         ),
+    ],
+)
+
+tab_2 = dbc.Col(
+    [
+        fusion_menu,
     ],
 )
 
@@ -206,7 +213,7 @@ tab_ui_2d = html.Div(
         dbc.Tabs(
             [
                 dbc.Tab(tab_1, label="Operations", tab_id="tab-1"),
-                # dbc.Tab(tab_2, label="Algorithms", tab_id="tab-2"),
+                dbc.Tab(tab_2, label="Fusion", tab_id="tab-2"),
                 dbc.Tab(tab_3, label="Reset and Load", tab_id="tab-3"),
                 dbc.Tab(tab_5, label="Plot Options", tab_id="tab-5"),
                 dbc.Tab(tab_6, label="Information", tab_id="tab-6"),

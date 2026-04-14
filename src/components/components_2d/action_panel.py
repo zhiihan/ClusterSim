@@ -25,32 +25,20 @@ qubit_panel = dbc.Card(
                     dbc.Button("MZ", outline=True, color="primary", id="MZ"),
                     dbc.Button("MY", outline=True, color="primary", id="MY"),
                     dbc.Button("MX", outline=True, color="primary", id="MX"),
-                    dbc.Button(
-                        "Fusion", outline=True, color="primary", id="fusion-gate"
-                    ),
                 ],
             ),
-            dbc.Select(
-                id="force-measurement",
-                options=[
-                    {"label": "Force outcome 0 (default)", "value": 0},
-                    {"label": "Force outcome 1", "value": 1},
-                    {"label": "Random measurement", "value": -1},
-                ],
-                placeholder="Force outcome 0 (default)",
-                value=0,
-                style={"minwidth": "300px", "width": "300px"},
-            ),
-            dbc.Select(
-                id="fusion-mode",
-                options=[
-                    {"label": "XXZZ (default)", "value": "II"},
-                    {"label": "XZZX", "value": "HI"},
-                ],
-                placeholder="XXZZ (default)",
-                value="II",
-                style={"minwidth": "200px", "width": "200px"},
-            ),
+                    dbc.Select(
+            id="force-measurement",
+            options=[
+                {"label": "Force outcome 0 (default)", "value": 0},
+                {"label": "Force outcome 1", "value": 1},
+                {"label": "Random measurement", "value": -1},
+            ],
+            placeholder="Force outcome 0 (default)",
+            value=0,
+            style={"minwidth": "300px", "width": "300px"},
+        ),
+
             html.Br(),
             dcc.Markdown(
                 d(
@@ -102,9 +90,7 @@ qubit_panel = dbc.Card(
                     dbc.Button(
                         "Local Complementation", outline=True, color="primary", id="LC"
                     ),
-                    dbc.Button(
-                        "Copy", outline=True, color="primary", id="duplicate"
-                    ),
+                    dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
                 ]
             ),
         ]
@@ -142,6 +128,8 @@ button_operations = {
     Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     State("fusion-mode", "value"),
+    State("fusion-force-measurement", "value"),
+    State("fusion-type", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
@@ -164,9 +152,11 @@ def handle_buttons(*args):
 
     method_name, method_args = button_operations[triggered_id]
     if method_name == "fusion_gate":
+        
         method_args["gate_control"] = args[-5][0]
         method_args["gate_target"] = args[-5][1]
-        method_args["force"] = int(args[-4])
+        method_args["force"] = int(args[-6])
+        method_args["mode"] = args[-7]
 
     elif method_name == "measure":
         method_args["force"] = int(args[-4])

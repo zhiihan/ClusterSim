@@ -161,8 +161,23 @@ class ClusterState:
             gate_control(str): either I or H
             gate_target(str): either I or H or SH
             mode (str, optional): Either "success", "failure", or "random". Defaults to "success".
-            force (int): whether to force the measurements to be 0. Defaults to 0.
+            force (int): Force the measurements according to the following mapping:
+                - 0 : Qubit 1 = 0, Qubit 2 = 0
+                - 1 : Qubit 1 = 0, Qubit 2 = 1
+                - 2 : Qubit 1 = 1, Qubit 2 = 0
+                - 3 : Qubit 1 = 1, Qubit 2 = 1
+                - -1 : Random measurement
         """
+
+        force_settings = {
+            0 : (0, 0),
+            1 : (0, 1),
+            2 : (1, 0),
+            3 : (1, 1),
+            -1 : (-1, -1)
+        }
+
+        qubit1_force, qubit2_force = force_settings[force]
 
         if mode == "random":
             if random.randint(0, 1) == 0:
@@ -181,24 +196,24 @@ class ClusterState:
 
             self.CX(qubit1, qubit2)
             self.H(qubit1)
-            self.MZ(qubit1, force=force)
-            self.MZ(qubit2, force=force)
+            self.MZ(qubit1, force=qubit1_force)
+            self.MZ(qubit2, force=qubit2_force)
         elif mode == "failure":
             if gate_control == "I" and gate_target == "I":
-                self.MZ(qubit1, force=force)
+                self.MZ(qubit1, force=qubit1_force)
                 self.X(qubit2)
-                self.MZ(qubit2, force=force)
+                self.MZ(qubit2, force=qubit2_force)
             elif gate_control == "H" and gate_target == "I":
-                self.MX(qubit1, force=force)
+                self.MX(qubit1, force=qubit1_force)
                 self.X(qubit2)
-                self.MZ(qubit2, force=force)
+                self.MZ(qubit2, force=qubit2_force)
             elif gate_control == "H" and gate_target == "H":
-                self.MX(qubit1, force=force)
+                self.MX(qubit1, force=qubit1_force)
                 self.Z(qubit2)
-                self.MX(qubit2, force=force)
+                self.MX(qubit2, force=qubit2_force)
             elif gate_control == "H" and gate_target == "SH":
-                self.MZ(qubit1, force=force)
-                self.MY(qubit2, force=force)
+                self.MZ(qubit1, force=qubit1_force)
+                self.MY(qubit2, force=qubit2_force)
             else:
                 raise NotImplementedError
 
