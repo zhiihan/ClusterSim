@@ -138,7 +138,7 @@ class ClusterState:
         if mode == "success":
 
             # The gates applied are Rc^\dag and Rt^\dag
-            getattr(self, gate_control)(qubit2)
+            getattr(self, gate_control)(qubit1)
             if gate_target == 'SH':
                 self.S_DAG(qubit2)
                 self.H(qubit2)
