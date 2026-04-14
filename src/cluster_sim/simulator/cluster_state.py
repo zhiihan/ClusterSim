@@ -1,3 +1,4 @@
+from typing import Self
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
@@ -5,6 +6,7 @@ import networkx as nx
 import re
 import itertools
 import random
+
 
 class ClusterState:
     """
@@ -43,6 +45,28 @@ class ClusterState:
 
     def __len__(self):
         return self.num_nodes
+
+    def __add__(self, other: Self) -> "ClusterState":
+        new_state = ClusterState(self.num_nodes + other.num_nodes)
+        new_state.simulator = self.simulator + other.simulator
+        return new_state
+
+    def __getitem__(self, key):
+        if isinstance(key, slice) or isinstance(key, int):
+            return {
+                "neighbors": self.adjacency_list[key],
+                "stabilizer": self.stabilizers[key],
+                "vop": self.vertex_operators[key],
+            }
+        else:
+            raise TypeError("Invalid argument type")
+
+    def __iter__(self, key):
+        return zip(
+            self.adjacency_list,
+            self.stabilizers,
+            self.vertex_operators,
+        )
 
     def measure(self, qubit: int, force: int = -1, basis: str = "Z"):
         """
@@ -115,8 +139,15 @@ class ClusterState:
         """
         raise NotImplementedError
 
-
-    def fusion_gate(self, qubit1: int, qubit2: int, gate_control="I", gate_target="I", mode="success", force=0):
+    def fusion_gate(
+        self,
+        qubit1: int,
+        qubit2: int,
+        gate_control="I",
+        gate_target="I",
+        mode="success",
+        force=0,
+    ):
         """Apply a fusion gate.
 
         Type II fusion of the form XXZZ corresponds to gate_control = I and gate_target = I.
@@ -140,10 +171,9 @@ class ClusterState:
                 mode = "failure"
 
         if mode == "success":
-
             # The gates applied are Rc^\dag and Rt^\dag
             getattr(self, gate_control)(qubit1)
-            if gate_target == 'SH':
+            if gate_target == "SH":
                 self.S_DAG(qubit2)
                 self.H(qubit2)
             else:
@@ -171,7 +201,6 @@ class ClusterState:
                 self.MY(qubit2, force=force)
             else:
                 raise NotImplementedError
-
 
     def local_complementation(self, qubit):
         """Apply a local complementation.
@@ -231,6 +260,33 @@ class ClusterState:
         self.simulator = ClusterState.from_rustworkx(new_graph).simulator
         self.num_nodes -= len(qubits)
 
+    def subgraph(self, targets: list[int] | None = None):
+        """Generate a copy and return a larger object.
+
+        This does not copy any edges out of the selection.
+
+        Args:
+            targets (list[int]): The qubits to copy. Defaults to all qubits.
+        """
+
+        if targets is None:
+            targets = list(range(self.num_nodes))
+
+        graph = self.to_rustworkx()
+        return ClusterState.from_rustworkx(graph.subgraph(targets))
+
+    def duplicate(self, targets: list[int] | None = None):
+        """Generate a copy of the selection and return a larger object.
+
+        Args:
+            targets (list[int]): The qubits to copy. Defaults to all qubits.
+        """
+
+        if targets is None:
+            targets = list(range(self.num_nodes))
+
+        return self + self.subgraph(targets)
+
     @classmethod
     def from_text(cls, text: str, return_log: bool = False):
         """
@@ -252,7 +308,9 @@ class ClusterState:
         max_qubit = -1
 
         # Regex to find commands: NAME followed optionally by [numbers]
-        pattern = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(?:\[([A-Za-z0-9_]+)\])?\s*([^A-Za-z_]*)")
+        pattern = re.compile(
+            r"([A-Za-z_][A-Za-z0-9_]*)(?:\[([A-Za-z0-9_]+)\])?\s*([^A-Za-z_]*)"
+        )
 
         for match in pattern.finditer(full_text):
             op_name = match.group(1).upper()
@@ -277,13 +335,14 @@ class ClusterState:
         # ---------- Second pass: apply ops ----------
         parsed_log = ""
 
-
         for op_name, qubits, optional_args in parsed_ops:
             if optional_args:
-                parsed_log += f"{op_name}[{optional_args}] {' '.join(map(str, qubits))}\n"
+                parsed_log += (
+                    f"{op_name}[{optional_args}] {' '.join(map(str, qubits))}\n"
+                )
             else:
                 parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
-            
+
             if op_name == "ADD_NODE":
                 for q in qubits:
                     if q + 1 > num_nodes:
@@ -319,7 +378,13 @@ class ClusterState:
                     method(pair[0], pair[1])
             elif op_name in {"FUSION_GATE"}:
                 for pair in itertools.combinations(qubits, 2):
-                    new_state.fusion_gate(*pair, gate_control=optional_args[0], gate_target=optional_args[1])
+                    new_state.fusion_gate(
+                        *pair,
+                        gate_control=optional_args[0],
+                        gate_target=optional_args[1],
+                    )
+            elif op_name in {"DUPLICATE"}:
+                new_state += new_state.subgraph(qubits)
             else:
                 raise ValueError(f"Unknown operation: {op_name}")
 
@@ -538,7 +603,9 @@ class ClusterState:
         return G
 
     @classmethod
-    def random_graph(cls, num_nodes: int, p: float = 0.5, local_cliffords: bool = False):
+    def random_graph(
+        cls, num_nodes: int, p: float = 0.5, local_cliffords: bool = False
+    ):
         """Generate a random graph.
 
         Args:

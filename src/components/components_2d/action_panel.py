@@ -25,7 +25,9 @@ qubit_panel = dbc.Card(
                     dbc.Button("MZ", outline=True, color="primary", id="MZ"),
                     dbc.Button("MY", outline=True, color="primary", id="MY"),
                     dbc.Button("MX", outline=True, color="primary", id="MX"),
-                    dbc.Button("Fusion", outline=True, color="primary", id="fusion-gate"),
+                    dbc.Button(
+                        "Fusion", outline=True, color="primary", id="fusion-gate"
+                    ),
                 ],
             ),
             dbc.Select(
@@ -37,22 +39,18 @@ qubit_panel = dbc.Card(
                 ],
                 placeholder="Force outcome 0 (default)",
                 value=0,
-                style={
-                        "minwidth": "300px",
-                        "width": "300px"
-                    }),
+                style={"minwidth": "300px", "width": "300px"},
+            ),
             dbc.Select(
                 id="fusion-mode",
                 options=[
-                    {"label": "XXZZ (default)", "value": 'II'},
-                    {"label": "XZZX", "value": 'HI'},
+                    {"label": "XXZZ (default)", "value": "II"},
+                    {"label": "XZZX", "value": "HI"},
                 ],
                 placeholder="XXZZ (default)",
-                value='II',
-                style={
-                        "minwidth": "200px",
-                        "width": "200px"
-                    }),
+                value="II",
+                style={"minwidth": "200px", "width": "200px"},
+            ),
             html.Br(),
             dcc.Markdown(
                 d(
@@ -104,6 +102,9 @@ qubit_panel = dbc.Card(
                     dbc.Button(
                         "Local Complementation", outline=True, color="primary", id="LC"
                     ),
+                    dbc.Button(
+                        "Copy", outline=True, color="primary", id="duplicate"
+                    ),
                 ]
             ),
         ]
@@ -130,6 +131,7 @@ button_operations = {
     "toggle-edge": ("toggle_edge", {}),
     "add-node": ("add_node", {"vop": "YC"}),
     "remove-node": ("remove_node", {}),
+    "duplicate": ("duplicate", {}),
 }
 
 
@@ -249,7 +251,9 @@ def apply_operation_wrapper(
         log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
 
         return ui, cyto_data_new, repr(g), log
-
+    elif method_name == "duplicate":
+        g = getattr(g, method_name)(selected_nodes, **method_args)
+        ui = f"Duplicated nodes {selected_nodes}"
     else:
         raise NotImplementedError(f"Do not know {method_name}")
 
@@ -346,13 +350,14 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
 
         move_log = "\n".join(move_log_list[:-1])
         g, parsed_log = ClusterState.from_text(move_log, return_log=True)
-        
-        
+
     elif triggered_id == "load-button":
         g, parsed_log = ClusterState.from_text(load_graph_input, return_log=True)
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
-                positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
+                positions += [
+                    {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+                ]
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
