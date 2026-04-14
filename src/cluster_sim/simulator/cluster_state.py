@@ -62,6 +62,10 @@ class ClusterState:
     def MY(self, qubit: int, force: int = -1):
         return self.simulator.measure(qubit, force, "Y")
 
+    def M(self, qubit: int, force: int = -1):
+        """Shorthand for MZ"""
+        return self.MZ(qubit, force)
+
     def MZ(self, qubit: int, force: int = -1):
         return self.simulator.measure(qubit, force, "Z")
 
@@ -228,7 +232,7 @@ class ClusterState:
         self.num_nodes -= len(qubits)
 
     @classmethod
-    def load_text(cls, text: str, return_log: bool = False):
+    def from_text(cls, text: str, return_log: bool = False):
         """
         Create a cluster state from a text-based representation of operations.
         """
@@ -292,7 +296,7 @@ class ClusterState:
                         new_state.remove_node(q)
                         num_nodes -= 1
 
-            elif op_name in {"H", "X", "Y", "Z", "S"}:
+            elif op_name in {"H", "X", "Y", "Z", "S", "S_DAG"}:
                 for q in qubits:
                     getattr(new_state, op_name)(q)
             elif op_name in {"MZ", "MX", "MY"}:

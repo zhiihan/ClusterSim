@@ -345,11 +345,11 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
             return no_update, no_update, no_update, "Cannot undo, empty graph!"
 
         move_log = "\n".join(move_log_list[:-1])
-        g, parsed_log = ClusterState.load_text(move_log, return_log=True)
+        g, parsed_log = ClusterState.from_text(move_log, return_log=True)
         
         
     elif triggered_id == "load-button":
-        g, parsed_log = ClusterState.load_text(load_graph_input, return_log=True)
+        g, parsed_log = ClusterState.from_text(load_graph_input, return_log=True)
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
                 positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
