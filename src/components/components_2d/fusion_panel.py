@@ -39,7 +39,7 @@ fusion_menu = dbc.Card(
                         {"label": "Random", "value": "random"},
                     ],
                     placeholder="Success (default)",
-                    value=0,
+                    value="success",
                     style={"minwidth": "200px", "width": "200px"},
                 ),
                 dbc.Button(
