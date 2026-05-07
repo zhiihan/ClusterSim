@@ -335,8 +335,12 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
 
     if triggered_id == "undo-button":
         move_log_list = [move for move in move_log.split("\n") if move]
+
         if not move_log_list[:-1]:
             return no_update, no_update, no_update, "Cannot undo, empty graph!"
+
+        while move_log_list[-1].startswith("#"):
+            move_log_list = move_log_list[:-1]
 
         move_log = "\n".join(move_log_list[:-1])
         g, parsed_log = ClusterState.from_text(move_log, return_log=True)
