@@ -27,18 +27,17 @@ qubit_panel = dbc.Card(
                     dbc.Button("MX", outline=True, color="primary", id="MX"),
                 ],
             ),
-                    dbc.Select(
-            id="force-measurement",
-            options=[
-                {"label": "Force outcome 0 (default)", "value": 0},
-                {"label": "Force outcome 1", "value": 1},
-                {"label": "Random measurement", "value": -1},
-            ],
-            placeholder="Force outcome 0 (default)",
-            value=0,
-            style={"minwidth": "300px", "width": "300px"},
-        ),
-
+            dbc.Select(
+                id="force-measurement",
+                options=[
+                    {"label": "Force outcome 0 (default)", "value": 0},
+                    {"label": "Force outcome 1", "value": 1},
+                    {"label": "Random measurement", "value": -1},
+                ],
+                placeholder="Force outcome 0 (default)",
+                value=0,
+                style={"minwidth": "300px", "width": "300px"},
+            ),
             html.Br(),
             dcc.Markdown(
                 d(
@@ -152,7 +151,6 @@ def handle_buttons(*args):
 
     method_name, method_args = button_operations[triggered_id]
     if method_name == "fusion_gate":
-        
         method_args["gate_control"] = args[-5][0]
         method_args["gate_target"] = args[-5][1]
         method_args["force"] = int(args[-6])

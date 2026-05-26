@@ -169,13 +169,7 @@ class ClusterState:
                 - -1 : Random measurement
         """
 
-        force_settings = {
-            0 : (0, 0),
-            1 : (0, 1),
-            2 : (1, 0),
-            3 : (1, 1),
-            -1 : (-1, -1)
-        }
+        force_settings = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1), -1: (-1, -1)}
 
         qubit1_force, qubit2_force = force_settings[force]
 
