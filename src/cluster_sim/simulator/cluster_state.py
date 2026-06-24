@@ -203,8 +203,8 @@ class ClusterState:
                 self.MX(qubit2, force=qubit2_force)
                 return
             elif mode == 'failure':
-                self.MY(qubit1, force=qubit1_force)
-                self.MZ(qubit2, force=qubit2_force)
+                self.MZ(qubit1, force=qubit1_force)
+                self.MY(qubit2, force=qubit2_force)
                 return
         raise NotImplementedError
 
