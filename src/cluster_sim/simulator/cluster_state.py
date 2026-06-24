@@ -143,23 +143,18 @@ class ClusterState:
         self,
         qubit1: int,
         qubit2: int,
-        gate_control="I",
-        gate_target="I",
+        fusion_type: str = "XXZZ",
         mode="success",
         force=0,
     ):
         """Apply a fusion gate.
-
-        Type II fusion of the form XXZZ corresponds to gate_control = I and gate_target = I.
-        Type II fusion of the form XZZX corresponds to gate_control = H and gate_target = I.
 
         For more details, see https://arxiv.org/pdf/2312.02377.
 
         Args:
             qubit1 (int): which qubit to apply
             qubit2 (int): which qubit to apply
-            gate_control(str): either I or H
-            gate_target(str): either I or H or SH
+            fusion_type (str): "XXZZ", "XZZX", "XYYZ"
             mode (str, optional): Either "success", "failure", or "random". Defaults to "success".
             force (int): Force the measurements according to the following mapping:
                 - 0 : Qubit 1 = 0, Qubit 2 = 0
@@ -179,45 +174,61 @@ class ClusterState:
             else:
                 mode = "failure"
 
-        if mode == "success":
-            # The gates applied are Rc^\dag and Rt^\dag
-            getattr(self, gate_control)(qubit1)
-            if gate_target == "SH":
-                self.S_DAG(qubit2)
+        if fusion_type == "XXZZ":
+            if mode == "success":
                 self.H(qubit2)
-            else:
-                getattr(self, gate_target)(qubit2)
-
-            self.CX(qubit1, qubit2)
-            self.H(qubit1)
-            self.MZ(qubit1, force=qubit1_force)
-            self.MZ(qubit2, force=qubit2_force)
-        elif mode == "failure":
-            if gate_control == "I" and gate_target == "I":
-                self.MZ(qubit1, force=qubit1_force)
-                self.X(qubit2)
-                self.MZ(qubit2, force=qubit2_force)
-            elif gate_control == "H" and gate_target == "I":
+                self.CZ(qubit1, qubit2)
                 self.MX(qubit1, force=qubit1_force)
-                self.X(qubit2)
-                self.MZ(qubit2, force=qubit2_force)
-            elif gate_control == "H" and gate_target == "H":
-                self.MX(qubit1, force=qubit1_force)
-                self.Z(qubit2)
                 self.MX(qubit2, force=qubit2_force)
-            elif gate_control == "H" and gate_target == "SH":
+                return
+            elif mode == 'failure':
                 self.MZ(qubit1, force=qubit1_force)
-                self.MY(qubit2, force=qubit2_force)
-            else:
-                raise NotImplementedError
+                self.MZ(qubit2, force=qubit2_force)
+                return
+        if fusion_type == "XZZX":
+            if mode == "success":
+                self.CZ(qubit1, qubit2)
+                self.MX(qubit1, force=qubit1_force)
+                self.MX(qubit2, force=qubit2_force)
+                return 
+            elif mode == 'failure':
+                self.MX(qubit1, force=qubit1_force)
+                self.MZ(qubit2, force=qubit2_force)
+                return
+        if fusion_type == "XYYZ":
+            if mode == "success":
+                self.S_DAG(qubit2)
+                self.CZ(qubit1, qubit2)
+                self.MX(qubit1, force=qubit1_force)
+                self.MX(qubit2, force=qubit2_force)
+                return
+            elif mode == 'failure':
+                self.MY(qubit1, force=qubit1_force)
+                self.MZ(qubit2, force=qubit2_force)
+                return
+        raise NotImplementedError
 
-    def local_complementation(self, qubit):
-        """Apply a local complementation.
+    def local_complementation_rewrite(self, qubit):
+        """Apply a local complementation. This does not change the graph state.
+
+        This is because we apply local Cliffords to cancel out the state.
 
         Args:
             qubit (int): which qubit to apply
         """
         self.simulator.invert_neighborhood(qubit)
+
+    def local_complementation(self, qubit):
+        """Apply a local complementation.
+
+        Args:
+            qubit (_type_): which qubit to apply
+        """
+
+        for qubit1 in self.adjacency_list[qubit]:
+            for qubit2 in self.adjacency_list[qubit]:
+                if qubit1 < qubit2:
+                    self.simulator.toggle_edge(qubit1, qubit2)
 
     def apply_VOP(self, qubit, vop: tuple[int, int] | int | str):
         """Apply vertex operators.
@@ -375,6 +386,10 @@ class ClusterState:
                 for q in qubits:
                     new_state.local_complementation(q)
 
+            elif op_name == "LCR":
+                for q in qubits:
+                    new_state.local_complementation_rewrite(q)
+
             elif op_name in {"CZ", "CX"}:
                 if len(qubits) % 2 != 0:
                     raise ValueError(f"{op_name} requires an even number of qubits.")
@@ -389,8 +404,7 @@ class ClusterState:
                 for pair in itertools.combinations(qubits, 2):
                     new_state.fusion_gate(
                         *pair,
-                        gate_control=optional_args[0],
-                        gate_target=optional_args[1],
+                        fusion_type=optional_args,
                     )
             elif op_name in {"DUPLICATE"}:
                 new_state += new_state.subgraph(qubits)
