@@ -11,11 +11,12 @@ fusion_menu = dbc.Card(
             dbc.Select(
                 id="fusion-type",
                 options=[
-                    {"label": "XXZZ (default)", "value": "II"},
-                    {"label": "XZZX", "value": "HI"},
+                    {"label": "XXZZ (default)", "value": "XXZZ"},
+                    {"label": "XZZX", "value": "XZZX"},
+                    {"label": "XYYZ", "value": "XYYZ"},
                 ],
                 placeholder="XXZZ (default)",
-                value="II",
+                value="XXZZ",
                 style={"minwidth": "200px", "width": "200px"},
             ),
             dbc.Select(

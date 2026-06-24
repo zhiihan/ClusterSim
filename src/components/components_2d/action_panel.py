@@ -87,7 +87,10 @@ qubit_panel = dbc.Card(
                         "Toggle Edge", outline=True, color="primary", id="toggle-edge"
                     ),
                     dbc.Button(
-                        "Local Complementation", outline=True, color="primary", id="LC"
+                        "LC", outline=True, color="primary", id="LC"
+                    ),
+                    dbc.Button(
+                        "LC Rewrite", outline=True, color="primary", id="LCR"
                     ),
                     dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
                 ]
@@ -103,6 +106,7 @@ button_operations = {
     "MZ": ("measure", {"force": 0, "basis": "Z"}),
     "fusion-gate": ("fusion_gate", {"force": 0, "mode": "success"}),
     # simple operations with no extra args
+    "LCR": ("local_complementation_rewrite", {}),
     "LC": ("local_complementation", {}),
     "X": ("X", {}),
     "Y": ("Y", {}),
@@ -151,8 +155,7 @@ def handle_buttons(*args):
 
     method_name, method_args = button_operations[triggered_id]
     if method_name == "fusion_gate":
-        method_args["gate_control"] = args[-5][0]
-        method_args["gate_target"] = args[-5][1]
+        method_args["fusion_type"] = args[-5]
         method_args["force"] = int(args[-6])
         method_args["mode"] = args[-7]
 
@@ -197,7 +200,7 @@ def apply_operation_wrapper(
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
-    elif method_name in ["X", "Y", "Z", "local_complementation", "H", "S"]:
+    elif method_name in ["X", "Y", "Z", "local_complementation", "local_complementation_rewrite", "H", "S"]:
         for i in selected_nodes:
             getattr(g, method_name)(i, **method_args)
 
@@ -255,9 +258,11 @@ def apply_operation_wrapper(
         log += f" {' '.join(map(str, selected_nodes))}\n"
         log += f"# OUTCOME {' '.join(map(str, outcomes))}\n"
     elif method_name == "fusion_gate":
-        log += f"FUSION_GATE[{method_args['gate_control']}{method_args['gate_target']}] {' '.join(map(str, selected_nodes))}\n"
+        log += f"FUSION_GATE[{method_args['fusion_type']}] {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "local_complementation":
         log += f"LC {' '.join(map(str, selected_nodes))}\n"
+    elif method_name == "local_complementation_rewrite":
+        log += f"LCR {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":
         log += f"ADD_NODE {len(g) - 1}\n"
     else:
