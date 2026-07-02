@@ -137,19 +137,21 @@ button_operations = {
     State("force-measurement", "value"),
     State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
+    State("figure-app", "selectedEdgeData"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
     kwargs = {}
 
-    log = args[-3]
+    log = args[-4]
 
-    # The last two args are selectedNodeData and elements
-    selected_node_data = args[-2]
+    # The last three args are selectedNodeData, selectedEdgeData, and elements
+    selected_node_data = args[-3]
+    selected_edge_data = args[-2]
     cyto_data = args[-1]
 
-    history_data = args[-8]
+    history_data = args[-9]
     if not history_data or not isinstance(history_data, dict):
         history_data = {"undo_stack": [], "redo_stack": []}
     else:
@@ -169,11 +171,10 @@ def handle_buttons(*args):
         triggered_id = "remove-node"
 
     if triggered_id == "ctrl-v-btn":
-        clipboard_data = args[-9]
+        clipboard_data = args[-10]
         if not clipboard_data:
             return (
                 "Clipboard is empty!",
-                no_update,
                 no_update,
                 no_update,
                 no_update,
@@ -188,17 +189,31 @@ def handle_buttons(*args):
 
         method_name, method_args = button_operations[triggered_id]
         if method_name == "fusion_gate":
-            method_args["fusion_type"] = args[-5]
-            method_args["force"] = int(args[-6])
-            method_args["mode"] = args[-7]
+            method_args["fusion_type"] = args[-6]
+            method_args["force"] = int(args[-7])
+            method_args["mode"] = args[-8]
 
         elif method_name == "measure":
-            method_args["force"] = int(args[-4])
+            method_args["force"] = int(args[-5])
 
         selected_nodes = [i["value"] for i in selected_node_data]
 
+        # If no nodes selected but an edge is selected, derive nodes from the edge
+        # for edge operations (add/remove/toggle)
+        if not selected_nodes and method_name in ["add_edge", "remove_edge", "toggle_edge"]:
+            if selected_edge_data:
+                edge_nodes: list[int] = []
+                for edge in selected_edge_data:
+                    src = edge.get("source")
+                    tgt = edge.get("target")
+                    if src is not None:
+                        edge_nodes.append(int(src))
+                    if tgt is not None:
+                        edge_nodes.append(int(tgt))
+                selected_nodes = list(dict.fromkeys(edge_nodes))  # deduplicate, preserve order
+
     if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update
 
     return apply_operation_wrapper(
         method_name, selected_nodes, cyto_data, log, method_args, history_data, **kwargs
