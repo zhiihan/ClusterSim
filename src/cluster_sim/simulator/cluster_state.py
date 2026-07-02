@@ -260,8 +260,8 @@ class ClusterState:
         """
 
         graph = self.to_rustworkx()
-        graph.add_node({"id": self.num_nodes + 1, "vop": vop})
-
+        graph.add_node({"id": str(self.num_nodes), "vop": vop})
+        
         self.simulator = ClusterState.from_rustworkx(graph).simulator
         self.num_nodes += 1
 
@@ -349,7 +349,8 @@ class ClusterState:
                 qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
             if qubits:
-                max_qubit = max(max_qubit, max(qubits))
+                if op_name not in {"ADD_NODE", "REMOVE_NODE", "DUPLICATE"} and qubits:
+                    max_qubit = max(max_qubit, max(qubits))
 
             parsed_ops.append((op_name, qubits, optional_args))
 
@@ -373,7 +374,7 @@ class ClusterState:
             if op_name == "ADD_NODE":
                 for q in qubits:
                     if q + 1 > num_nodes:
-                        new_state.add_node(vop="YC")
+                        new_state.add_node(vop="IA")
                         num_nodes += 1
 
             elif op_name == "REMOVE_NODE":
