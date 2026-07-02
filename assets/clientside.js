@@ -48,6 +48,45 @@ window.dash_clientside.clientside = {
                     btn.click();
                 }
             }
+            // Check if N (Add Node)
+            if (!e.ctrlKey && !e.metaKey && (e.key === 'n' || e.key === 'N')) {
+                const btn = document.getElementById('key-n-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
+            // Check if Shift+E (Remove Edge)
+            if (e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+                const btn = document.getElementById('key-shift-e-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            // Check if E (Toggle Edge)
+            } else if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'e' || e.key === 'E')) {
+                const btn = document.getElementById('key-e-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
+            // Check if H (Hadamard)
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'h' || e.key === 'H')) {
+                const btn = document.getElementById('key-h-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
+            // Check if W (LC)
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'w' || e.key === 'W')) {
+                const btn = document.getElementById('key-w-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
         }, true);
         return window.dash_clientside.no_update;
     }

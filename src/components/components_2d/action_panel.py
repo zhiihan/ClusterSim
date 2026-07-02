@@ -128,6 +128,11 @@ button_operations = {
     Output("history-store", "data", allow_duplicate=True),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     Input("backspace-btn", "n_clicks"),
+    Input("key-n-btn", "n_clicks"),
+    Input("key-e-btn", "n_clicks"),
+    Input("key-shift-e-btn", "n_clicks"),
+    Input("key-h-btn", "n_clicks"),
+    Input("key-w-btn", "n_clicks"),
     Input("ctrl-v-btn", "n_clicks"),
     State("clipboard-store", "data"),
     State("history-store", "data"),
@@ -169,6 +174,16 @@ def handle_buttons(*args):
     triggered_id = callback_context.triggered_id
     if triggered_id == "backspace-btn":
         triggered_id = "remove-node"
+    elif triggered_id == "key-n-btn":
+        triggered_id = "add-node"
+    elif triggered_id == "key-e-btn":
+        triggered_id = "toggle-edge"
+    elif triggered_id == "key-shift-e-btn":
+        triggered_id = "remove-edge"
+    elif triggered_id == "key-h-btn":
+        triggered_id = "H"
+    elif triggered_id == "key-w-btn":
+        triggered_id = "LC"
 
     if triggered_id == "ctrl-v-btn":
         clipboard_data = args[-10]

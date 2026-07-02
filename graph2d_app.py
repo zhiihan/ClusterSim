@@ -56,6 +56,11 @@ app.layout = html.Div(
         html.Button(id="ctrl-z-btn", style={"display": "none"}),
         html.Button(id="ctrl-y-btn", style={"display": "none"}),
         html.Button(id="backspace-btn", style={"display": "none"}),
+        html.Button(id="key-n-btn", style={"display": "none"}),
+        html.Button(id="key-e-btn", style={"display": "none"}),
+        html.Button(id="key-shift-e-btn", style={"display": "none"}),
+        html.Button(id="key-h-btn", style={"display": "none"}),
+        html.Button(id="key-w-btn", style={"display": "none"}),
         html.Div(
             id="none",
             children=[],
