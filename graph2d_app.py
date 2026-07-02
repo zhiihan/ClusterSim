@@ -5,7 +5,6 @@ from cluster_sim.app import BrowserState
 from cluster_sim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
-from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 
 import logging
 
@@ -19,32 +18,20 @@ server = app.server  # For deployment
 
 app.layout = html.Div(
     [
-        PanelGroup(
-            id="main_app",
-            children=[
-                Panel(
-                    id="resize_figure",
-                    children=[
-                        figure_2d,
-                    ],
+        html.Div(
+            [
+                # Top horizontal toolbar panel
+                html.Div(
+                    tab_ui_2d,
+                    className="glass-top-panel"
                 ),
-                PanelResizeHandle(
-                    html.Div(
-                        style={
-                            "backgroundColor": "grey",
-                            "height": "100%",
-                            "width": "5px",
-                        }
-                    )
-                ),
-                Panel(
-                    id="resize_info",
-                    children=tab_ui_2d,
-                    style={"overflowY": "scroll"},
+                # Fullscreen background Cytoscape canvas
+                html.Div(
+                    figure_2d,
+                    className="cytoscape-container"
                 ),
             ],
-            direction="horizontal",
-            style={"height": "100vh"},
+            className="app-container"
         ),
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),

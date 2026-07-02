@@ -6,93 +6,73 @@ import dash_bootstrap_components as dbc
 from typing import Any
 import random
 
-qubit_panel = dbc.Card(
-    dbc.CardBody(
-        [
-            dcc.Markdown(
-                d(
-                    """
-                **Select Measurement Basis**
-
-                Click points in the graph, then press the button to measure. 
-                
-                Forcing measurement only applies if the state is 50/50.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button("MZ", outline=True, color="primary", id="MZ"),
-                    dbc.Button("MY", outline=True, color="primary", id="MY"),
-                    dbc.Button("MX", outline=True, color="primary", id="MX"),
-                ],
-            ),
-            dbc.Select(
-                id="force-measurement",
-                options=[
-                    {"label": "Force outcome 0 (default)", "value": 0},
-                    {"label": "Force outcome 1", "value": 1},
-                    {"label": "Random measurement", "value": -1},
-                ],
-                placeholder="Force outcome 0 (default)",
-                value=0,
-                style={"minwidth": "300px", "width": "300px"},
-            ),
-            html.Br(),
-            dcc.Markdown(
-                d(
-                    """
-                **Apply Clifford Gates**
-
-                Click points in the graph, then press the button to apply Clifford gates.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button("X", outline=True, color="primary", id="X"),
-                    dbc.Button("Y", outline=True, color="primary", id="Y"),
-                    dbc.Button("Z", outline=True, color="primary", id="Z"),
-                    dbc.Button("H", outline=True, color="primary", id="H"),
-                    dbc.Button("S", outline=True, color="primary", id="S"),
-                    dbc.Button("CX", outline=True, color="primary", id="CX"),
-                    dbc.Button("CZ", outline=True, color="primary", id="CZ"),
-                ]
-            ),
-            html.Br(),
-            dcc.Markdown(
-                d(
-                    """
-                **Graph operations**
-
-                Click points in the graph, then press the button to apply graph operations.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button(
-                        "Add Node", outline=True, color="primary", id="add-node"
-                    ),
-                    dbc.Button(
-                        "Remove Node", outline=True, color="primary", id="remove-node"
-                    ),
-                    dbc.Button(
-                        "Add Edge", outline=True, color="primary", id="add-edge"
-                    ),
-                    dbc.Button(
-                        "Remove Edge", outline=True, color="primary", id="remove-edge"
-                    ),
-                    dbc.Button(
-                        "Toggle Edge", outline=True, color="primary", id="toggle-edge"
-                    ),
-                    dbc.Button("LC", outline=True, color="primary", id="LC"),
-                    dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR"),
-                    dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
-                ]
-            ),
-        ]
-    )
+qubit_panel = dbc.Row(
+    [
+        # Column 1: Select Measurement Basis
+        dbc.Col(
+            [
+                dcc.Markdown("**Select Measurement Basis**", style={"margin": "0 0 4px 0"}),
+                dbc.ButtonGroup(
+                    [
+                        dbc.Button("MZ", outline=True, color="primary", id="MZ"),
+                        dbc.Button("MY", outline=True, color="primary", id="MY"),
+                        dbc.Button("MX", outline=True, color="primary", id="MX"),
+                    ],
+                    style={"width": "100%", "marginBottom": "6px"}
+                ),
+                dbc.Select(
+                    id="force-measurement",
+                    options=[
+                        {"label": "Force outcome 0 (default)", "value": 0},
+                        {"label": "Force outcome 1", "value": 1},
+                        {"label": "Random measurement", "value": -1},
+                    ],
+                    placeholder="Force outcome 0 (default)",
+                    value=0,
+                ),
+            ],
+            width=3
+        ),
+        # Column 2: Apply Clifford Gates
+        dbc.Col(
+            [
+                dcc.Markdown("**Apply Clifford Gates**", style={"margin": "0 0 4px 0"}),
+                dbc.ButtonGroup(
+                    [
+                        dbc.Button("X", outline=True, color="primary", id="X"),
+                        dbc.Button("Y", outline=True, color="primary", id="Y"),
+                        dbc.Button("Z", outline=True, color="primary", id="Z"),
+                        dbc.Button("H", outline=True, color="primary", id="H"),
+                        dbc.Button("S", outline=True, color="primary", id="S"),
+                        dbc.Button("CX", outline=True, color="primary", id="CX"),
+                        dbc.Button("CZ", outline=True, color="primary", id="CZ"),
+                    ],
+                    style={"width": "100%"}
+                ),
+            ],
+            width=4
+        ),
+        # Column 3: Graph operations
+        dbc.Col(
+            [
+                dcc.Markdown("**Graph operations**", style={"margin": "0 0 4px 0"}),
+                dbc.ButtonGroup(
+                    [
+                        dbc.Button("Add Node", outline=True, color="primary", id="add-node"),
+                        dbc.Button("Remove Node", outline=True, color="primary", id="remove-node"),
+                        dbc.Button("Add Edge", outline=True, color="primary", id="add-edge"),
+                        dbc.Button("Remove Edge", outline=True, color="primary", id="remove-edge"),
+                        dbc.Button("Toggle Edge", outline=True, color="primary", id="toggle-edge"),
+                        dbc.Button("LC", outline=True, color="primary", id="LC"),
+                        dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR"),
+                        dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
+                    ],
+                    style={"width": "100%"}
+                ),
+            ],
+            width=5
+        ),
+    ]
 )
 
 button_operations = {
