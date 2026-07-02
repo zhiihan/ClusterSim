@@ -126,6 +126,9 @@ button_operations = {
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
+    Input("backspace-btn", "n_clicks"),
+    Input("ctrl-v-btn", "n_clicks"),
+    State("clipboard-store", "data"),
     State("fusion-mode", "value"),
     State("fusion-force-measurement", "value"),
     State("fusion-type", "value"),
@@ -146,19 +149,30 @@ def handle_buttons(*args):
 
     # Determine which button triggered the callback
     triggered_id = callback_context.triggered_id
-    if not triggered_id or triggered_id not in button_operations:
-        raise NotImplementedError
+    if triggered_id == "backspace-btn":
+        triggered_id = "remove-node"
 
-    method_name, method_args = button_operations[triggered_id]
-    if method_name == "fusion_gate":
-        method_args["fusion_type"] = args[-5]
-        method_args["force"] = int(args[-6])
-        method_args["mode"] = args[-7]
+    if triggered_id == "ctrl-v-btn":
+        clipboard_data = args[-8]
+        if not clipboard_data:
+            return "Clipboard is empty!", no_update, no_update, no_update
+        selected_nodes = clipboard_data
+        method_name = "duplicate"
+        method_args = {}
+    else:
+        if not triggered_id or triggered_id not in button_operations:
+            raise NotImplementedError
 
-    elif method_name == "measure":
-        method_args["force"] = int(args[-4])
+        method_name, method_args = button_operations[triggered_id]
+        if method_name == "fusion_gate":
+            method_args["fusion_type"] = args[-5]
+            method_args["force"] = int(args[-6])
+            method_args["mode"] = args[-7]
 
-    selected_nodes = [i["value"] for i in selected_node_data]
+        elif method_name == "measure":
+            method_args["force"] = int(args[-4])
+
+        selected_nodes = [i["value"] for i in selected_node_data]
 
     if not selected_nodes and method_name != "add_node":
         return no_update, no_update, no_update, no_update
@@ -327,23 +341,28 @@ def postprocess_cyto_data_elements(
     Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
     Input("undo-button", "n_clicks"),
+    Input("ctrl-z-btn", "n_clicks"),
     Input("load-button", "n_clicks"),
     State("load-graph-input", "value"),
     State("move-log", "children"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
 )
-def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyto_data):
+def load_graph(_undo: int, _ctrl_z: int, _load: int, load_graph_input: str, move_log: str, cyto_data):
     """Load or undo from either the move log or a saved text.
 
     Args:
         _undo (int): whether the undo button was clicked
+        _ctrl_z (int): whether the ctrl-z key was pressed
         _load (int): whether the load button was clicked
         load_graph_input (str): the load graph input
         move_log (str): the move log
     """
 
     triggered_id = callback_context.triggered_id
+    if triggered_id == "ctrl-z-btn":
+        triggered_id = "undo-button"
+
     _, positions = preprocess_cyto_data_elements(cyto_data)
 
     if not load_graph_input and triggered_id == "load-button":
@@ -390,3 +409,18 @@ def export_graph_to_json(n_clicks, cyto_data):
     cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
     g = ClusterState.from_cytoscape(cyto_data)
     return dcc.send_string(g.to_json(), "cytoscape_graph.json")
+
+
+@callback(
+    Output("clipboard-store", "data"),
+    Input("ctrl-c-btn", "n_clicks"),
+    State("figure-app", "selectedNodeData"),
+    prevent_initial_call=True,
+)
+def copy_nodes(n_clicks, selected_node_data):
+    if not selected_node_data:
+        return []
+    return [node["value"] for node in selected_node_data]
+
+
+
