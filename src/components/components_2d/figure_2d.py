@@ -1,4 +1,4 @@
-from dash import dcc, html, callback, Input, Output, State, no_update
+from dash import dcc, html, callback, Input, Output, State, no_update, callback_context
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from clustersim.simulator import ClusterState
