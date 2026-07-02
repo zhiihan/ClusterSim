@@ -125,10 +125,12 @@ button_operations = {
     Output("figure-app", "elements", allow_duplicate=True),
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
+    Output("history-store", "data", allow_duplicate=True),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
     Input("backspace-btn", "n_clicks"),
     Input("ctrl-v-btn", "n_clicks"),
     State("clipboard-store", "data"),
+    State("history-store", "data"),
     State("fusion-mode", "value"),
     State("fusion-force-measurement", "value"),
     State("fusion-type", "value"),
@@ -147,15 +149,32 @@ def handle_buttons(*args):
     selected_node_data = args[-2]
     cyto_data = args[-1]
 
+    history_data = args[-8]
+    if not history_data or not isinstance(history_data, dict):
+        history_data = {"undo_stack": [], "redo_stack": []}
+    else:
+        history_data = {
+            "undo_stack": list(history_data.get("undo_stack", [])),
+            "redo_stack": list(history_data.get("redo_stack", []))
+        }
+
+    # Record the current state in history before performing the action
+    _, current_positions = preprocess_cyto_data_elements(cyto_data)
+    history_data["undo_stack"].append({
+        "move_log": log,
+        "positions": current_positions
+    })
+    history_data["redo_stack"] = []
+
     # Determine which button triggered the callback
     triggered_id = callback_context.triggered_id
     if triggered_id == "backspace-btn":
         triggered_id = "remove-node"
 
     if triggered_id == "ctrl-v-btn":
-        clipboard_data = args[-8]
+        clipboard_data = args[-9]
         if not clipboard_data:
-            return "Clipboard is empty!", no_update, no_update, no_update
+            return "Clipboard is empty!", no_update, no_update, no_update, no_update
         selected_nodes = clipboard_data
         method_name = "duplicate"
         method_args = {}
@@ -175,15 +194,15 @@ def handle_buttons(*args):
         selected_nodes = [i["value"] for i in selected_node_data]
 
     if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update
 
     return apply_operation_wrapper(
-        method_name, selected_nodes, cyto_data, log, method_args, **kwargs
+        method_name, selected_nodes, cyto_data, log, method_args, history_data, **kwargs
     )
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_nodes: list[int], cyto_data, log, method_args, **kwargs
+    method_name: str, selected_nodes: list[int], cyto_data, log, method_args, history_data, **kwargs
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -259,7 +278,7 @@ def apply_operation_wrapper(
 
         log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
 
-        return ui, cyto_data_new, repr(g), log
+        return ui, cyto_data_new, repr(g), log, history_data
     elif method_name == "duplicate":
         selected_nodes.sort()
         for parent_id in selected_nodes:
@@ -298,7 +317,7 @@ def apply_operation_wrapper(
     else:
         log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 
-    return ui, cyto_data_new, repr(g), log
+    return ui, cyto_data_new, repr(g), log, history_data
 
 
 def preprocess_cyto_data_elements(
@@ -340,47 +359,75 @@ def postprocess_cyto_data_elements(
     Output("simulator-representation", "children", allow_duplicate=True),
     Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
+    Output("history-store", "data", allow_duplicate=True),
     Input("undo-button", "n_clicks"),
     Input("ctrl-z-btn", "n_clicks"),
+    Input("redo-button", "n_clicks"),
+    Input("ctrl-y-btn", "n_clicks"),
     Input("load-button", "n_clicks"),
     State("load-graph-input", "value"),
     State("move-log", "children"),
     State("figure-app", "elements"),
+    State("history-store", "data"),
     prevent_initial_call=True,
 )
-def load_graph(_undo: int, _ctrl_z: int, _load: int, load_graph_input: str, move_log: str, cyto_data):
-    """Load or undo from either the move log or a saved text.
-
-    Args:
-        _undo (int): whether the undo button was clicked
-        _ctrl_z (int): whether the ctrl-z key was pressed
-        _load (int): whether the load button was clicked
-        load_graph_input (str): the load graph input
-        move_log (str): the move log
+def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log, cyto_data, history_data):
+    """Load, undo, or redo from move log or saved text.
     """
 
     triggered_id = callback_context.triggered_id
     if triggered_id == "ctrl-z-btn":
         triggered_id = "undo-button"
+    elif triggered_id == "ctrl-y-btn":
+        triggered_id = "redo-button"
+
+    if not history_data or not isinstance(history_data, dict):
+        history_data = {"undo_stack": [], "redo_stack": []}
+    else:
+        history_data = {
+            "undo_stack": list(history_data.get("undo_stack", [])),
+            "redo_stack": list(history_data.get("redo_stack", []))
+        }
 
     _, positions = preprocess_cyto_data_elements(cyto_data)
 
     if not load_graph_input and triggered_id == "load-button":
-        return no_update, no_update, no_update, "Cannot load empty input!"
-
-    if not move_log and triggered_id == "undo-button":
-        return no_update, no_update, no_update, "Empty graph!"
+        return no_update, no_update, no_update, "Cannot load empty input!", no_update
 
     if triggered_id == "undo-button":
-        move_log_list = [move for move in move_log.split("\n") if move]
+        if not history_data["undo_stack"]:
+            return no_update, no_update, no_update, "Nothing to undo!", no_update
 
-        if not move_log_list[:-1]:
-            return no_update, no_update, no_update, "Cannot undo, empty graph!"
+        # Pop the state to restore
+        prev_state = history_data["undo_stack"].pop()
+        
+        # Save the current state to the redo stack
+        _, current_positions = preprocess_cyto_data_elements(cyto_data)
+        history_data["redo_stack"].append({
+            "move_log": move_log,
+            "positions": current_positions
+        })
 
-        while move_log_list[-1].startswith("#"):
-            move_log_list = move_log_list[:-1]
+        move_log = prev_state["move_log"]
+        positions = prev_state["positions"]
+        g, parsed_log = ClusterState.from_string(move_log, return_log=True)
 
-        move_log = "\n".join(move_log_list[:-1])
+    elif triggered_id == "redo-button":
+        if not history_data["redo_stack"]:
+            return no_update, no_update, no_update, "Nothing to redo!", no_update
+
+        # Pop the state to restore
+        next_state = history_data["redo_stack"].pop()
+        
+        # Save the current state to the undo stack
+        _, current_positions = preprocess_cyto_data_elements(cyto_data)
+        history_data["undo_stack"].append({
+            "move_log": move_log,
+            "positions": current_positions
+        })
+
+        move_log = next_state["move_log"]
+        positions = next_state["positions"]
         g, parsed_log = ClusterState.from_string(move_log, return_log=True)
 
     elif triggered_id == "load-button":
@@ -388,13 +435,17 @@ def load_graph(_undo: int, _ctrl_z: int, _load: int, load_graph_input: str, move
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
                 positions += [
-                    {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+                    {"x": random.randint(0, 300), "y": random.randint(0, 300)}
                 ]
+        positions = positions[:len(g)]
+        move_log = parsed_log
+        # Clear history on new graph load
+        history_data = {"undo_stack": [], "redo_stack": []}
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
-    return cyto_data_new, repr(g), parsed_log, "Loaded graph!"
+    return cyto_data_new, repr(g), move_log, "Action completed!", history_data
 
 
 @callback(

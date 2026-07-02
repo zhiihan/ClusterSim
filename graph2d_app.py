@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, Input, Output
+from dash import Dash, html, dcc, Input, Output, ClientsideFunction
 
 from components.components_2d import tab_ui_2d, figure_2d
 from cluster_sim.app import BrowserState
@@ -50,9 +50,11 @@ app.layout = html.Div(
         dcc.Store(id="graph-data"),
         dcc.Store(id="draw-plot"),  # This is a dummy variable
         dcc.Store(id="clipboard-store"),
+        dcc.Store(id="history-store"),
         html.Button(id="ctrl-c-btn", style={"display": "none"}),
         html.Button(id="ctrl-v-btn", style={"display": "none"}),
         html.Button(id="ctrl-z-btn", style={"display": "none"}),
+        html.Button(id="ctrl-y-btn", style={"display": "none"}),
         html.Button(id="backspace-btn", style={"display": "none"}),
         html.Div(
             id="none",
@@ -68,51 +70,10 @@ app.layout = html.Div(
 )
 
 app.clientside_callback(
-    """
-    function(dummy) {
-        document.addEventListener('keydown', function(e) {
-            // Do not capture keys if the user is typing in an input or textarea
-            const active = document.activeElement;
-            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
-                return;
-            }
-
-            // Check if Ctrl+C
-            if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
-                const btn = document.getElementById('ctrl-c-btn');
-                if (btn) {
-                    e.preventDefault();
-                    btn.click();
-                }
-            }
-            // Check if Ctrl+V
-            if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
-                const btn = document.getElementById('ctrl-v-btn');
-                if (btn) {
-                    e.preventDefault();
-                    btn.click();
-                }
-            }
-            // Check if Ctrl+Z
-            if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
-                const btn = document.getElementById('ctrl-z-btn');
-                if (btn) {
-                    e.preventDefault();
-                    btn.click();
-                }
-            }
-            // Check if Backspace
-            if (e.key === 'Backspace') {
-                const btn = document.getElementById('backspace-btn');
-                if (btn) {
-                    e.preventDefault();
-                    btn.click();
-                }
-            }
-        }, true);
-        return window.dash_clientside.no_update;
-    }
-    """,
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='keydown_listener'
+    ),
     Output("clientside-dummy", "children"),
     Input("none", "children"),
     prevent_initial_call=False,

@@ -105,6 +105,7 @@ tab_3 = dbc.Col(
                         [
                             dbc.Button("Load", id="load-button"),
                             dbc.Button("Undo", id="undo-button"),
+                            dbc.Button("Redo", id="redo-button"),
                         ],
                         gap=3,
                         direction="horizontal",
