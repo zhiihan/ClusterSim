@@ -1,6 +1,7 @@
 from cluster_sim.simulator import ClusterState
 import rustworkx as rx
 import networkx as nx
+import pytest
 
 
 def test_apply_gate():
@@ -91,3 +92,47 @@ def test_load_text_edge():
 
     assert log == text
     assert str(g) == "['+XZZZZ', '+ZXZZZ', '+ZZXZZ', '+ZZZXZ', '+ZZZZX']"
+
+
+def test_from_json_formats(tmp_path):
+    import io
+    import json
+
+    g = rx.generators.grid_graph(2, 2)
+    c = ClusterState.from_rustworkx(g)
+    json_str = c.to_json()
+    json_dict = json.loads(json_str)
+
+    # 1. Test dictionary
+    c_dict = ClusterState.from_json(json_dict)
+    assert c == c_dict
+
+    # 2. Test string
+    c_str = ClusterState.from_json(json_str)
+    assert c == c_str
+
+    # 3. Test file path (str)
+    file_path_str = str(tmp_path / "graph.json")
+    with open(file_path_str, "w") as f:
+        f.write(json_str)
+    c_path_str = ClusterState.from_json(file_path_str)
+    assert c == c_path_str
+
+    # 4. Test path-like object (pathlib.Path)
+    file_path = tmp_path / "graph_path.json"
+    file_path.write_text(json_str)
+    c_path = ClusterState.from_json(file_path)
+    assert c == c_path
+
+    # 5. Test file-like object
+    string_io = io.StringIO(json_str)
+    c_file = ClusterState.from_json(string_io)
+    assert c == c_file
+
+    # 6. Test FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        ClusterState.from_json("non_existent_file.json")
+
+    # 7. Test TypeError
+    with pytest.raises(TypeError):
+        ClusterState.from_json(12345)

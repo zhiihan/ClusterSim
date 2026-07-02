@@ -247,6 +247,17 @@ def apply_operation_wrapper(
 
         return ui, cyto_data_new, repr(g), log
     elif method_name == "duplicate":
+        for parent_id in selected_nodes:
+            parent_pos = next(
+                (item["position"] for item in cyto_data["elements"]["nodes"]
+                 if item.get("data") and item["data"].get("value") == parent_id),
+                {"x": 0, "y": 0}
+            )
+            positions.append({
+                "x": parent_pos["x"] + 50,
+                "y": parent_pos["y"] + 50
+            })
+
         g = getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Duplicated nodes {selected_nodes}"
     else:
