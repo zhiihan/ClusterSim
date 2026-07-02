@@ -155,15 +155,12 @@ def handle_buttons(*args):
     else:
         history_data = {
             "undo_stack": list(history_data.get("undo_stack", [])),
-            "redo_stack": list(history_data.get("redo_stack", []))
+            "redo_stack": list(history_data.get("redo_stack", [])),
         }
 
     # Record the current state in history before performing the action
     _, current_positions = preprocess_cyto_data_elements(cyto_data)
-    history_data["undo_stack"].append({
-        "move_log": log,
-        "positions": current_positions
-    })
+    history_data["undo_stack"].append({"move_log": log, "positions": current_positions})
     history_data["redo_stack"] = []
 
     # Determine which button triggered the callback
@@ -174,7 +171,14 @@ def handle_buttons(*args):
     if triggered_id == "ctrl-v-btn":
         clipboard_data = args[-9]
         if not clipboard_data:
-            return "Clipboard is empty!", no_update, no_update, no_update, no_update, no_update
+            return (
+                "Clipboard is empty!",
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+            )
         selected_nodes = clipboard_data
         method_name = "duplicate"
         method_args = {}
@@ -202,7 +206,13 @@ def handle_buttons(*args):
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_nodes: list[int], cyto_data, log, method_args, history_data, **kwargs
+    method_name: str,
+    selected_nodes: list[int],
+    cyto_data,
+    log,
+    method_args,
+    history_data,
+    **kwargs,
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -283,14 +293,14 @@ def apply_operation_wrapper(
         selected_nodes.sort()
         for parent_id in selected_nodes:
             parent_pos = next(
-                (item["position"] for item in cyto_data["elements"]["nodes"]
-                 if item.get("data") and item["data"].get("value") == parent_id),
-                {"x": 0, "y": 0}
+                (
+                    item["position"]
+                    for item in cyto_data["elements"]["nodes"]
+                    if item.get("data") and item["data"].get("value") == parent_id
+                ),
+                {"x": 0, "y": 0},
             )
-            positions.append({
-                "x": parent_pos["x"] + 50,
-                "y": parent_pos["y"] + 50
-            })
+            positions.append({"x": parent_pos["x"] + 50, "y": parent_pos["y"] + 50})
 
         g = getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Duplicated nodes {selected_nodes}"
@@ -371,9 +381,18 @@ def postprocess_cyto_data_elements(
     State("history-store", "data"),
     prevent_initial_call=True,
 )
-def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log, cyto_data, history_data):
-    """Load, undo, or redo from move log or saved text.
-    """
+def load_graph(
+    _undo,
+    _ctrl_z,
+    _redo,
+    _ctrl_y,
+    _load,
+    load_graph_input,
+    move_log,
+    cyto_data,
+    history_data,
+):
+    """Load, undo, or redo from move log or saved text."""
 
     triggered_id = callback_context.triggered_id
     if triggered_id == "ctrl-z-btn":
@@ -386,7 +405,7 @@ def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log
     else:
         history_data = {
             "undo_stack": list(history_data.get("undo_stack", [])),
-            "redo_stack": list(history_data.get("redo_stack", []))
+            "redo_stack": list(history_data.get("redo_stack", [])),
         }
 
     _, positions = preprocess_cyto_data_elements(cyto_data)
@@ -400,13 +419,12 @@ def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log
 
         # Pop the state to restore
         prev_state = history_data["undo_stack"].pop()
-        
+
         # Save the current state to the redo stack
         _, current_positions = preprocess_cyto_data_elements(cyto_data)
-        history_data["redo_stack"].append({
-            "move_log": move_log,
-            "positions": current_positions
-        })
+        history_data["redo_stack"].append(
+            {"move_log": move_log, "positions": current_positions}
+        )
 
         move_log = prev_state["move_log"]
         positions = prev_state["positions"]
@@ -418,13 +436,12 @@ def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log
 
         # Pop the state to restore
         next_state = history_data["redo_stack"].pop()
-        
+
         # Save the current state to the undo stack
         _, current_positions = preprocess_cyto_data_elements(cyto_data)
-        history_data["undo_stack"].append({
-            "move_log": move_log,
-            "positions": current_positions
-        })
+        history_data["undo_stack"].append(
+            {"move_log": move_log, "positions": current_positions}
+        )
 
         move_log = next_state["move_log"]
         positions = next_state["positions"]
@@ -437,7 +454,7 @@ def load_graph(_undo, _ctrl_z, _redo, _ctrl_y, _load, load_graph_input, move_log
                 positions += [
                     {"x": random.randint(0, 300), "y": random.randint(0, 300)}
                 ]
-        positions = positions[:len(g)]
+        positions = positions[: len(g)]
         move_log = parsed_log
         # Clear history on new graph load
         history_data = {"undo_stack": [], "redo_stack": []}
@@ -472,6 +489,3 @@ def copy_nodes(n_clicks, selected_node_data):
     if not selected_node_data:
         return []
     return [node["value"] for node in selected_node_data]
-
-
-

@@ -70,10 +70,7 @@ app.layout = html.Div(
 )
 
 app.clientside_callback(
-    ClientsideFunction(
-        namespace='clientside',
-        function_name='keydown_listener'
-    ),
+    ClientsideFunction(namespace="clientside", function_name="keydown_listener"),
     Output("clientside-dummy", "children"),
     Input("none", "children"),
     prevent_initial_call=False,

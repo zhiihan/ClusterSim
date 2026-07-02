@@ -48,7 +48,7 @@ figure_2d = cyto.Cytoscape(
     boxSelectionEnabled=True,
     wheelSensitivity=0.2,
     minZoom=0.2,
-    maxZoom=20
+    maxZoom=20,
 )
 
 layout_dropdown = dcc.Dropdown(

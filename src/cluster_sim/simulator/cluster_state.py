@@ -250,7 +250,14 @@ class ClusterState:
     def toggle_edge(self, qubit1, qubit2):
         self.simulator.toggle_edge(qubit1, qubit2)
 
-    def add_node(self, vop: str = "YC"):
+    def add_node(self, vop: str = "IA"):
+        """Add a node.
+
+        By default, the vertex operator corresponds to the |+> state. To add |0>, set vop to "YC".
+
+        Args:
+            vop (str, optional): Vertex operator. Defaults to "IA" (|+>).
+        """
 
         graph = self.to_rustworkx()
         graph.add_node({"id": self.num_nodes + 1, "vop": vop})
