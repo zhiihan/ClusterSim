@@ -247,6 +247,7 @@ def apply_operation_wrapper(
 
         return ui, cyto_data_new, repr(g), log
     elif method_name == "duplicate":
+        selected_nodes.sort()
         for parent_id in selected_nodes:
             parent_pos = next(
                 (item["position"] for item in cyto_data["elements"]["nodes"]
