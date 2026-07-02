@@ -17,6 +17,7 @@ import logging
 # SVG Export
 cyto.load_extra_layouts()
 
+
 # Initialize the figure of the user's browsing section
 def _init_state():
     G = ClusterState(5)

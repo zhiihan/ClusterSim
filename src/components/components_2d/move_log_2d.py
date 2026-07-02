@@ -1,6 +1,7 @@
 from textwrap import dedent as d
-from dash import dcc, html, Input, Output, callback, no_update
+from dash import dcc, html, Input, Output, callback, no_update, State
 import dash_bootstrap_components as dbc
+import json
 
 move_log = dbc.Card(
     dbc.CardBody(
@@ -33,20 +34,20 @@ move_log = dbc.Card(
                     "overflowY": "scroll",
                 },
             ),
-            html.Button("as svg", id="btn-get-svg")
+            html.Button("Export SVG", id="btn-get-svg"),
+            html.Button("Export JSON", id="btn-get-json"),
+            dcc.Download(id="download-json"),
         ]
     )
 )
 
+
 @callback(
     Output("figure-app", "generateImage"),
     Input("btn-get-svg", "n_clicks"),
-    prevent_initial_call=True)
-def get_image(n_clicks, ftype='svg'):
+    prevent_initial_call=True,
+)
+def export_svg(n_clicks, ftype="svg"):
     if n_clicks > 0:
-        return {
-            'type': 'svg',
-            'action': 'download',
-            'filename': 'cytoscape'
-        }
+        return {"type": "svg", "action": "download", "filename": "cytoscape"}
     return no_update

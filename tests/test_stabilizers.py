@@ -52,7 +52,7 @@ def test_compare_stabilizers_stim(stim_program: stim.Circuit):
     s.do_circuit(stim_program)
 
     # ClusterSim
-    c = ClusterState.from_text(program)
+    c = ClusterState.from_string(program)
     t = stim.Tableau.from_stabilizers([stim.PauliString(i) for i in c.stabilizers])
     s2 = stim.TableauSimulator()
     s2.do_tableau(t, [i for i in range(len(c))])
@@ -83,7 +83,7 @@ def test_force_measurement(data):
         assume(False)
 
     # ClusterSim
-    c = ClusterState.from_text(program)
+    c = ClusterState.from_string(program)
     for i in measurement_targets:
         c.M(i, force=force)
 

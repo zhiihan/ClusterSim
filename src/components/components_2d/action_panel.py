@@ -86,12 +86,8 @@ qubit_panel = dbc.Card(
                     dbc.Button(
                         "Toggle Edge", outline=True, color="primary", id="toggle-edge"
                     ),
-                    dbc.Button(
-                        "LC", outline=True, color="primary", id="LC"
-                    ),
-                    dbc.Button(
-                        "LC Rewrite", outline=True, color="primary", id="LCR"
-                    ),
+                    dbc.Button("LC", outline=True, color="primary", id="LC"),
+                    dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR"),
                     dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
                 ]
             ),
@@ -200,7 +196,15 @@ def apply_operation_wrapper(
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
-    elif method_name in ["X", "Y", "Z", "local_complementation", "local_complementation_rewrite", "H", "S"]:
+    elif method_name in [
+        "X",
+        "Y",
+        "Z",
+        "local_complementation",
+        "local_complementation_rewrite",
+        "H",
+        "S",
+    ]:
         for i in selected_nodes:
             getattr(g, method_name)(i, **method_args)
 
@@ -346,10 +350,10 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
             move_log_list = move_log_list[:-1]
 
         move_log = "\n".join(move_log_list[:-1])
-        g, parsed_log = ClusterState.from_text(move_log, return_log=True)
+        g, parsed_log = ClusterState.from_string(move_log, return_log=True)
 
     elif triggered_id == "load-button":
-        g, parsed_log = ClusterState.from_text(load_graph_input, return_log=True)
+        g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
                 positions += [
@@ -360,3 +364,17 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
     return cyto_data_new, repr(g), parsed_log, "Loaded graph!"
+
+
+@callback(
+    Output("download-json", "data"),
+    Input("btn-get-json", "n_clicks"),
+    State("figure-app", "elements"),
+    prevent_initial_call=True,
+)
+def export_graph_to_json(n_clicks, cyto_data):
+    if not n_clicks:
+        return no_update
+    cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
+    g = ClusterState.from_cytoscape(cyto_data)
+    return dcc.send_string(g.to_json(), "cytoscape_graph.json")

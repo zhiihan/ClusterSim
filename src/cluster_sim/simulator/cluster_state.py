@@ -181,7 +181,7 @@ class ClusterState:
                 self.MX(qubit1, force=qubit1_force)
                 self.MX(qubit2, force=qubit2_force)
                 return
-            elif mode == 'failure':
+            elif mode == "failure":
                 self.MZ(qubit1, force=qubit1_force)
                 self.MZ(qubit2, force=qubit2_force)
                 return
@@ -190,8 +190,8 @@ class ClusterState:
                 self.CZ(qubit1, qubit2)
                 self.MX(qubit1, force=qubit1_force)
                 self.MX(qubit2, force=qubit2_force)
-                return 
-            elif mode == 'failure':
+                return
+            elif mode == "failure":
                 self.MX(qubit1, force=qubit1_force)
                 self.MZ(qubit2, force=qubit2_force)
                 return
@@ -202,7 +202,7 @@ class ClusterState:
                 self.MX(qubit1, force=qubit1_force)
                 self.MX(qubit2, force=qubit2_force)
                 return
-            elif mode == 'failure':
+            elif mode == "failure":
                 self.MZ(qubit1, force=qubit1_force)
                 self.MY(qubit2, force=qubit2_force)
                 return
@@ -308,13 +308,13 @@ class ClusterState:
         return self + self.subgraph(targets)
 
     @classmethod
-    def from_text(cls, text: str, return_log: bool = False):
+    def from_string(cls, string: str, return_log: bool = False):
         """
-        Create a cluster state from a text-based representation of operations.
+        Create a cluster state from a string representation of operations.
         """
 
         lines = []
-        for line in text.strip().splitlines():
+        for line in string.strip().splitlines():
             line = line.split("#", 1)[0].strip()
             if line:
                 lines.append(line)
@@ -417,15 +417,37 @@ class ClusterState:
         return new_state
 
     @classmethod
-    def from_json(cls, json_data):
+    def from_json(cls, json_data: str | dict):
         """
-        Convert the graph state to a JSON-serializable format.
+        Create a ClusterState from JSON data in various formats.
+
+        Args:
+            json_data: A python dict, a JSON string, a path to a JSON file, or a file-like object.
 
         Returns:
-            A JSON-serializable representation of the graph state.
+            ClusterState: The reconstructed cluster state.
         """
+        import os
+        import json
 
-        rx_graph = rx.parse_node_link_json(json_data)
+        if isinstance(json_data, dict):
+            json_str = json.dumps(json_data)
+        elif hasattr(json_data, "read"):
+            json_str = json_data.read()
+        elif isinstance(json_data, (str, os.PathLike)):
+            if isinstance(json_data, str) and (
+                json_data.strip().startswith("{") or json_data.strip().startswith("[")
+            ):
+                json_str = json_data
+            else:
+                with open(json_data, "r") as f:
+                    json_str = f.read()
+        else:
+            raise TypeError(
+                "Unsupported JSON input type. Must be dict, str, os.PathLike, or file-like object."
+            )
+
+        rx_graph = rx.parse_node_link_json(json_str)
 
         G = cls.from_rustworkx(rx_graph)
         return G
