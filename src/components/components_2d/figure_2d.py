@@ -44,6 +44,7 @@ figure_2d = cyto.Cytoscape(
     stylesheet=[{"selector": "node", "style": {"label": "data(vop)"}}],
     elements=_init_state()[0],
     selectedNodeData=[],
+    boxSelectionEnabled=True,
 )
 
 layout_dropdown = dcc.Dropdown(
