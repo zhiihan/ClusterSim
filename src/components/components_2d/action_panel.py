@@ -8,27 +8,97 @@ import random
 
 qubit_panel = dbc.Row(
     [
-        # Column 1: Select Measurement Basis
+        # Column 1: Select Measurement Basis + Fusion controls
         dbc.Col(
             [
-                dcc.Markdown("**Select Measurement Basis**", style={"margin": "0 0 4px 0"}),
-                dbc.ButtonGroup(
+                dcc.Markdown("**Select Measurement Basis**", style={"margin": "0 0 4px 0", "fontSize": "0.8rem"}),
+                html.Div(
                     [
-                        dbc.Button("MZ", outline=True, color="primary", id="MZ"),
-                        dbc.Button("MY", outline=True, color="primary", id="MY"),
-                        dbc.Button("MX", outline=True, color="primary", id="MX"),
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button("MZ", outline=True, color="primary", id="MZ", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                                dbc.Button("MY", outline=True, color="primary", id="MY", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                                dbc.Button("MX", outline=True, color="primary", id="MX", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                            ],
+                            style={"flexShrink": "0"}
+                        ),
+                        dbc.Select(
+                            id="force-measurement",
+                            options=[
+                                {"label": "Force 0", "value": 0},
+                                {"label": "Force 1", "value": 1},
+                                {"label": "Random", "value": -1},
+                            ],
+                            placeholder="Force 0",
+                            value=0,
+                            style={"fontSize": "0.85rem", "padding": "4px 8px", "height": "auto"},
+                        ),
                     ],
-                    style={"width": "100%", "marginBottom": "6px"}
+                    style={"display": "flex", "gap": "6px", "alignItems": "center", "marginBottom": "6px"}
                 ),
-                dbc.Select(
-                    id="force-measurement",
-                    options=[
-                        {"label": "Force outcome 0 (default)", "value": 0},
-                        {"label": "Force outcome 1", "value": 1},
-                        {"label": "Random measurement", "value": -1},
+                # Fusion controls: all in one compact horizontal row
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.Span("Fusion Type", style={"fontSize": "0.7rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
+                                dbc.Select(
+                                    id="fusion-type",
+                                    options=[
+                                        {"label": "XXZZ", "value": "XXZZ"},
+                                        {"label": "XZZX", "value": "XZZX"},
+                                        {"label": "XYYZ", "value": "XYYZ"},
+                                    ],
+                                    value="XXZZ",
+                                    style={"fontSize": "0.7rem", "padding": "1px 4px", "height": "auto", "minWidth": "0"},
+                                ),
+                            ],
+                            style={"flex": "1", "minWidth": "0"}
+                        ),
+                        html.Div(
+                            [
+                                html.Span("Force Meas.", style={"fontSize": "0.7rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
+                                dbc.Select(
+                                    id="fusion-force-measurement",
+                                    options=[
+                                        {"label": "00", "value": 0}, # Q1=0, Q2=0
+                                        {"label": "10", "value": 1}, # Q1=1, Q2=0
+                                        {"label": "01", "value": 2}, # Q1=0, Q2=1
+                                        {"label": "11", "value": 3}, # Q1=1, Q2=1
+                                        {"label": "Random", "value": -1},
+                                    ],
+                                    value=0,
+                                    placeholder="00",
+                                    style={"fontSize": "0.7rem", "padding": "1px 4px", "height": "auto", "minWidth": "0"},
+                                ),
+                            ],
+                            style={"flex": "1", "minWidth": "0"}
+                        ),
+                        html.Div(
+                            [
+                                html.Span("Fusion Mode", style={"fontSize": "0.7rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
+                                dbc.Select(
+                                    id="fusion-mode",
+                                    options=[
+                                        {"label": "Success", "value": "success"},
+                                        {"label": "Failure", "value": "failure"},
+                                        {"label": "Random", "value": "random"},
+                                    ],
+                                    value="success",
+                                    style={"fontSize": "0.7rem", "padding": "1px 4px", "height": "auto", "minWidth": "0"},
+                                ),
+                            ],
+                            style={"flex": "1", "minWidth": "0"}
+                        ),
+                        html.Div(
+                            [
+                                html.Span("\u00a0", style={"fontSize": "0.7rem", "display": "block", "marginBottom": "2px"}),
+                                dbc.Button("Fusion", outline=True, color="primary", id="fusion-gate", style={"fontSize": "0.7rem", "padding": "1px 6px", "whiteSpace": "nowrap"}),
+                            ],
+                            style={"flexShrink": "0"}
+                        ),
                     ],
-                    placeholder="Force outcome 0 (default)",
-                    value=0,
+                    style={"display": "flex", "gap": "6px", "alignItems": "flex-end", "marginTop": "6px"}
                 ),
             ],
             width=3
@@ -36,16 +106,17 @@ qubit_panel = dbc.Row(
         # Column 2: Apply Clifford Gates
         dbc.Col(
             [
-                dcc.Markdown("**Apply Clifford Gates**", style={"margin": "0 0 4px 0"}),
+                dcc.Markdown("**Apply Clifford Gates**", style={"margin": "0 0 4px 0", "fontSize": "0.8rem"}),
                 dbc.ButtonGroup(
                     [
-                        dbc.Button("X", outline=True, color="primary", id="X"),
-                        dbc.Button("Y", outline=True, color="primary", id="Y"),
-                        dbc.Button("Z", outline=True, color="primary", id="Z"),
-                        dbc.Button("H", outline=True, color="primary", id="H"),
-                        dbc.Button("S", outline=True, color="primary", id="S"),
-                        dbc.Button("CX", outline=True, color="primary", id="CX"),
-                        dbc.Button("CZ", outline=True, color="primary", id="CZ"),
+                        dbc.Button("X", outline=True, color="primary", id="X", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Y", outline=True, color="primary", id="Y", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Z", outline=True, color="primary", id="Z", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("H", outline=True, color="primary", id="H", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("S", outline=True, color="primary", id="S", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("S†", outline=True, color="primary", id="S_DAG", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("CX", outline=True, color="primary", id="CX", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("CZ", outline=True, color="primary", id="CZ", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
                     ],
                     style={"width": "100%"}
                 ),
@@ -55,17 +126,17 @@ qubit_panel = dbc.Row(
         # Column 3: Graph operations
         dbc.Col(
             [
-                dcc.Markdown("**Graph operations**", style={"margin": "0 0 4px 0"}),
+                dcc.Markdown("**Graph operations**", style={"margin": "0 0 4px 0", "fontSize": "0.8rem"}),
                 dbc.ButtonGroup(
                     [
-                        dbc.Button("Add Node", outline=True, color="primary", id="add-node"),
-                        dbc.Button("Remove Node", outline=True, color="primary", id="remove-node"),
-                        dbc.Button("Add Edge", outline=True, color="primary", id="add-edge"),
-                        dbc.Button("Remove Edge", outline=True, color="primary", id="remove-edge"),
-                        dbc.Button("Toggle Edge", outline=True, color="primary", id="toggle-edge"),
-                        dbc.Button("LC", outline=True, color="primary", id="LC"),
-                        dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR"),
-                        dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
+                        dbc.Button("Add Node", outline=True, color="primary", id="add-node", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Remove Node", outline=True, color="primary", id="remove-node", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Add Edge", outline=True, color="primary", id="add-edge", style={"display": "none"}),
+                        dbc.Button("Toggle Edge", outline=True, color="primary", id="toggle-edge", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Remove Edge", outline=True, color="primary", id="remove-edge", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("LC", outline=True, color="primary", id="LC", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
+                        dbc.Button("Copy", outline=True, color="primary", id="duplicate", style={"fontSize": "0.85rem", "padding": "4px 10px"}),
                     ],
                     style={"width": "100%"}
                 ),
@@ -74,6 +145,7 @@ qubit_panel = dbc.Row(
         ),
     ]
 )
+
 
 button_operations = {
     # measure buttons with basis
@@ -89,6 +161,7 @@ button_operations = {
     "Z": ("Z", {}),
     "H": ("H", {}),
     "S": ("S", {}),
+    "S_DAG": ("S_DAG", {}),
     "CX": ("CX", {}),
     "CZ": ("CZ", {}),
     "add-edge": ("add_edge", {}),

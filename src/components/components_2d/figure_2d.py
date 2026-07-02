@@ -164,6 +164,9 @@ tab_ui_2d = html.Div(
                                             dbc.NavLink("Simulator Representation", id="modal-tab-rep", active=True, style={"cursor": "pointer"}),
                                             dbc.NavLink("Move Log", id="modal-tab-log", style={"cursor": "pointer"}),
                                             dbc.NavLink("Clifford Reference", id="modal-tab-ref", style={"cursor": "pointer"}),
+                                            html.Hr(style={"margin": "8px 0"}),
+                                            dbc.NavLink("Reset & Load", id="modal-tab-reset", style={"cursor": "pointer"}),
+                                            dbc.NavLink("Plot Options", id="modal-tab-plot", style={"cursor": "pointer"}),
                                         ],
                                         vertical=True,
                                         pills=True,
@@ -240,6 +243,18 @@ tab_ui_2d = html.Div(
                                                 id="modal-content-ref",
                                                 style={"display": "none"}
                                             ),
+                                            # Page 4: Reset & Load
+                                            html.Div(
+                                                tab_3,
+                                                id="modal-content-reset",
+                                                style={"display": "none"}
+                                            ),
+                                            # Page 5: Plot Options
+                                            html.Div(
+                                                tab_5,
+                                                id="modal-content-plot",
+                                                style={"display": "none"}
+                                            ),
                                         ],
                                         style={"paddingLeft": "20px"}
                                     )
@@ -255,58 +270,43 @@ tab_ui_2d = html.Div(
             is_open=False,
             centered=True,
         ),
-        
+
         # Main Header Row
         dbc.Row(
             [
+                # Left: Title + Alert stacked
                 dbc.Col(
-                    html.H2("Cluster Sim", style={"margin": "0", "fontSize": "22px", "fontWeight": "bold"}),
-                    width=2,
-                    className="d-flex align-items-center"
-                ),
-                dbc.Col(
-                    dcc.Loading(
-                        dbc.Alert(
-                            "Click on the graph to measure nodes.",
-                            color="primary",
-                            id="ui",
-                            style={"padding": "8px 16px", "margin": "0"}
+                    [
+                        html.H2("Cluster Sim", style={"margin": "0 0 4px 0", "fontSize": "22px", "fontWeight": "bold"}),
+                        dcc.Loading(
+                            dbc.Alert(
+                                "Click on the graph to measure nodes.",
+                                color="primary",
+                                id="ui",
+                                style={"padding": "4px 10px", "margin": "0", "fontSize": "0.8rem"}
+                            ),
+                            delay_show=100,
+                            delay_hide=100,
+                            custom_spinner=dbc.Spinner(color="primary", size="sm"),
                         ),
-                        delay_show=100,
-                        delay_hide=100,
-                        custom_spinner=dbc.Spinner(color="primary", size="sm"),
-                    ),
-                    width=4,
-                    className="d-flex align-items-center"
+                    ],
+                    width=2,
+                    className="d-flex flex-column justify-content-center"
                 ),
+                # Center: Operations panel
                 dbc.Col(
-                    dbc.Tabs(
-                        [
-                            dbc.Tab(label="Operations", tab_id="tab-1"),
-                            dbc.Tab(label="Fusion", tab_id="tab-2"),
-                            dbc.Tab(label="Reset and Load", tab_id="tab-3"),
-                            dbc.Tab(label="Plot Options", tab_id="tab-5"),
-                        ],
-                        id="tabs",
-                        active_tab="tab-1",
-                        style={"border": "none", "margin": "0", "justifyContent": "flex-end"}
-                    ),
-                    width=4,
-                    className="d-flex align-items-center justify-content-end"
+                    tab_1,
+                    width=8,
                 ),
+                # Right: Reference & Logs button
                 dbc.Col(
-                    dbc.Button("Reference & Logs", id="open-modal-btn", outline=True, color="secondary", style={"width": "100%"}),
+                    dbc.Button("Advanced", id="open-modal-btn", outline=True, color="secondary", style={"width": "100%"}),
                     width=2,
                     className="d-flex align-items-center justify-content-end"
                 )
             ],
-            className="align-items-center mb-2"
+            className="align-items-start mb-2"
         ),
-        html.Hr(style={"margin": "8px 0"}),
-        html.Div(tab_1, id="tab-content-1", style={"display": "block"}),
-        html.Div(tab_2, id="tab-content-2", style={"display": "none"}),
-        html.Div(tab_3, id="tab-content-3", style={"display": "none"}),
-        html.Div(tab_5, id="tab-content-5", style={"display": "none"}),
     ]
 )
 
@@ -445,25 +445,6 @@ def handle_snap_to_grid(n_clicks, cyto_data):
     return postprocess_cyto_data_elements(cyto_data, snapped_positions)
 
 
-@callback(
-    Output("tab-content-1", "style"),
-    Output("tab-content-2", "style"),
-    Output("tab-content-3", "style"),
-    Output("tab-content-5", "style"),
-    Input("tabs", "active_tab"),
-)
-def toggle_tab_visibility(active_tab):
-    styles = [{"display": "none"} for _ in range(4)]
-    if active_tab == "tab-1":
-        styles[0] = {"display": "block"}
-    elif active_tab == "tab-2":
-        styles[1] = {"display": "block"}
-    elif active_tab == "tab-3":
-        styles[2] = {"display": "block"}
-    elif active_tab == "tab-5":
-        styles[3] = {"display": "block"}
-    return styles[0], styles[1], styles[2], styles[3]
-
 
 @callback(
     Output("reference-modal", "is_open"),
@@ -481,36 +462,50 @@ def toggle_modal(n1, n2, is_open):
     Output("modal-tab-rep", "active"),
     Output("modal-tab-log", "active"),
     Output("modal-tab-ref", "active"),
+    Output("modal-tab-reset", "active"),
+    Output("modal-tab-plot", "active"),
     Input("modal-tab-rep", "n_clicks"),
     Input("modal-tab-log", "n_clicks"),
     Input("modal-tab-ref", "n_clicks"),
+    Input("modal-tab-reset", "n_clicks"),
+    Input("modal-tab-plot", "n_clicks"),
     prevent_initial_call=True,
 )
-def switch_modal_tab(n_rep, n_log, n_ref):
+def switch_modal_tab(n_rep, n_log, n_ref, n_reset, n_plot):
     ctx = callback_context
     if not ctx.triggered:
-        return "rep", True, False, False
-    
+        return "rep", True, False, False, False, False
+
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if trigger_id == "modal-tab-log":
-        return "log", False, True, False
+        return "log", False, True, False, False, False
     elif trigger_id == "modal-tab-ref":
-        return "ref", False, False, True
-    return "rep", True, False, False
+        return "ref", False, False, True, False, False
+    elif trigger_id == "modal-tab-reset":
+        return "reset", False, False, False, True, False
+    elif trigger_id == "modal-tab-plot":
+        return "plot", False, False, False, False, True
+    return "rep", True, False, False, False, False
 
 
 @callback(
     Output("modal-content-rep", "style"),
     Output("modal-content-log", "style"),
     Output("modal-content-ref", "style"),
+    Output("modal-content-reset", "style"),
+    Output("modal-content-plot", "style"),
     Input("modal-tab-store", "data"),
 )
 def toggle_modal_content_visibility(active_tab):
-    styles = [{"display": "none"} for _ in range(3)]
+    styles = [{"display": "none"} for _ in range(5)]
     if active_tab == "rep":
         styles[0] = {"display": "block"}
     elif active_tab == "log":
         styles[1] = {"display": "block"}
     elif active_tab == "ref":
         styles[2] = {"display": "block"}
-    return styles[0], styles[1], styles[2]
+    elif active_tab == "reset":
+        styles[3] = {"display": "block"}
+    elif active_tab == "plot":
+        styles[4] = {"display": "block"}
+    return styles[0], styles[1], styles[2], styles[3], styles[4]
