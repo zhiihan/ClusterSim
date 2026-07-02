@@ -46,6 +46,9 @@ figure_2d = cyto.Cytoscape(
     elements=_init_state()[0],
     selectedNodeData=[],
     boxSelectionEnabled=True,
+    wheelSensitivity=0.2,
+    minZoom=0.2,
+    maxZoom=20
 )
 
 layout_dropdown = dcc.Dropdown(
