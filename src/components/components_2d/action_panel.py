@@ -283,8 +283,15 @@ def apply_operation_wrapper(
 
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
+        new_node_id = len(g) - 1
         positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
-        ui = f"Added node {len(g) - 1}!"
+        # Connect the new node to every selected node
+        for neighbour in selected_nodes:
+            g.add_edge(new_node_id, neighbour)
+        if selected_nodes:
+            ui = f"Added node {new_node_id} with edges to {selected_nodes}!"
+        else:
+            ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
         if len(selected_nodes) >= len(g):
             return "Cannot remove last node!", no_update, no_update, no_update
@@ -338,7 +345,10 @@ def apply_operation_wrapper(
     elif method_name == "local_complementation_rewrite":
         log += f"LCR {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":
-        log += f"ADD_NODE {len(g) - 1}\n"
+        new_node_id = len(g) - 1
+        log += f"ADD_NODE {new_node_id}\n"
+        for neighbour in selected_nodes:
+            log += f"ADD_EDGE {new_node_id} {neighbour}\n"
     else:
         log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 

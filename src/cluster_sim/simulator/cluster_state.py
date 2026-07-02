@@ -349,7 +349,7 @@ class ClusterState:
                 qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
             if qubits:
-                if op_name not in {"ADD_NODE", "REMOVE_NODE", "DUPLICATE"} and qubits:
+                if op_name not in {"ADD_NODE", "REMOVE_NODE", "DUPLICATE", "ADD_EDGE", "REMOVE_EDGE", "TOGGLE_EDGE"} and qubits:
                     max_qubit = max(max_qubit, max(qubits))
 
             parsed_ops.append((op_name, qubits, optional_args))
