@@ -174,7 +174,7 @@ def handle_buttons(*args):
     if triggered_id == "ctrl-v-btn":
         clipboard_data = args[-9]
         if not clipboard_data:
-            return "Clipboard is empty!", no_update, no_update, no_update, no_update
+            return "Clipboard is empty!", no_update, no_update, no_update, no_update, no_update
         selected_nodes = clipboard_data
         method_name = "duplicate"
         method_args = {}
@@ -194,7 +194,7 @@ def handle_buttons(*args):
         selected_nodes = [i["value"] for i in selected_node_data]
 
     if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update, no_update
 
     return apply_operation_wrapper(
         method_name, selected_nodes, cyto_data, log, method_args, history_data, **kwargs
