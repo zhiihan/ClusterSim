@@ -380,7 +380,7 @@ def apply_operation_wrapper(
     elif method_name in ["CX", "CZ"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of gates!", no_update, no_update, no_update
+                return "Odd number of gates!", no_update, no_update, no_update, no_update
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
@@ -406,7 +406,7 @@ def apply_operation_wrapper(
     elif method_name in ["fusion_gate"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of qubits!", no_update, no_update, no_update
+                return "Odd number of qubits!", no_update, no_update, no_update, no_update
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
@@ -414,7 +414,30 @@ def apply_operation_wrapper(
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
         new_node_id = len(g) - 1
-        positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
+
+        selected_positions = []
+        if selected_nodes:
+            for parent_id in selected_nodes:
+                parent_pos = next(
+                    (
+                        item["position"]
+                        for item in cyto_data["elements"]["nodes"]
+                        if item.get("data") and item["data"].get("value") == parent_id
+                    ),
+                    None,
+                )
+                if parent_pos:
+                    selected_positions.append(parent_pos)
+
+        if selected_positions:
+            avg_x = sum(p["x"] for p in selected_positions) / len(selected_positions)
+            avg_y = sum(p["y"] for p in selected_positions) / len(selected_positions)
+            new_pos = {"x": avg_x + 50, "y": avg_y + 50}
+        else:
+            new_pos = {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+
+        positions.append(new_pos)
+
         # Connect the new node to every selected node
         for neighbour in selected_nodes:
             g.add_edge(new_node_id, neighbour)
@@ -423,9 +446,6 @@ def apply_operation_wrapper(
         else:
             ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
-        if len(selected_nodes) >= len(g):
-            return "Cannot remove last node!", no_update, no_update, no_update
-
         getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Removed nodes {selected_nodes}"
 
