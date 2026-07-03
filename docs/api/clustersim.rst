@@ -1,5 +1,5 @@
-cluster\_sim package
-====================
+clustersim package
+==================
 
 .. automodule:: clustersim
    :members:

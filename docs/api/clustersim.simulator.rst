@@ -1,5 +1,5 @@
-cluster\_sim.simulator package
-==============================
+clustersim.simulator package
+============================
 
 .. automodule:: clustersim.simulator
    :members:
@@ -9,8 +9,8 @@ cluster\_sim.simulator package
 Submodules
 ----------
 
-cluster\_sim.simulator.cluster\_state module
---------------------------------------------
+clustersim.simulator.cluster\_state module
+------------------------------------------
 
 .. automodule:: clustersim.simulator.cluster_state
    :members:

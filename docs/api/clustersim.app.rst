@@ -1,5 +1,5 @@
-cluster\_sim.app package
-========================
+clustersim.app package
+======================
 
 .. automodule:: clustersim.app
    :members:
@@ -9,24 +9,24 @@ cluster\_sim.app package
 Submodules
 ----------
 
-cluster\_sim.app.layout module
-------------------------------
+clustersim.app.layout module
+----------------------------
 
 .. automodule:: clustersim.app.layout
    :members:
    :show-inheritance:
    :undoc-members:
 
-cluster\_sim.app.state module
------------------------------
+clustersim.app.state module
+---------------------------
 
 .. automodule:: clustersim.app.state
    :members:
    :show-inheritance:
    :undoc-members:
 
-cluster\_sim.app.utils module
------------------------------
+clustersim.app.utils module
+---------------------------
 
 .. automodule:: clustersim.app.utils
    :members:

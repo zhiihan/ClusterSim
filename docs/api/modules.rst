@@ -1,5 +1,5 @@
 clustersim
-===========
+==========
 
 .. toctree::
    :maxdepth: 4
