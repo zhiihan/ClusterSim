@@ -1,4 +1,4 @@
-from __future__ import annotations  
+from __future__ import annotations
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
@@ -13,7 +13,7 @@ class ClusterState:
     Adapter class containing a GraphRegister object.
     """
 
-    def __init__(self, num_nodes: int):
+    def __init__(self, num_nodes: int = 0):
         """
         Nodes are indexed from 0 to n-1, where n is the number of nodes in the graph.
 
@@ -22,8 +22,7 @@ class ClusterState:
             init_graph_state (bool, optional): Whether to auto apply H and CZ. Defaults to False.
         """
 
-        self.num_nodes = num_nodes
-        self.simulator = graphsim.GraphRegister(self.num_nodes)
+        self.simulator = graphsim.GraphRegister(num_nodes)
 
     def __repr__(self):
         rep = "Adjacency List:\n"
@@ -44,7 +43,11 @@ class ClusterState:
         return str(self.stabilizers)
 
     def __len__(self):
-        return self.num_nodes
+        return len(self.simulator)
+
+    @property
+    def num_nodes(self):
+        return len(self.simulator)
 
     def __add__(self, other: ClusterState) -> ClusterState:
         new_state = ClusterState(self.num_nodes + other.num_nodes)
@@ -93,8 +96,8 @@ class ClusterState:
     def MZ(self, qubit: int, force: int = -1):
         return self.simulator.measure(qubit, force, "Z")
 
-    def I(self, qubit: int):  # noqa: E743
-        pass
+    def I(self, qubit: int):  
+        return self.simulator.I(qubit)
 
     def X(self, qubit: int):
         self.simulator.X(qubit)
@@ -222,13 +225,10 @@ class ClusterState:
         """Apply a local complementation.
 
         Args:
-            qubit (_type_): which qubit to apply
+            qubit (int): which qubit to apply
         """
 
-        for qubit1 in self.adjacency_list[qubit]:
-            for qubit2 in self.adjacency_list[qubit]:
-                if qubit1 < qubit2:
-                    self.simulator.toggle_edge(qubit1, qubit2)
+        self.simulator.local_complementation(qubit)
 
     def apply_VOP(self, qubit, vop: tuple[int, int] | int | str):
         """Apply vertex operators.
@@ -258,12 +258,10 @@ class ClusterState:
         Args:
             vop (str, optional): Vertex operator. Defaults to "IA" (|+>).
         """
-
-        graph = self.to_rustworkx()
-        graph.add_node({"id": str(self.num_nodes), "vop": vop})
-
-        self.simulator = ClusterState.from_rustworkx(graph).simulator
-        self.num_nodes += 1
+        idx = self.num_nodes
+        self.H(idx)
+        self.apply_VOP(idx, vop) 
+        
 
     def remove_node(self, qubits: int | list[int]):
         graph = self.to_rustworkx()
@@ -285,7 +283,6 @@ class ClusterState:
             new_graph.add_edge(index_map[u], index_map[v], None)
 
         self.simulator = ClusterState.from_rustworkx(new_graph).simulator
-        self.num_nodes -= len(qubits)
 
     def subgraph(self, targets: list[int] | None = None) -> ClusterState:
         """Generate a copy and return a larger object.
@@ -314,12 +311,11 @@ class ClusterState:
 
         return self + self.subgraph(targets)
 
-    @classmethod
-    def from_string(cls, string: str, return_log: bool = False) -> ClusterState | tuple[ClusterState, str]:
+    @staticmethod
+    def _parse_ops_from_string(string: str) -> list[tuple[str, list[int], str | None]]:
         """
-        Create a cluster state from a string representation of operations.
+        Parse a string representation of operations.
         """
-
         lines = []
         for line in string.strip().splitlines():
             line = line.split("#", 1)[0].strip()
@@ -332,7 +328,6 @@ class ClusterState:
             raise ValueError("Cannot construct ClusterState from empty text.")
 
         parsed_ops = []
-        max_qubit = -1
 
         # Regex to find commands: NAME followed optionally by [numbers]
         pattern = re.compile(
@@ -348,31 +343,22 @@ class ClusterState:
             if args_str:
                 qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
-            if qubits:
-                if (
-                    op_name
-                    not in {
-                        "ADD_NODE",
-                        "REMOVE_NODE",
-                        "DUPLICATE",
-                        "ADD_EDGE",
-                        "REMOVE_EDGE",
-                        "TOGGLE_EDGE",
-                        "MX",
-                        "MZ",
-                        "MY",
-                        "FUSION_GATE",
-                    }
-                    and qubits
-                ):
-                    max_qubit = max(max_qubit, max(qubits))
-
             parsed_ops.append((op_name, qubits, optional_args))
 
-        num_nodes = max(max_qubit + 1, 1)
-        new_state = cls(num_nodes)
+        return parsed_ops
 
-        # ---------- Second pass: apply ops ----------
+    @classmethod
+    def from_string(
+        cls, string: str, return_log: bool = False
+    ) -> ClusterState | tuple[ClusterState, str]:
+        """
+        Create a cluster state from a string representation of operations.
+        """
+
+        parsed_ops = cls._parse_ops_from_string(string)
+
+        new_state = cls()
+
         parsed_log = ""
 
         for op_name, qubits, optional_args in parsed_ops:
@@ -384,20 +370,13 @@ class ClusterState:
                 parsed_log += f"{op_name} {' '.join(map(str, qubits))}\n"
 
             if op_name == "ADD_NODE":
+                vop = optional_args if optional_args else "IA"
                 for q in qubits:
-                    if q + 1 > num_nodes:
-                        new_state.add_node(vop="IA")
-                        num_nodes += 1
-                    elif q == 0:
-                        # Add H gate if it is the first gate and we are adding a node
-                        # This only shows up if the program is ADD_NODE 0
-                        new_state.H(q)
+                    new_state.add_node(vop=vop)
 
             elif op_name == "REMOVE_NODE":
                 for q in sorted(qubits, reverse=True):
-                    if q + 1 <= num_nodes:
-                        new_state.remove_node(q)
-                        num_nodes -= 1
+                    new_state.remove_node(q)
 
             elif op_name in {"H", "X", "Y", "Z", "S", "S_DAG"}:
                 for q in qubits:
