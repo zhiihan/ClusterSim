@@ -145,4 +145,40 @@ def test_from_json_formats(tmp_path):
 
     # 7. Test TypeError
     with pytest.raises(TypeError):
-        ClusterState.from_json(12345)
+        ClusterState.from_json(12345)  # ty:ignore[invalid-argument-type]
+
+
+def test_add_node_measure():
+    program = """H 0 1 
+    CZ 0 1
+    ADD_NODE 2
+    MX[0] 2
+    """
+    g1 = ClusterState.from_string(program)
+    g2 = ClusterState(2)
+    g2.H(0)
+    g2.H(1)
+    g2.CZ(0, 1)
+    g2.add_node()
+    g2.measure(2, 0, basis='X')
+
+    assert g1 == g2
+
+def test_duplicate_measure():
+    program = """H 0 1 
+    CZ 0 1
+    DUPLICATE 0 1 
+    DUPLICATE 0 1
+    MX[0] 5
+    """
+    g1 = ClusterState.from_string(program)
+    g2 = ClusterState(2)
+    g2.H(0)
+    g2.H(1)
+    g2.CZ(0, 1)
+    g2 = g2.duplicate([0, 1])
+    g2 = g2.duplicate([0, 1])
+    g2.measure(5, 0, basis='X')
+
+    assert g1 == g2
+

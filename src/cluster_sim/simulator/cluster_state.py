@@ -1,4 +1,4 @@
-from typing import Self
+from __future__ import annotations  
 from rustworkx.visualization import mpl_draw
 import graphsim
 import rustworkx as rx
@@ -46,7 +46,7 @@ class ClusterState:
     def __len__(self):
         return self.num_nodes
 
-    def __add__(self, other: Self) -> "ClusterState":
+    def __add__(self, other: ClusterState) -> ClusterState:
         new_state = ClusterState(self.num_nodes + other.num_nodes)
         new_state.simulator = self.simulator + other.simulator
         return new_state
@@ -287,7 +287,7 @@ class ClusterState:
         self.simulator = ClusterState.from_rustworkx(new_graph).simulator
         self.num_nodes -= len(qubits)
 
-    def subgraph(self, targets: list[int] | None = None):
+    def subgraph(self, targets: list[int] | None = None) -> ClusterState:
         """Generate a copy and return a larger object.
 
         This does not copy any edges out of the selection.
@@ -302,7 +302,7 @@ class ClusterState:
         graph = self.to_rustworkx()
         return ClusterState.from_rustworkx(graph.subgraph(targets))
 
-    def duplicate(self, targets: list[int] | None = None):
+    def duplicate(self, targets: list[int] | None = None) -> ClusterState:
         """Generate a copy of the selection and return a larger object.
 
         Args:
@@ -315,7 +315,7 @@ class ClusterState:
         return self + self.subgraph(targets)
 
     @classmethod
-    def from_string(cls, string: str, return_log: bool = False):
+    def from_string(cls, string: str, return_log: bool = False) -> ClusterState | tuple[ClusterState, str]:
         """
         Create a cluster state from a string representation of operations.
         """
@@ -441,7 +441,7 @@ class ClusterState:
         return new_state
 
     @classmethod
-    def from_json(cls, json_data: str | dict):
+    def from_json(cls, json_data: str | dict) -> ClusterState:
         """
         Create a ClusterState from JSON data in various formats.
 
@@ -473,10 +473,9 @@ class ClusterState:
 
         rx_graph = rx.parse_node_link_json(json_str)
 
-        G = cls.from_rustworkx(rx_graph)
-        return G
+        return cls.from_rustworkx(rx_graph)
 
-    def to_json(self):
+    def to_json(self) -> str | None:
         """
         Convert the graph state to a JSON-serializable format.
 
@@ -541,7 +540,7 @@ class ClusterState:
                     yield (u, v, None)
 
     @classmethod
-    def from_rustworkx(cls, graph: rx.PyGraph | rx.PyDiGraph):
+    def from_rustworkx(cls, graph: rx.PyGraph | rx.PyDiGraph) -> ClusterState:
         """Create a graph state from rustworkx.
 
         Args:
@@ -564,7 +563,7 @@ class ClusterState:
         return c
 
     @classmethod
-    def from_networkx(cls, graph: nx.Graph):
+    def from_networkx(cls, graph: nx.Graph) -> ClusterState:
         graph = nx.convert_node_labels_to_integers(graph)
         c = cls(len(graph))
         for i in graph.nodes():
@@ -655,7 +654,7 @@ class ClusterState:
         return cyto_data
 
     @classmethod
-    def from_cytoscape(cls, data):
+    def from_cytoscape(cls, data) -> ClusterState:
         """
         Load a simulator from cytoscape.
         """
@@ -674,7 +673,7 @@ class ClusterState:
     @classmethod
     def random_graph(
         cls, num_nodes: int, p: float = 0.5, local_cliffords: bool = False
-    ):
+    ) -> ClusterState:
         """Generate a random graph.
 
         Args:
@@ -696,6 +695,6 @@ class ClusterState:
                 c.apply_VOP(i, rng)
         return c
 
-    def draw(self, label_func=lambda node: str(node), **kwargs):
+    def draw(self, label_func=lambda node: str(node), **kwargs) -> None:
         g = self.to_rustworkx()
         mpl_draw(g, with_labels=True, labels=label_func, **kwargs)
