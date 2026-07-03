@@ -77,44 +77,7 @@ qubit_panel = dbc.Row(
                             [
                                 dbc.Col(
                                     [
-                                        html.Span(
-                                            "Fusion Type",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "fontWeight": "600",
-                                                "display": "block",
-                                                "marginBottom": "2px",
-                                            },
-                                        ),
-                                        dbc.Select(
-                                            id="fusion-type",
-                                            options=[
-                                                {"label": "XXZZ", "value": "XXZZ"},
-                                                {"label": "XZZX", "value": "XZZX"},
-                                                {"label": "XYYZ", "value": "XYYZ"},
-                                            ],
-                                            value="XXZZ",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "padding": "2px 4px",
-                                                "height": "auto",
-                                            },
-                                        ),
-                                    ],
-                                    width=6,
-                                    className="pe-1",
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.Span(
-                                            "Force Meas.",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "fontWeight": "600",
-                                                "display": "block",
-                                                "marginBottom": "2px",
-                                            },
-                                        ),
+                                        html.Span("Force Meas.", style={"fontSize": "0.85rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
                                         dbc.Select(
                                             id="fusion-force-measurement",
                                             options=[
@@ -126,32 +89,15 @@ qubit_panel = dbc.Row(
                                             ],
                                             placeholder="00",
                                             value=0,
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "padding": "2px 4px",
-                                                "height": "auto",
-                                            },
+                                            style={"fontSize": "0.85rem", "padding": "2px 4px", "height": "auto"},
                                         ),
                                     ],
                                     width=6,
-                                    className="ps-1",
+                                    className="pe-1"
                                 ),
-                            ],
-                            className="mb-2 g-0",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
                                     [
-                                        html.Span(
-                                            "Fusion Mode",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "fontWeight": "600",
-                                                "display": "block",
-                                                "marginBottom": "2px",
-                                            },
-                                        ),
+                                        html.Span("Fusion Mode", style={"fontSize": "0.85rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
                                         dbc.Select(
                                             id="fusion-mode",
                                             options=[
@@ -166,41 +112,29 @@ qubit_panel = dbc.Row(
                                                 {"label": "Random", "value": "random"},
                                             ],
                                             value="success",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "padding": "2px 4px",
-                                                "height": "auto",
-                                            },
+                                            style={"fontSize": "0.85rem", "padding": "2px 4px", "height": "auto"},
                                         ),
                                     ],
                                     width=6,
-                                    className="pe-1",
+                                    className="ps-1"
                                 ),
+                            ],
+                            className="mb-2 g-0"
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Col(
                                     [
-                                        html.Span(
-                                            " ",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "display": "block",
-                                                "marginBottom": "2px",
-                                            },
-                                        ),
-                                        dbc.Button(
-                                            "Fusion",
-                                            outline=True,
-                                            color="primary",
-                                            id="fusion-gate",
-                                            style={
-                                                "fontSize": "0.7rem",
-                                                "padding": "2px 6px",
-                                                "height": "auto",
-                                            },
-                                            className="w-100",
+                                        dbc.ButtonGroup(
+                                            [
+                                                dbc.Button("XXZZ", outline=True, color="primary", id="fusion-gate-xxzz", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
+                                                dbc.Button("XZZX", outline=True, color="primary", id="fusion-gate-xzzx", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
+                                                dbc.Button("XYYZ", outline=True, color="primary", id="fusion-gate-xyyz", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
+                                            ],
+                                            className="w-100"
                                         ),
                                     ],
-                                    width=6,
-                                    className="ps-1 d-flex flex-column justify-content-end",
+                                    width=12
                                 ),
                             ],
                             className="g-0",
@@ -395,17 +329,27 @@ qubit_panel = dbc.Row(
             ],
             width=1,
         ),
-        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
-        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
-        dbc.Tooltip(
-            "Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"
-        ),
+        dbc.Tooltip("Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"),
         dbc.Tooltip("Delete Node (Backspace)", target="remove-node", placement="top"),
         dbc.Tooltip("Add Node (N)", target="add-node", placement="top"),
         dbc.Tooltip("Toggle Edge (E)", target="toggle-edge", placement="top"),
         dbc.Tooltip("Delete Edge (Shift+E)", target="remove-edge", placement="top"),
         dbc.Tooltip("Hadamard Gate (H)", target="H", placement="top"),
         dbc.Tooltip("Local Complementation (W)", target="LC", placement="top"),
+        dbc.Tooltip("Fusion Gate XXZZ", target="fusion-gate-xxzz", placement="top"),
+        dbc.Tooltip("Fusion Gate XZZX", target="fusion-gate-xzzx", placement="top"),
+        dbc.Tooltip("Fusion Gate XYYZ", target="fusion-gate-xyyz", placement="top"),
+        dbc.Tooltip("Pauli X", target="X", placement="top"),
+        dbc.Tooltip("Pauli Y", target="Y", placement="top"),
+        dbc.Tooltip("Pauli Z", target="Z", placement="top"),
+        dbc.Tooltip("Pauli S", target="S", placement="top"),
+        dbc.Tooltip("Pauli S Dagger", target="S_DAG", placement="top"),
+        dbc.Tooltip("Controlled X", target="CX", placement="top"),
+        dbc.Tooltip("Controlled Z", target="CZ", placement="top"),
+        dbc.Tooltip("Rewrite", target="LCR", placement="top"),
+        dbc.Tooltip("Measure X", target="MX", placement="top"),
+        dbc.Tooltip("Measure Y", target="MY", placement="top"),
+        dbc.Tooltip("Measure Z", target="MZ", placement="top"),
     ],
     className="flex-nowrap",
 )
@@ -416,7 +360,9 @@ button_operations = {
     "MX": ("measure", {"force": 0, "basis": "X"}),
     "MY": ("measure", {"force": 0, "basis": "Y"}),
     "MZ": ("measure", {"force": 0, "basis": "Z"}),
-    "fusion-gate": ("fusion_gate", {"force": 0, "mode": "success"}),
+    "fusion-gate-xxzz": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XXZZ"}),
+    "fusion-gate-xzzx": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XZZX"}),
+    "fusion-gate-xyyz": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XYYZ"}),
     # simple operations with no extra args
     "LCR": ("local_complementation_rewrite", {}),
     "LC": ("local_complementation", {}),
@@ -455,7 +401,6 @@ button_operations = {
     State("history-store", "data"),
     State("fusion-mode", "value"),
     State("fusion-force-measurement", "value"),
-    State("fusion-type", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
@@ -473,7 +418,7 @@ def handle_buttons(*args):
     selected_edge_data = args[-2]
     cyto_data = args[-1]
 
-    history_data = args[-9]
+    history_data = args[-8]
     if not history_data or not isinstance(history_data, dict):
         history_data = {"undo_stack": [], "redo_stack": []}
     else:
@@ -503,7 +448,7 @@ def handle_buttons(*args):
         triggered_id = "LC"
 
     if triggered_id == "ctrl-v-btn":
-        clipboard_data = args[-10]
+        clipboard_data = args[-9]
         if not clipboard_data:
             return (
                 "Clipboard is empty!",
@@ -519,11 +464,11 @@ def handle_buttons(*args):
         if not triggered_id or triggered_id not in button_operations:
             raise NotImplementedError
 
-        method_name, method_args = button_operations[triggered_id]
+        method_name, base_args = button_operations[triggered_id]
+        method_args = base_args.copy()
         if method_name == "fusion_gate":
-            method_args["fusion_type"] = args[-6]
-            method_args["force"] = int(args[-7])
-            method_args["mode"] = args[-8]
+            method_args["force"] = int(args[-6])
+            method_args["mode"] = args[-7]
 
         elif method_name == "measure":
             method_args["force"] = int(args[-5])

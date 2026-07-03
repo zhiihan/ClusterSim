@@ -92,24 +92,11 @@ tab_3 = dbc.Row(
                             ],
                             width=6,
                         ),
-                        dbc.Col(
-                            dbc.Button(
-                                "Load", id="load-button", style={"width": "100%"}
-                            ),
-                            width=2,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "Undo", id="undo-button", style={"width": "100%"}
-                            ),
-                            width=2,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "Redo", id="redo-button", style={"width": "100%"}
-                            ),
-                            width=2,
-                        ),
+                        dbc.Col(dbc.Button("Load", id="load-button", style={"width": "100%"}), width=2),
+                        dbc.Col(dbc.Button("Undo", id="undo-button", style={"width": "100%"}), width=2),
+                        dbc.Col(dbc.Button("Redo", id="redo-button", style={"width": "100%"}), width=2),
+                        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
+        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
                     ],
                     className="align-items-center",
                 ),

@@ -123,8 +123,6 @@ def test_action_panel_tooltips():
     ]
 
     expected_targets = {
-        "undo-button",
-        "redo-button",
         "duplicate",
         "remove-node",
         "add-node",
@@ -132,7 +130,39 @@ def test_action_panel_tooltips():
         "remove-edge",
         "H",
         "LC",
+        "fusion-gate-xxzz",
+        "fusion-gate-xzzx",
+        "fusion-gate-xyyz",
+        "X",
+        "Y",
+        "Z",
+        "S",
+        "S_DAG",
+        "CX",
+        "CZ",
+        "LCR",
+        "MX",
+        "MY",
+        "MZ",
     }
 
     actual_targets = {tooltip.target for tooltip in tooltips}
     assert expected_targets == actual_targets
+
+
+def test_fusion_buttons_mapping():
+    from components.components_2d.action_panel import button_operations
+
+    assert "fusion-gate" not in button_operations
+    assert "fusion-gate-xxzz" in button_operations
+    assert "fusion-gate-xzzx" in button_operations
+    assert "fusion-gate-xyyz" in button_operations
+
+    for key, expected_type in [
+        ("fusion-gate-xxzz", "XXZZ"),
+        ("fusion-gate-xzzx", "XZZX"),
+        ("fusion-gate-xyyz", "XYYZ"),
+    ]:
+        op_name, op_args = button_operations[key]
+        assert op_name == "fusion_gate"
+        assert op_args["fusion_type"] == expected_type
