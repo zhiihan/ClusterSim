@@ -261,7 +261,7 @@ class ClusterState:
 
         graph = self.to_rustworkx()
         graph.add_node({"id": str(self.num_nodes), "vop": vop})
-        
+
         self.simulator = ClusterState.from_rustworkx(graph).simulator
         self.num_nodes += 1
 
@@ -349,15 +349,23 @@ class ClusterState:
                 qubits = [int(x.strip()) for x in args_str.split(" ") if x.strip()]
 
             if qubits:
-                if op_name not in {"ADD_NODE", "REMOVE_NODE", "DUPLICATE", "ADD_EDGE", "REMOVE_EDGE", "TOGGLE_EDGE"} and qubits:
+                if (
+                    op_name
+                    not in {
+                        "ADD_NODE",
+                        "REMOVE_NODE",
+                        "DUPLICATE",
+                        "ADD_EDGE",
+                        "REMOVE_EDGE",
+                        "TOGGLE_EDGE",
+                    }
+                    and qubits
+                ):
                     max_qubit = max(max_qubit, max(qubits))
 
             parsed_ops.append((op_name, qubits, optional_args))
 
-        num_nodes = max_qubit + 1
-        if num_nodes <= 0:
-            raise ValueError("ClusterState must have at least one node.")
-
+        num_nodes = max(max_qubit + 1, 1)
         new_state = cls(num_nodes)
 
         # ---------- Second pass: apply ops ----------
@@ -376,6 +384,10 @@ class ClusterState:
                     if q + 1 > num_nodes:
                         new_state.add_node(vop="IA")
                         num_nodes += 1
+                    elif q == 0:
+                        # Add H gate if it is the first gate and we are adding a node
+                        # This only shows up if the program is ADD_NODE 0
+                        new_state.H(q)
 
             elif op_name == "REMOVE_NODE":
                 for q in sorted(qubits, reverse=True):

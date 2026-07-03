@@ -215,7 +215,11 @@ def handle_buttons(*args):
 
         # If no nodes selected but an edge is selected, derive nodes from the edge
         # for edge operations (add/remove/toggle)
-        if not selected_nodes and method_name in ["add_edge", "remove_edge", "toggle_edge"]:
+        if not selected_nodes and method_name in [
+            "add_edge",
+            "remove_edge",
+            "toggle_edge",
+        ]:
             if selected_edge_data:
                 edge_nodes: list[int] = []
                 for edge in selected_edge_data:
@@ -225,7 +229,9 @@ def handle_buttons(*args):
                         edge_nodes.append(int(src))
                     if tgt is not None:
                         edge_nodes.append(int(tgt))
-                selected_nodes = list(dict.fromkeys(edge_nodes))  # deduplicate, preserve order
+                selected_nodes = list(
+                    dict.fromkeys(edge_nodes)
+                )  # deduplicate, preserve order
 
     if not selected_nodes and method_name != "add_node":
         return no_update, no_update, no_update, no_update, no_update

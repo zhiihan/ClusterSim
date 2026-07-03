@@ -94,6 +94,16 @@ def test_load_text_edge():
     assert str(g) == "['+XZZZZ', '+ZXZZZ', '+ZZXZZ', '+ZZZXZ', '+ZZZZX']"
 
 
+def test_load_text_add_node():
+    text = "ADD_NODE 0\nADD_NODE 1\nADD_NODE 2\n"
+
+    g, log = ClusterState.from_string(text, return_log=True)
+
+    assert log == text
+    assert len(g) == 3
+    assert str(g) == "['+XII', '+IXI', '+IIX']"
+
+
 def test_from_json_formats(tmp_path):
     import io
     import json
