@@ -21,17 +21,11 @@ app.layout = html.Div(
         html.Div(
             [
                 # Top horizontal toolbar panel
-                html.Div(
-                    tab_ui_2d,
-                    className="glass-top-panel"
-                ),
+                html.Div(tab_ui_2d, className="glass-top-panel"),
                 # Fullscreen background Cytoscape canvas
-                html.Div(
-                    figure_2d,
-                    className="cytoscape-container"
-                ),
+                html.Div(figure_2d, className="cytoscape-container"),
             ],
-            className="app-container"
+            className="app-container",
         ),
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),

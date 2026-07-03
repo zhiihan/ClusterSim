@@ -60,17 +60,9 @@ node_labels = dbc.Select(
 )
 
 
-tab_1 = dbc.Row(
-    [
-        dbc.Col(qubit_panel, width=12)
-    ]
-)
+tab_1 = dbc.Row([dbc.Col(qubit_panel, width=12)])
 
-tab_2 = dbc.Row(
-    [
-        dbc.Col(fusion_menu, width=12)
-    ]
-)
+tab_2 = dbc.Row([dbc.Col(fusion_menu, width=12)])
 
 tab_3 = dbc.Row(
     [
@@ -87,21 +79,42 @@ tab_3 = dbc.Row(
                                     id="load-graph-input",
                                     placeholder="Load a graph state",
                                     value="",
-                                    className="mb-0"
+                                    className="mb-0",
                                 ),
-                                dbc.FormFeedback("Graph loaded successfully!", type="valid", id="load-feedback-valid"),
-                                dbc.FormFeedback("", type="invalid", id="load-feedback-invalid"),
+                                dbc.FormFeedback(
+                                    "Graph loaded successfully!",
+                                    type="valid",
+                                    id="load-feedback-valid",
+                                ),
+                                dbc.FormFeedback(
+                                    "", type="invalid", id="load-feedback-invalid"
+                                ),
                             ],
-                            width=6
+                            width=6,
                         ),
-                        dbc.Col(dbc.Button("Load", id="load-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Undo", id="undo-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Redo", id="redo-button", style={"width": "100%"}), width=2),
+                        dbc.Col(
+                            dbc.Button(
+                                "Load", id="load-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Undo", id="undo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Redo", id="redo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
                     ],
-                    className="align-items-center"
-                )
+                    className="align-items-center",
+                ),
             ],
-            width=12
+            width=12,
         )
     ]
 )
@@ -113,14 +126,14 @@ tab_5 = dbc.Row(
                 dcc.Markdown("**Select Layout**", style={"margin": "0 0 4px 0"}),
                 layout_dropdown,
             ],
-            width=4
+            width=4,
         ),
         dbc.Col(
             [
                 dcc.Markdown("**Select Node Labels**", style={"margin": "0 0 4px 0"}),
                 node_labels,
             ],
-            width=4
+            width=4,
         ),
         dbc.Col(
             [
@@ -131,8 +144,8 @@ tab_5 = dbc.Row(
                 dcc.Download(id="download-json"),
             ],
             width=4,
-            className="d-flex flex-column justify-content-end"
-        )
+            className="d-flex flex-column justify-content-end",
+        ),
     ]
 )
 
@@ -140,7 +153,6 @@ tab_ui_2d = html.Div(
     [
         # Store for active modal tab
         dcc.Store(id="modal-tab-store", data="rep"),
-        
         # Reference & Logs Modal
         dbc.Modal(
             [
@@ -152,26 +164,61 @@ tab_ui_2d = html.Div(
                                 [
                                     html.Div(
                                         [
-                                            html.Button("×", id="close-modal-btn", className="btn-close", style={"fontSize": "24px", "background": "none", "border": "none", "color": "#64748b"}),
+                                            html.Button(
+                                                "×",
+                                                id="close-modal-btn",
+                                                className="btn-close",
+                                                style={
+                                                    "fontSize": "24px",
+                                                    "background": "none",
+                                                    "border": "none",
+                                                    "color": "#64748b",
+                                                },
+                                            ),
                                         ],
-                                        style={"marginBottom": "20px"}
+                                        style={"marginBottom": "20px"},
                                     ),
                                     dbc.Nav(
                                         [
-                                            dbc.NavLink("Simulator Representation", id="modal-tab-rep", active=True, style={"cursor": "pointer"}),
-                                            dbc.NavLink("Move Log", id="modal-tab-log", style={"cursor": "pointer"}),
-                                            dbc.NavLink("Clifford Reference", id="modal-tab-ref", style={"cursor": "pointer"}),
+                                            dbc.NavLink(
+                                                "Simulator Representation",
+                                                id="modal-tab-rep",
+                                                active=True,
+                                                style={"cursor": "pointer"},
+                                            ),
+                                            dbc.NavLink(
+                                                "Move Log",
+                                                id="modal-tab-log",
+                                                style={"cursor": "pointer"},
+                                            ),
+                                            dbc.NavLink(
+                                                "Clifford Reference",
+                                                id="modal-tab-ref",
+                                                style={"cursor": "pointer"},
+                                            ),
                                             html.Hr(style={"margin": "8px 0"}),
-                                            dbc.NavLink("Reset & Load", id="modal-tab-reset", style={"cursor": "pointer"}),
-                                            dbc.NavLink("Plot Options", id="modal-tab-plot", style={"cursor": "pointer"}),
+                                            dbc.NavLink(
+                                                "Reset & Load",
+                                                id="modal-tab-reset",
+                                                style={"cursor": "pointer"},
+                                            ),
+                                            dbc.NavLink(
+                                                "Plot Options",
+                                                id="modal-tab-plot",
+                                                style={"cursor": "pointer"},
+                                            ),
                                         ],
                                         vertical=True,
                                         pills=True,
-                                        className="flex-column"
+                                        className="flex-column",
                                     ),
                                 ],
                                 width=3,
-                                style={"borderRight": "1px solid #dee2e6", "minHeight": "420px", "paddingRight": "20px"}
+                                style={
+                                    "borderRight": "1px solid #dee2e6",
+                                    "minHeight": "420px",
+                                    "paddingRight": "20px",
+                                },
                             ),
                             # Modal Content Column
                             dbc.Col(
@@ -181,26 +228,43 @@ tab_ui_2d = html.Div(
                                             # Page 1: Simulator Representation
                                             html.Div(
                                                 [
-                                                    dcc.Markdown("**Simulator Representation**", style={"marginBottom": "8px"}),
+                                                    dcc.Markdown(
+                                                        "**Simulator Representation**",
+                                                        style={"marginBottom": "8px"},
+                                                    ),
                                                     html.Pre(
                                                         id="simulator-representation",
-                                                        style={"whiteSpace": "pre-wrap", "height": "380px", "overflowY": "auto", "border": "1px solid #dee2e6", "borderRadius": "4px", "padding": "12px", "backgroundColor": "#f8f9fa", "color": "#212529", "fontFamily": "SFMono-Regular, Menlo, Monaco, Consolas, monospace", "fontSize": "13px"},
+                                                        style={
+                                                            "whiteSpace": "pre-wrap",
+                                                            "height": "380px",
+                                                            "overflowY": "auto",
+                                                            "border": "1px solid #dee2e6",
+                                                            "borderRadius": "4px",
+                                                            "padding": "12px",
+                                                            "backgroundColor": "#f8f9fa",
+                                                            "color": "#212529",
+                                                            "fontFamily": "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                                                            "fontSize": "13px",
+                                                        },
                                                         children=_init_state()[1],
                                                     ),
                                                 ],
                                                 id="modal-content-rep",
-                                                style={"display": "block"}
+                                                style={"display": "block"},
                                             ),
                                             # Page 2: Move Log
                                             html.Div(
                                                 move_log,
                                                 id="modal-content-log",
-                                                style={"display": "none"}
+                                                style={"display": "none"},
                                             ),
                                             # Page 3: Clifford Reference
                                             html.Div(
                                                 [
-                                                    dcc.Markdown("**Local Clifford Gate Decomposition Reference**", style={"marginBottom": "8px"}),
+                                                    dcc.Markdown(
+                                                        "**Local Clifford Gate Decomposition Reference**",
+                                                        style={"marginBottom": "8px"},
+                                                    ),
                                                     html.Div(
                                                         dcc.Markdown(
                                                             d("""
@@ -234,30 +298,37 @@ tab_ui_2d = html.Div(
                                                             ```
                                                             """)
                                                         ),
-                                                        style={"height": "380px", "overflowY": "auto", "border": "1px solid #dee2e6", "borderRadius": "4px", "padding": "10px", "backgroundColor": "#f8f9fa"}
-                                                    )
+                                                        style={
+                                                            "height": "380px",
+                                                            "overflowY": "auto",
+                                                            "border": "1px solid #dee2e6",
+                                                            "borderRadius": "4px",
+                                                            "padding": "10px",
+                                                            "backgroundColor": "#f8f9fa",
+                                                        },
+                                                    ),
                                                 ],
                                                 id="modal-content-ref",
-                                                style={"display": "none"}
+                                                style={"display": "none"},
                                             ),
                                             # Page 4: Reset & Load
                                             html.Div(
                                                 tab_3,
                                                 id="modal-content-reset",
-                                                style={"display": "none"}
+                                                style={"display": "none"},
                                             ),
                                             # Page 5: Plot Options
                                             html.Div(
                                                 tab_5,
                                                 id="modal-content-plot",
-                                                style={"display": "none"}
+                                                style={"display": "none"},
                                             ),
                                         ],
-                                        style={"paddingLeft": "20px"}
+                                        style={"paddingLeft": "20px"},
                                     )
                                 ],
-                                width=9
-                            )
+                                width=9,
+                            ),
                         ]
                     )
                 )
@@ -267,20 +338,30 @@ tab_ui_2d = html.Div(
             is_open=False,
             centered=True,
         ),
-
         # Main Header Row
         dbc.Row(
             [
                 # Left: Title + Alert stacked
                 dbc.Col(
                     [
-                        html.H2("Cluster Sim", style={"margin": "0 0 4px 0", "fontSize": "22px", "fontWeight": "bold"}),
+                        html.H2(
+                            "Cluster Sim",
+                            style={
+                                "margin": "0 0 4px 0",
+                                "fontSize": "22px",
+                                "fontWeight": "bold",
+                            },
+                        ),
                         dcc.Loading(
                             dbc.Alert(
                                 "Click on the graph to measure nodes.",
                                 color="primary",
                                 id="ui",
-                                style={"padding": "4px 10px", "margin": "0", "fontSize": "0.8rem"}
+                                style={
+                                    "padding": "4px 10px",
+                                    "margin": "0",
+                                    "fontSize": "0.8rem",
+                                },
                             ),
                             delay_show=100,
                             delay_hide=100,
@@ -288,15 +369,15 @@ tab_ui_2d = html.Div(
                         ),
                     ],
                     width=2,
-                    className="d-flex flex-column justify-content-center"
+                    className="d-flex flex-column justify-content-center",
                 ),
                 # Center: Operations panel
                 dbc.Col(
                     tab_1,
                     width=10,
-                )
+                ),
             ],
-            className="align-items-start mb-2 flex-nowrap"
+            className="align-items-start mb-2 flex-nowrap",
         ),
     ]
 )
@@ -402,7 +483,6 @@ def handle_snap_to_grid(n_clicks, cyto_data):
         for pos in positions
     ]
     return postprocess_cyto_data_elements(cyto_data, snapped_positions)
-
 
 
 @callback(

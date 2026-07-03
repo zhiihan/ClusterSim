@@ -1,5 +1,6 @@
 from clustersim.simulator import ClusterState
 
+
 def test_apply_operation_wrapper_remove_last_node():
     from components.components_2d.action_panel import apply_operation_wrapper
 
@@ -15,7 +16,7 @@ def test_apply_operation_wrapper_remove_last_node():
         cyto_data=cyto_data,
         log="",
         method_args={},
-        history_data={"undo_stack": [], "redo_stack": []}
+        history_data={"undo_stack": [], "redo_stack": []},
     )
 
     assert len(res) == 5
@@ -40,7 +41,7 @@ def test_apply_operation_wrapper_errors():
         cyto_data=cyto_data,
         log="",
         method_args={},
-        history_data={"undo_stack": [], "redo_stack": []}
+        history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res_cz) == 5
     assert res_cz[0] == "Odd number of gates!"
@@ -52,7 +53,7 @@ def test_apply_operation_wrapper_errors():
         cyto_data=cyto_data,
         log="",
         method_args={"fusion_type": "success", "force": 0, "mode": "success"},
-        history_data={"undo_stack": [], "redo_stack": []}
+        history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res_fusion) == 5
     assert res_fusion[0] == "Odd number of qubits!"
@@ -75,7 +76,7 @@ def test_apply_operation_wrapper_add_node_offset():
         cyto_data=cyto_data,
         log="",
         method_args={},
-        history_data={"undo_stack": [], "redo_stack": []}
+        history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res) == 5
     ui, cyto_data_new, repr_g, log, history_data = res
@@ -100,7 +101,7 @@ def test_apply_operation_wrapper_add_node_offset():
         cyto_data=cyto_data2,
         log="",
         method_args={},
-        history_data={"undo_stack": [], "redo_stack": []}
+        history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res2) == 5
     ui2, cyto_data_new2, repr_g2, log2, history_data2 = res2
@@ -118,18 +119,20 @@ def test_action_panel_tooltips():
     import dash_bootstrap_components as dbc
 
     tooltips = [
-        child for child in qubit_panel.children
-        if isinstance(child, dbc.Tooltip)
+        child for child in qubit_panel.children if isinstance(child, dbc.Tooltip)
     ]
 
     expected_targets = {
-        "undo-button", "redo-button", "duplicate", "remove-node",
-        "add-node", "toggle-edge", "remove-edge", "H", "LC"
+        "undo-button",
+        "redo-button",
+        "duplicate",
+        "remove-node",
+        "add-node",
+        "toggle-edge",
+        "remove-edge",
+        "H",
+        "LC",
     }
 
     actual_targets = {tooltip.target for tooltip in tooltips}
     assert expected_targets == actual_targets
-
-
-
-

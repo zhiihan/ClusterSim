@@ -19,7 +19,7 @@ fusion_menu = dbc.Row(
                     value="XXZZ",
                 ),
             ],
-            width=3
+            width=3,
         ),
         dbc.Col(
             [
@@ -36,7 +36,7 @@ fusion_menu = dbc.Row(
                     value=0,
                 ),
             ],
-            width=4
+            width=4,
         ),
         dbc.Col(
             [
@@ -51,15 +51,21 @@ fusion_menu = dbc.Row(
                     value="success",
                 ),
             ],
-            width=3
+            width=3,
         ),
         dbc.Col(
             [
                 dcc.Markdown("**Action**", style={"margin": "0 0 4px 0"}),
-                dbc.Button("Fusion", outline=True, color="primary", id="fusion-gate", style={"width": "100%"}),
+                dbc.Button(
+                    "Fusion",
+                    outline=True,
+                    color="primary",
+                    id="fusion-gate",
+                    style={"width": "100%"},
+                ),
             ],
             width=2,
-            className="d-flex flex-column justify-content-end"
+            className="d-flex flex-column justify-content-end",
         ),
     ]
 )

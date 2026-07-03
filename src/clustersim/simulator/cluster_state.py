@@ -96,7 +96,7 @@ class ClusterState:
     def MZ(self, qubit: int, force: int = -1):
         return self.simulator.measure(qubit, force, "Z")
 
-    def I(self, qubit: int):  
+    def I(self, qubit: int):
         return self.simulator.I(qubit)
 
     def X(self, qubit: int):
@@ -260,8 +260,7 @@ class ClusterState:
         """
         idx = self.num_nodes
         self.H(idx)
-        self.apply_VOP(idx, vop) 
-        
+        self.apply_VOP(idx, vop)
 
     def remove_node(self, qubits: int | list[int]):
         graph = self.to_rustworkx()

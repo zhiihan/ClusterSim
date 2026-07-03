@@ -5,6 +5,7 @@ import pytest
 from tests.test_stabilizers import random_stim_circuit
 from hypothesis import given, strategies as st
 
+
 def test_apply_gate():
     """
     Test measurement.
@@ -105,7 +106,6 @@ def test_duplicate_measure():
     assert g1 == g2
 
 
-
 @st.composite
 def random_graph_program(draw):
     """
@@ -113,45 +113,63 @@ def random_graph_program(draw):
     """
     num_nodes = 0
     instructions = []
-    
+
     # Generate between 1 and 15 steps
     num_steps = draw(st.integers(min_value=1, max_value=15))
-    
+
     # Keep track of used node labels for ADD_NODE to ensure they are unique
     used_labels = set()
-    
+
     for _ in range(num_steps):
         choices = ["ADD_NODE"]
         if num_nodes > 0:
             choices.append("REMOVE_NODE")
             choices.append("DUPLICATE")
-            
+
         op = draw(st.sampled_from(choices))
-        
+
         if op == "ADD_NODE":
             k = draw(st.integers(min_value=1, max_value=5))
             labels = []
             for _ in range(k):
-                label = draw(st.integers(min_value=0, max_value=1000).filter(lambda x: x not in used_labels))
+                label = draw(
+                    st.integers(min_value=0, max_value=1000).filter(
+                        lambda x: x not in used_labels
+                    )
+                )
                 used_labels.add(label)
                 labels.append(label)
             instructions.append(f"ADD_NODE {' '.join(map(str, labels))}")
             num_nodes += k
-            
+
         elif op == "REMOVE_NODE":
             active_indices = list(range(num_nodes))
             num_to_remove = draw(st.integers(min_value=1, max_value=num_nodes))
-            targets = draw(st.lists(st.sampled_from(active_indices), min_size=num_to_remove, max_size=num_to_remove, unique=True))
+            targets = draw(
+                st.lists(
+                    st.sampled_from(active_indices),
+                    min_size=num_to_remove,
+                    max_size=num_to_remove,
+                    unique=True,
+                )
+            )
             instructions.append(f"REMOVE_NODE {' '.join(map(str, targets))}")
             num_nodes -= len(targets)
-            
+
         elif op == "DUPLICATE":
             active_indices = list(range(num_nodes))
             num_to_dup = draw(st.integers(min_value=1, max_value=num_nodes))
-            targets = draw(st.lists(st.sampled_from(active_indices), min_size=num_to_dup, max_size=num_to_dup, unique=True))
+            targets = draw(
+                st.lists(
+                    st.sampled_from(active_indices),
+                    min_size=num_to_dup,
+                    max_size=num_to_dup,
+                    unique=True,
+                )
+            )
             instructions.append(f"DUPLICATE {' '.join(map(str, targets))}")
             num_nodes += len(targets)
-            
+
     return "\n".join(instructions) + "\n"
 
 
@@ -161,11 +179,8 @@ def test_load_undo(program):
     Test applying the same sequence of gates as in the stimulus program results in the same graph.
     """
     g = ClusterState.from_string(program)
-    
+
     # Verify serialization round-trip
     serialized = g.to_json()
     g_reconstructed = ClusterState.from_json(serialized)
     assert g == g_reconstructed
-
-
-
