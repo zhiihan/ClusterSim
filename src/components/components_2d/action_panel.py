@@ -401,6 +401,7 @@ def apply_operation_wrapper(
         "local_complementation_rewrite",
         "H",
         "S",
+        "S_DAG",
     ]:
         for i in selected_nodes:
             getattr(g, method_name)(i, **method_args)
