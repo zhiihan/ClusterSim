@@ -6,94 +6,410 @@ import dash_bootstrap_components as dbc
 from typing import Any
 import random
 
-qubit_panel = dbc.Card(
-    dbc.CardBody(
-        [
-            dcc.Markdown(
-                d(
-                    """
-                **Select Measurement Basis**
-
-                Click points in the graph, then press the button to measure. 
-                
-                Forcing measurement only applies if the state is 50/50.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button("MZ", outline=True, color="primary", id="MZ"),
-                    dbc.Button("MY", outline=True, color="primary", id="MY"),
-                    dbc.Button("MX", outline=True, color="primary", id="MX"),
-                ],
-            ),
-            dbc.Select(
-                id="force-measurement",
-                options=[
-                    {"label": "Force outcome 0 (default)", "value": 0},
-                    {"label": "Force outcome 1", "value": 1},
-                    {"label": "Random measurement", "value": -1},
-                ],
-                placeholder="Force outcome 0 (default)",
-                value=0,
-                style={"minwidth": "300px", "width": "300px"},
-            ),
-            html.Br(),
-            dcc.Markdown(
-                d(
-                    """
-                **Apply Clifford Gates**
-
-                Click points in the graph, then press the button to apply Clifford gates.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button("X", outline=True, color="primary", id="X"),
-                    dbc.Button("Y", outline=True, color="primary", id="Y"),
-                    dbc.Button("Z", outline=True, color="primary", id="Z"),
-                    dbc.Button("H", outline=True, color="primary", id="H"),
-                    dbc.Button("S", outline=True, color="primary", id="S"),
-                    dbc.Button("CX", outline=True, color="primary", id="CX"),
-                    dbc.Button("CZ", outline=True, color="primary", id="CZ"),
-                ]
-            ),
-            html.Br(),
-            dcc.Markdown(
-                d(
-                    """
-                **Graph operations**
-
-                Click points in the graph, then press the button to apply graph operations.
-                """
-                )
-            ),
-            dbc.ButtonGroup(
-                [
-                    dbc.Button(
-                        "Add Node", outline=True, color="primary", id="add-node"
-                    ),
-                    dbc.Button(
-                        "Remove Node", outline=True, color="primary", id="remove-node"
-                    ),
-                    dbc.Button(
-                        "Add Edge", outline=True, color="primary", id="add-edge"
-                    ),
-                    dbc.Button(
-                        "Remove Edge", outline=True, color="primary", id="remove-edge"
-                    ),
-                    dbc.Button(
-                        "Toggle Edge", outline=True, color="primary", id="toggle-edge"
-                    ),
-                    dbc.Button("LC", outline=True, color="primary", id="LC"),
-                    dbc.Button("LC Rewrite", outline=True, color="primary", id="LCR"),
-                    dbc.Button("Copy", outline=True, color="primary", id="duplicate"),
-                ]
-            ),
-        ]
-    )
+qubit_panel = dbc.Row(
+    [
+        # Column 1: Select Measurement Basis
+        dbc.Col(
+            [
+                dcc.Markdown(
+                    "**Select Measurement Basis**",
+                    style={"margin": "0 0 4px 0", "fontSize": "0.8rem"},
+                ),
+                html.Div(
+                    [
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "MZ",
+                                    outline=True,
+                                    color="primary",
+                                    id="MZ",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "MY",
+                                    outline=True,
+                                    color="primary",
+                                    id="MY",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "MX",
+                                    outline=True,
+                                    color="primary",
+                                    id="MX",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100",
+                        ),
+                        dbc.Select(
+                            id="force-measurement",
+                            options=[
+                                {"label": "Force 0", "value": 0},
+                                {"label": "Force 1", "value": 1},
+                                {"label": "Random", "value": -1},
+                            ],
+                            placeholder="Force 0",
+                            value=0,
+                            style={
+                                "fontSize": "0.85rem",
+                                "padding": "4px 8px",
+                                "height": "auto",
+                            },
+                            className="w-100 mt-2",
+                        ),
+                    ],
+                ),
+            ],
+            width=2,
+        ),
+        # Column 2: Fusion Controls
+        dbc.Col(
+            [
+                dcc.Markdown(
+                    "**Fusion Controls**",
+                    style={"margin": "0 0 4px 0", "fontSize": "0.8rem"},
+                ),
+                html.Div(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            "Fusion Type",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "fontWeight": "600",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
+                                        dbc.Select(
+                                            id="fusion-type",
+                                            options=[
+                                                {"label": "XXZZ", "value": "XXZZ"},
+                                                {"label": "XZZX", "value": "XZZX"},
+                                                {"label": "XYYZ", "value": "XYYZ"},
+                                            ],
+                                            value="XXZZ",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "padding": "2px 4px",
+                                                "height": "auto",
+                                            },
+                                        ),
+                                    ],
+                                    width=6,
+                                    className="pe-1",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            "Force Meas.",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "fontWeight": "600",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
+                                        dbc.Select(
+                                            id="fusion-force-measurement",
+                                            options=[
+                                                {"label": "00", "value": 0},
+                                                {"label": "10", "value": 1},
+                                                {"label": "01", "value": 2},
+                                                {"label": "11", "value": 3},
+                                                {"label": "Random", "value": -1},
+                                            ],
+                                            placeholder="00",
+                                            value=0,
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "padding": "2px 4px",
+                                                "height": "auto",
+                                            },
+                                        ),
+                                    ],
+                                    width=6,
+                                    className="ps-1",
+                                ),
+                            ],
+                            className="mb-2 g-0",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            "Fusion Mode",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "fontWeight": "600",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
+                                        dbc.Select(
+                                            id="fusion-mode",
+                                            options=[
+                                                {
+                                                    "label": "Success",
+                                                    "value": "success",
+                                                },
+                                                {
+                                                    "label": "Failure",
+                                                    "value": "failure",
+                                                },
+                                                {"label": "Random", "value": "random"},
+                                            ],
+                                            value="success",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "padding": "2px 4px",
+                                                "height": "auto",
+                                            },
+                                        ),
+                                    ],
+                                    width=6,
+                                    className="pe-1",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            " ",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
+                                        dbc.Button(
+                                            "Fusion",
+                                            outline=True,
+                                            color="primary",
+                                            id="fusion-gate",
+                                            style={
+                                                "fontSize": "0.7rem",
+                                                "padding": "2px 6px",
+                                                "height": "auto",
+                                            },
+                                            className="w-100",
+                                        ),
+                                    ],
+                                    width=6,
+                                    className="ps-1 d-flex flex-column justify-content-end",
+                                ),
+                            ],
+                            className="g-0",
+                        ),
+                    ],
+                ),
+            ],
+            width=3,
+        ),
+        # Column 3: Apply Clifford Gates
+        dbc.Col(
+            [
+                dcc.Markdown(
+                    "**Apply Clifford Gates**",
+                    style={"margin": "0 0 4px 0", "fontSize": "0.8rem"},
+                ),
+                html.Div(
+                    [
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "X",
+                                    outline=True,
+                                    color="primary",
+                                    id="X",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "Y",
+                                    outline=True,
+                                    color="primary",
+                                    id="Y",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "Z",
+                                    outline=True,
+                                    color="primary",
+                                    id="Z",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "H",
+                                    outline=True,
+                                    color="primary",
+                                    id="H",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100 mb-2",
+                        ),
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "S",
+                                    outline=True,
+                                    color="primary",
+                                    id="S",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "S†",
+                                    outline=True,
+                                    color="primary",
+                                    id="S_DAG",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "CX",
+                                    outline=True,
+                                    color="primary",
+                                    id="CX",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "CZ",
+                                    outline=True,
+                                    color="primary",
+                                    id="CZ",
+                                    style={"fontSize": "0.85rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100",
+                        ),
+                    ]
+                ),
+            ],
+            width=3,
+        ),
+        # Column 4: Graph operations
+        dbc.Col(
+            [
+                dcc.Markdown(
+                    "**Graph operations**",
+                    style={"margin": "0 0 4px 0", "fontSize": "0.8rem"},
+                ),
+                html.Div(
+                    [
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "Add Node",
+                                    outline=True,
+                                    color="primary",
+                                    id="add-node",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "Del Node",
+                                    outline=True,
+                                    color="primary",
+                                    id="remove-node",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100 mb-2",
+                        ),
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "Toggle",
+                                    outline=True,
+                                    color="primary",
+                                    id="toggle-edge",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "Del Edge",
+                                    outline=True,
+                                    color="primary",
+                                    id="remove-edge",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100 mb-2",
+                        ),
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    "LC",
+                                    outline=True,
+                                    color="primary",
+                                    id="LC",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "LC Rewrite",
+                                    outline=True,
+                                    color="primary",
+                                    id="LCR",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                                dbc.Button(
+                                    "Copy",
+                                    outline=True,
+                                    color="primary",
+                                    id="duplicate",
+                                    style={"fontSize": "0.8rem", "padding": "4px 6px"},
+                                ),
+                            ],
+                            className="w-100",
+                        ),
+                        dbc.Button(
+                            "Add Edge",
+                            outline=True,
+                            color="primary",
+                            id="add-edge",
+                            style={"display": "none"},
+                        ),
+                    ]
+                ),
+            ],
+            width=3,
+        ),
+        # Column 5: Advanced Options (Gear icon)
+        dbc.Col(
+            [
+                html.Div(style={"height": "20px"}),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "⚙",
+                            id="open-modal-btn",
+                            outline=True,
+                            color="secondary",
+                            style={"fontSize": "1.2rem", "padding": "2px 8px"},
+                            title="Advanced Options",
+                        ),
+                    ],
+                    className="w-100 d-flex justify-content-center mt-1",
+                ),
+            ],
+            width=1,
+        ),
+        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
+        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
+        dbc.Tooltip(
+            "Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"
+        ),
+        dbc.Tooltip("Delete Node (Backspace)", target="remove-node", placement="top"),
+        dbc.Tooltip("Add Node (N)", target="add-node", placement="top"),
+        dbc.Tooltip("Toggle Edge (E)", target="toggle-edge", placement="top"),
+        dbc.Tooltip("Delete Edge (Shift+E)", target="remove-edge", placement="top"),
+        dbc.Tooltip("Hadamard Gate (H)", target="H", placement="top"),
+        dbc.Tooltip("Local Complementation (W)", target="LC", placement="top"),
+    ],
+    className="flex-nowrap",
 )
+
 
 button_operations = {
     # measure buttons with basis
@@ -109,6 +425,7 @@ button_operations = {
     "Z": ("Z", {}),
     "H": ("H", {}),
     "S": ("S", {}),
+    "S_DAG": ("S_DAG", {}),
     "CX": ("CX", {}),
     "CZ": ("CZ", {}),
     "add-edge": ("add_edge", {}),
@@ -271,7 +588,13 @@ def apply_operation_wrapper(
     elif method_name in ["CX", "CZ"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of gates!", no_update, no_update, no_update
+                return (
+                    "Odd number of gates!",
+                    no_update,
+                    no_update,
+                    no_update,
+                    no_update,
+                )
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
@@ -283,6 +606,7 @@ def apply_operation_wrapper(
         "local_complementation_rewrite",
         "H",
         "S",
+        "S_DAG",
     ]:
         for i in selected_nodes:
             getattr(g, method_name)(i, **method_args)
@@ -297,7 +621,13 @@ def apply_operation_wrapper(
     elif method_name in ["fusion_gate"]:
         for pair in itertools.batched(selected_nodes, n=2):
             if len(pair) < 2:
-                return "Odd number of qubits!", no_update, no_update, no_update
+                return (
+                    "Odd number of qubits!",
+                    no_update,
+                    no_update,
+                    no_update,
+                    no_update,
+                )
             getattr(g, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
@@ -305,7 +635,30 @@ def apply_operation_wrapper(
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
         new_node_id = len(g) - 1
-        positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
+
+        selected_positions = []
+        if selected_nodes:
+            for parent_id in selected_nodes:
+                parent_pos = next(
+                    (
+                        item["position"]
+                        for item in cyto_data["elements"]["nodes"]
+                        if item.get("data") and item["data"].get("value") == parent_id
+                    ),
+                    None,
+                )
+                if parent_pos:
+                    selected_positions.append(parent_pos)
+
+        if selected_positions:
+            avg_x = sum(p["x"] for p in selected_positions) / len(selected_positions)
+            avg_y = sum(p["y"] for p in selected_positions) / len(selected_positions)
+            new_pos = {"x": avg_x + 50, "y": avg_y + 50}
+        else:
+            new_pos = {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+
+        positions.append(new_pos)
+
         # Connect the new node to every selected node
         for neighbour in selected_nodes:
             g.add_edge(new_node_id, neighbour)
@@ -314,9 +667,6 @@ def apply_operation_wrapper(
         else:
             ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
-        if len(selected_nodes) >= len(g):
-            return "Cannot remove last node!", no_update, no_update, no_update
-
         getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Removed nodes {selected_nodes}"
 
@@ -416,6 +766,9 @@ def postprocess_cyto_data_elements(
     Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
     Output("history-store", "data", allow_duplicate=True),
+    Output("load-graph-input", "valid", allow_duplicate=True),
+    Output("load-graph-input", "invalid", allow_duplicate=True),
+    Output("load-feedback-invalid", "children", allow_duplicate=True),
     Input("undo-button", "n_clicks"),
     Input("ctrl-z-btn", "n_clicks"),
     Input("redo-button", "n_clicks"),
@@ -456,12 +809,34 @@ def load_graph(
 
     _, positions = preprocess_cyto_data_elements(cyto_data)
 
+    valid = False
+    invalid = False
+    feedback = ""
+
     if not load_graph_input and triggered_id == "load-button":
-        return no_update, no_update, no_update, "Cannot load empty input!", no_update
+        return (
+            no_update,
+            no_update,
+            no_update,
+            "Cannot load empty input!",
+            no_update,
+            False,
+            True,
+            "Cannot load empty input!",
+        )
 
     if triggered_id == "undo-button":
         if not history_data["undo_stack"]:
-            return no_update, no_update, no_update, "Nothing to undo!", no_update
+            return (
+                no_update,
+                no_update,
+                no_update,
+                "Nothing to undo!",
+                no_update,
+                False,
+                False,
+                "",
+            )
 
         # Pop the state to restore
         prev_state = history_data["undo_stack"].pop()
@@ -478,7 +853,16 @@ def load_graph(
 
     elif triggered_id == "redo-button":
         if not history_data["redo_stack"]:
-            return no_update, no_update, no_update, "Nothing to redo!", no_update
+            return (
+                no_update,
+                no_update,
+                no_update,
+                "Nothing to redo!",
+                no_update,
+                False,
+                False,
+                "",
+            )
 
         # Pop the state to restore
         next_state = history_data["redo_stack"].pop()
@@ -494,7 +878,23 @@ def load_graph(
         g, parsed_log = ClusterState.from_string(move_log, return_log=True)
 
     elif triggered_id == "load-button":
-        g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
+        try:
+            g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
+            valid = True
+            invalid = False
+        except Exception as e:
+            err_msg = str(e)
+            return (
+                no_update,
+                no_update,
+                no_update,
+                f"Failed to load: {err_msg}",
+                no_update,
+                False,
+                True,
+                err_msg,
+            )
+
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
                 positions += [
@@ -508,7 +908,16 @@ def load_graph(
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
-    return cyto_data_new, repr(g), move_log, "Action completed!", history_data
+    return (
+        cyto_data_new,
+        repr(g),
+        move_log,
+        "Action completed!",
+        history_data,
+        valid,
+        invalid,
+        feedback,
+    )
 
 
 @callback(

@@ -26,7 +26,7 @@ move_log = dbc.Card(
                     html.Pre(
                         id="move-log",
                         style={"border": "thin lightgrey solid", "overflowX": "scroll"},
-                        children="H 0 1 2 3 4\nCZ 0 1 1 2 2 3 3 4 4 0\n",
+                        children="",
                     ),
                 ],
                 style={
@@ -34,9 +34,6 @@ move_log = dbc.Card(
                     "overflowY": "scroll",
                 },
             ),
-            html.Button("Export SVG", id="btn-get-svg"),
-            html.Button("Export JSON", id="btn-get-json"),
-            dcc.Download(id="download-json"),
         ]
     )
 )
