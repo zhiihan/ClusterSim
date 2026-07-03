@@ -15,7 +15,7 @@ dependencies = [
     "matplotlib",
     "numba",
     "rustworkx>=0.17.1",
-    "graphstatesim>=0.2.4",
+    "graphstatesim==0.3.0",
     "jsons>=1.6.3",
     "networkx>=3.6.1",
     "dash-cytoscape>=1.0.2",
