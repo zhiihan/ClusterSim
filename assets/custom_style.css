@@ -17,8 +17,8 @@ body {
 /* Fullscreen cytoscape container positioned below the top panel */
 .cytoscape-container {
     position: absolute;
-    top: 169px;
-    /* 12px top + 145px panel + 12px gap */
+    top: 194px;
+    /* 12px top + 170px panel + 12px gap */
     left: 16px;
     right: 16px;
     bottom: 16px;
@@ -40,7 +40,7 @@ body {
     top: 12px;
     left: 16px;
     right: 16px;
-    height: 145px;
+    height: 170px;
     /* Compact height that fully displays controls without clipping */
     z-index: 10;
     background: rgba(255, 255, 255, 0.96) !important;

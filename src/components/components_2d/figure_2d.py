@@ -91,13 +91,17 @@ tab_3 = dbc.Row(
                 dbc.Row(
                     [
                         dbc.Col(
-                            dbc.Input(
-                                type="text",
-                                id="load-graph-input",
-                                placeholder="Load a graph state",
-                                value="",
-                                className="mb-0"
-                            ),
+                            [
+                                dbc.Input(
+                                    type="text",
+                                    id="load-graph-input",
+                                    placeholder="Load a graph state",
+                                    value="",
+                                    className="mb-0"
+                                ),
+                                dbc.FormFeedback("Graph loaded successfully!", type="valid", id="load-feedback-valid"),
+                                dbc.FormFeedback("", type="invalid", id="load-feedback-invalid"),
+                            ],
                             width=6
                         ),
                         dbc.Col(dbc.Button("Load", id="load-button", style={"width": "100%"}), width=2),
@@ -130,8 +134,11 @@ tab_5 = dbc.Row(
         ),
         dbc.Col(
             [
-                dcc.Markdown("**Grid Actions**", style={"margin": "0 0 4px 0"}),
+                dcc.Markdown("**Plot Options**", style={"margin": "0 0 4px 0"}),
                 dbc.Button("Snap to Grid", id="snap-to-grid", style={"width": "100%"}),
+                dbc.Button("Export SVG", id="btn-get-svg"),
+                dbc.Button("Export JSON", id="btn-get-json"),
+                dcc.Download(id="download-json"),
             ],
             width=4,
             className="d-flex flex-column justify-content-end"
@@ -296,16 +303,10 @@ tab_ui_2d = html.Div(
                 # Center: Operations panel
                 dbc.Col(
                     tab_1,
-                    width=8,
-                ),
-                # Right: Reference & Logs button
-                dbc.Col(
-                    dbc.Button("Advanced", id="open-modal-btn", outline=True, color="secondary", style={"width": "100%"}),
-                    width=2,
-                    className="d-flex align-items-center justify-content-end"
+                    width=10,
                 )
             ],
-            className="align-items-start mb-2"
+            className="align-items-start mb-2 flex-nowrap"
         ),
     ]
 )
@@ -340,32 +341,7 @@ def update_layout(value):
 )
 def update_stylesheet(_, node_labels: str):
 
-    label_style = [
-        {
-            "selector": "node",
-            "style": {
-                "label": node_labels,
-                "color": "#212529",
-                "font-size": "13px",
-                "font-family": "system-ui, -apple-system, sans-serif",
-                "font-weight": "bold",
-                "text-valign": "center",
-                "text-halign": "center",
-                "width": "38px",
-                "height": "38px",
-                "border-width": "2px",
-                "border-color": "#ffffff",
-            }
-        },
-        {
-            "selector": "edge",
-            "style": {
-                "width": 3,
-                "line-color": "rgba(0, 0, 0, 0.22)",
-                "curve-style": "bezier",
-            }
-        }
-    ]
+    label_style = [{"selector": "node", "style": {"label": node_labels}}]
 
     color_palette = {
         "IA": "#93C5FD",
@@ -401,6 +377,8 @@ def update_stylesheet(_, node_labels: str):
                 "selector": f'[vop *= "{label}"]',
                 "style": {
                     "background-color": color,
+                    "border-width": 2,
+                    "border-color": "#000000",
                 },
             }
         )
@@ -409,18 +387,9 @@ def update_stylesheet(_, node_labels: str):
         {
             "selector": "node:selected",
             "style": {
-                "border-width": "4px",
-                "border-color": "#0d6efd",
-                "width": "42px",
-                "height": "42px",
+                "border-width": 3,
+                "border-color": "blue",
             },
-        },
-        {
-            "selector": "edge:selected",
-            "style": {
-                "line-color": "#0d6efd",
-                "width": 5,
-            }
         }
     ]
 

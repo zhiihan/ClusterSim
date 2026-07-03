@@ -34,9 +34,6 @@ move_log = dbc.Card(
                     "overflowY": "scroll",
                 },
             ),
-            html.Button("Export SVG", id="btn-get-svg"),
-            html.Button("Export JSON", id="btn-get-json"),
-            dcc.Download(id="download-json"),
         ]
     )
 )
