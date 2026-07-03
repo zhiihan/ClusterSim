@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, Input, Output
+from dash import Dash, html, dcc, Input, Output, ClientsideFunction
 
 from components.components_2d import tab_ui_2d, figure_2d
 from cluster_sim.app import BrowserState
@@ -49,12 +49,36 @@ app.layout = html.Div(
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),
         dcc.Store(id="draw-plot"),  # This is a dummy variable
+        dcc.Store(id="clipboard-store"),
+        dcc.Store(id="history-store"),
+        html.Button(id="ctrl-c-btn", style={"display": "none"}),
+        html.Button(id="ctrl-v-btn", style={"display": "none"}),
+        html.Button(id="ctrl-z-btn", style={"display": "none"}),
+        html.Button(id="ctrl-y-btn", style={"display": "none"}),
+        html.Button(id="backspace-btn", style={"display": "none"}),
+        html.Button(id="key-n-btn", style={"display": "none"}),
+        html.Button(id="key-e-btn", style={"display": "none"}),
+        html.Button(id="key-shift-e-btn", style={"display": "none"}),
+        html.Button(id="key-h-btn", style={"display": "none"}),
+        html.Button(id="key-w-btn", style={"display": "none"}),
         html.Div(
             id="none",
             children=[],
             style={"display": "none"},
         ),
+        html.Div(
+            id="clientside-dummy",
+            children=[],
+            style={"display": "none"},
+        ),
     ]
+)
+
+app.clientside_callback(
+    ClientsideFunction(namespace="clientside", function_name="keydown_listener"),
+    Output("clientside-dummy", "children"),
+    Input("none", "children"),
+    prevent_initial_call=False,
 )
 
 

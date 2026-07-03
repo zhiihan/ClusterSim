@@ -1,4 +1,4 @@
-from dash import dcc, html, callback, Input, Output
+from dash import dcc, html, callback, Input, Output, State, no_update
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from cluster_sim.simulator import ClusterState
@@ -6,6 +6,7 @@ import dash_cytoscape as cyto
 from components.components_2d import (
     qubit_panel,
     postprocess_cyto_data_elements,
+    preprocess_cyto_data_elements,
     move_log,
     fusion_menu,
 )
@@ -44,6 +45,10 @@ figure_2d = cyto.Cytoscape(
     stylesheet=[{"selector": "node", "style": {"label": "data(vop)"}}],
     elements=_init_state()[0],
     selectedNodeData=[],
+    boxSelectionEnabled=True,
+    wheelSensitivity=0.2,
+    minZoom=0.2,
+    maxZoom=20,
 )
 
 layout_dropdown = dcc.Dropdown(
@@ -105,6 +110,7 @@ tab_3 = dbc.Col(
                         [
                             dbc.Button("Load", id="load-button"),
                             dbc.Button("Undo", id="undo-button"),
+                            dbc.Button("Redo", id="redo-button"),
                         ],
                         gap=3,
                         direction="horizontal",
@@ -137,11 +143,8 @@ tab_5 = dbc.Col(
             """)
                     ),
                     node_labels,
-                    # dbc.Switch(
-                    #     id="reduced-form-switch",
-                    #     label="Reduced Form",
-                    #     value=False,
-                    # ),
+                    html.Br(),
+                    dbc.Button("Snap to Grid", id="snap-to-grid"),
                 ]
             )
         ),
@@ -338,3 +341,21 @@ def update_stylesheet(_, node_labels: str):
     ]
 
     return label_style + color_styles + selected_style
+
+
+@callback(
+    Output("figure-app", "elements", allow_duplicate=True),
+    Input("snap-to-grid", "n_clicks"),
+    State("figure-app", "elements"),
+    prevent_initial_call=True,
+)
+def handle_snap_to_grid(n_clicks, cyto_data):
+    if not n_clicks or not cyto_data:
+        return no_update
+
+    cyto_data_pre, positions = preprocess_cyto_data_elements(cyto_data)
+    snapped_positions = [
+        {"x": round(pos["x"] / 50) * 50, "y": round(pos["y"] / 50) * 50}
+        for pos in positions
+    ]
+    return postprocess_cyto_data_elements(cyto_data, snapped_positions)

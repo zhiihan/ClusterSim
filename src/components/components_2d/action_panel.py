@@ -114,7 +114,7 @@ button_operations = {
     "add-edge": ("add_edge", {}),
     "remove-edge": ("remove_edge", {}),
     "toggle-edge": ("toggle_edge", {}),
-    "add-node": ("add_node", {"vop": "YC"}),
+    "add-node": ("add_node", {"vop": "IA"}),
     "remove-node": ("remove_node", {}),
     "duplicate": ("duplicate", {}),
 }
@@ -125,51 +125,130 @@ button_operations = {
     Output("figure-app", "elements", allow_duplicate=True),
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
+    Output("history-store", "data", allow_duplicate=True),
     *[Input(btn, "n_clicks") for btn in button_operations.keys()],
+    Input("backspace-btn", "n_clicks"),
+    Input("key-n-btn", "n_clicks"),
+    Input("key-e-btn", "n_clicks"),
+    Input("key-shift-e-btn", "n_clicks"),
+    Input("key-h-btn", "n_clicks"),
+    Input("key-w-btn", "n_clicks"),
+    Input("ctrl-v-btn", "n_clicks"),
+    State("clipboard-store", "data"),
+    State("history-store", "data"),
     State("fusion-mode", "value"),
     State("fusion-force-measurement", "value"),
     State("fusion-type", "value"),
     State("force-measurement", "value"),
     State("move-log", "children"),
     State("figure-app", "selectedNodeData"),
+    State("figure-app", "selectedEdgeData"),
     State("figure-app", "elements"),
     prevent_initial_call=True,
 )
 def handle_buttons(*args):
     kwargs = {}
 
-    log = args[-3]
+    log = args[-4]
 
-    # The last two args are selectedNodeData and elements
-    selected_node_data = args[-2]
+    # The last three args are selectedNodeData, selectedEdgeData, and elements
+    selected_node_data = args[-3]
+    selected_edge_data = args[-2]
     cyto_data = args[-1]
+
+    history_data = args[-9]
+    if not history_data or not isinstance(history_data, dict):
+        history_data = {"undo_stack": [], "redo_stack": []}
+    else:
+        history_data = {
+            "undo_stack": list(history_data.get("undo_stack", [])),
+            "redo_stack": list(history_data.get("redo_stack", [])),
+        }
+
+    # Record the current state in history before performing the action
+    _, current_positions = preprocess_cyto_data_elements(cyto_data)
+    history_data["undo_stack"].append({"move_log": log, "positions": current_positions})
+    history_data["redo_stack"] = []
 
     # Determine which button triggered the callback
     triggered_id = callback_context.triggered_id
-    if not triggered_id or triggered_id not in button_operations:
-        raise NotImplementedError
+    if triggered_id == "backspace-btn":
+        triggered_id = "remove-node"
+    elif triggered_id == "key-n-btn":
+        triggered_id = "add-node"
+    elif triggered_id == "key-e-btn":
+        triggered_id = "toggle-edge"
+    elif triggered_id == "key-shift-e-btn":
+        triggered_id = "remove-edge"
+    elif triggered_id == "key-h-btn":
+        triggered_id = "H"
+    elif triggered_id == "key-w-btn":
+        triggered_id = "LC"
 
-    method_name, method_args = button_operations[triggered_id]
-    if method_name == "fusion_gate":
-        method_args["fusion_type"] = args[-5]
-        method_args["force"] = int(args[-6])
-        method_args["mode"] = args[-7]
+    if triggered_id == "ctrl-v-btn":
+        clipboard_data = args[-10]
+        if not clipboard_data:
+            return (
+                "Clipboard is empty!",
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+            )
+        selected_nodes = clipboard_data
+        method_name = "duplicate"
+        method_args = {}
+    else:
+        if not triggered_id or triggered_id not in button_operations:
+            raise NotImplementedError
 
-    elif method_name == "measure":
-        method_args["force"] = int(args[-4])
+        method_name, method_args = button_operations[triggered_id]
+        if method_name == "fusion_gate":
+            method_args["fusion_type"] = args[-6]
+            method_args["force"] = int(args[-7])
+            method_args["mode"] = args[-8]
 
-    selected_nodes = [i["value"] for i in selected_node_data]
+        elif method_name == "measure":
+            method_args["force"] = int(args[-5])
+
+        selected_nodes = [i["value"] for i in selected_node_data]
+
+        # If no nodes selected but an edge is selected, derive nodes from the edge
+        # for edge operations (add/remove/toggle)
+        if not selected_nodes and method_name in [
+            "add_edge",
+            "remove_edge",
+            "toggle_edge",
+        ]:
+            if selected_edge_data:
+                edge_nodes: list[int] = []
+                for edge in selected_edge_data:
+                    src = edge.get("source")
+                    tgt = edge.get("target")
+                    if src is not None:
+                        edge_nodes.append(int(src))
+                    if tgt is not None:
+                        edge_nodes.append(int(tgt))
+                selected_nodes = list(
+                    dict.fromkeys(edge_nodes)
+                )  # deduplicate, preserve order
 
     if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update
 
     return apply_operation_wrapper(
-        method_name, selected_nodes, cyto_data, log, method_args, **kwargs
+        method_name, selected_nodes, cyto_data, log, method_args, history_data, **kwargs
     )
 
 
 def apply_operation_wrapper(
-    method_name: str, selected_nodes: list[int], cyto_data, log, method_args, **kwargs
+    method_name: str,
+    selected_nodes: list[int],
+    cyto_data,
+    log,
+    method_args,
+    history_data,
+    **kwargs,
 ):
     """Take the buttons for all the call backs and apply the corresponding method in the simulator.
 
@@ -225,8 +304,15 @@ def apply_operation_wrapper(
 
     elif method_name in ["add_node"]:
         getattr(g, method_name)(**method_args)
+        new_node_id = len(g) - 1
         positions += [{"x": random.randint(0, 100), "y": random.randint(0, 100)}]
-        ui = f"Added node {len(g) - 1}!"
+        # Connect the new node to every selected node
+        for neighbour in selected_nodes:
+            g.add_edge(new_node_id, neighbour)
+        if selected_nodes:
+            ui = f"Added node {new_node_id} with edges to {selected_nodes}!"
+        else:
+            ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
         if len(selected_nodes) >= len(g):
             return "Cannot remove last node!", no_update, no_update, no_update
@@ -245,8 +331,20 @@ def apply_operation_wrapper(
 
         log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
 
-        return ui, cyto_data_new, repr(g), log
+        return ui, cyto_data_new, repr(g), log, history_data
     elif method_name == "duplicate":
+        selected_nodes.sort()
+        for parent_id in selected_nodes:
+            parent_pos = next(
+                (
+                    item["position"]
+                    for item in cyto_data["elements"]["nodes"]
+                    if item.get("data") and item["data"].get("value") == parent_id
+                ),
+                {"x": 0, "y": 0},
+            )
+            positions.append({"x": parent_pos["x"] + 50, "y": parent_pos["y"] + 50})
+
         g = getattr(g, method_name)(selected_nodes, **method_args)
         ui = f"Duplicated nodes {selected_nodes}"
     else:
@@ -268,11 +366,14 @@ def apply_operation_wrapper(
     elif method_name == "local_complementation_rewrite":
         log += f"LCR {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":
-        log += f"ADD_NODE {len(g) - 1}\n"
+        new_node_id = len(g) - 1
+        log += f"ADD_NODE {new_node_id}\n"
+        for neighbour in selected_nodes:
+            log += f"ADD_EDGE {new_node_id} {neighbour}\n"
     else:
         log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 
-    return ui, cyto_data_new, repr(g), log
+    return ui, cyto_data_new, repr(g), log, history_data
 
 
 def preprocess_cyto_data_elements(
@@ -314,42 +415,82 @@ def postprocess_cyto_data_elements(
     Output("simulator-representation", "children", allow_duplicate=True),
     Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
+    Output("history-store", "data", allow_duplicate=True),
     Input("undo-button", "n_clicks"),
+    Input("ctrl-z-btn", "n_clicks"),
+    Input("redo-button", "n_clicks"),
+    Input("ctrl-y-btn", "n_clicks"),
     Input("load-button", "n_clicks"),
     State("load-graph-input", "value"),
     State("move-log", "children"),
     State("figure-app", "elements"),
+    State("history-store", "data"),
     prevent_initial_call=True,
 )
-def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyto_data):
-    """Load or undo from either the move log or a saved text.
-
-    Args:
-        _undo (int): whether the undo button was clicked
-        _load (int): whether the load button was clicked
-        load_graph_input (str): the load graph input
-        move_log (str): the move log
-    """
+def load_graph(
+    _undo,
+    _ctrl_z,
+    _redo,
+    _ctrl_y,
+    _load,
+    load_graph_input,
+    move_log,
+    cyto_data,
+    history_data,
+):
+    """Load, undo, or redo from move log or saved text."""
 
     triggered_id = callback_context.triggered_id
+    if triggered_id == "ctrl-z-btn":
+        triggered_id = "undo-button"
+    elif triggered_id == "ctrl-y-btn":
+        triggered_id = "redo-button"
+
+    if not history_data or not isinstance(history_data, dict):
+        history_data = {"undo_stack": [], "redo_stack": []}
+    else:
+        history_data = {
+            "undo_stack": list(history_data.get("undo_stack", [])),
+            "redo_stack": list(history_data.get("redo_stack", [])),
+        }
+
     _, positions = preprocess_cyto_data_elements(cyto_data)
 
     if not load_graph_input and triggered_id == "load-button":
-        return no_update, no_update, no_update, "Cannot load empty input!"
-
-    if not move_log and triggered_id == "undo-button":
-        return no_update, no_update, no_update, "Empty graph!"
+        return no_update, no_update, no_update, "Cannot load empty input!", no_update
 
     if triggered_id == "undo-button":
-        move_log_list = [move for move in move_log.split("\n") if move]
+        if not history_data["undo_stack"]:
+            return no_update, no_update, no_update, "Nothing to undo!", no_update
 
-        if not move_log_list[:-1]:
-            return no_update, no_update, no_update, "Cannot undo, empty graph!"
+        # Pop the state to restore
+        prev_state = history_data["undo_stack"].pop()
 
-        while move_log_list[-1].startswith("#"):
-            move_log_list = move_log_list[:-1]
+        # Save the current state to the redo stack
+        _, current_positions = preprocess_cyto_data_elements(cyto_data)
+        history_data["redo_stack"].append(
+            {"move_log": move_log, "positions": current_positions}
+        )
 
-        move_log = "\n".join(move_log_list[:-1])
+        move_log = prev_state["move_log"]
+        positions = prev_state["positions"]
+        g, parsed_log = ClusterState.from_string(move_log, return_log=True)
+
+    elif triggered_id == "redo-button":
+        if not history_data["redo_stack"]:
+            return no_update, no_update, no_update, "Nothing to redo!", no_update
+
+        # Pop the state to restore
+        next_state = history_data["redo_stack"].pop()
+
+        # Save the current state to the undo stack
+        _, current_positions = preprocess_cyto_data_elements(cyto_data)
+        history_data["undo_stack"].append(
+            {"move_log": move_log, "positions": current_positions}
+        )
+
+        move_log = next_state["move_log"]
+        positions = next_state["positions"]
         g, parsed_log = ClusterState.from_string(move_log, return_log=True)
 
     elif triggered_id == "load-button":
@@ -357,13 +498,17 @@ def load_graph(_undo: int, _load: int, load_graph_input: str, move_log: str, cyt
         if len(positions) < len(g):
             for i in range(len(g) - len(positions)):
                 positions += [
-                    {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+                    {"x": random.randint(0, 300), "y": random.randint(0, 300)}
                 ]
+        positions = positions[: len(g)]
+        move_log = parsed_log
+        # Clear history on new graph load
+        history_data = {"undo_stack": [], "redo_stack": []}
 
     cyto_data_new = g.to_cytoscape(export_elements=True)
     cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
 
-    return cyto_data_new, repr(g), parsed_log, "Loaded graph!"
+    return cyto_data_new, repr(g), move_log, "Action completed!", history_data
 
 
 @callback(
@@ -378,3 +523,15 @@ def export_graph_to_json(n_clicks, cyto_data):
     cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
     g = ClusterState.from_cytoscape(cyto_data)
     return dcc.send_string(g.to_json(), "cytoscape_graph.json")
+
+
+@callback(
+    Output("clipboard-store", "data"),
+    Input("ctrl-c-btn", "n_clicks"),
+    State("figure-app", "selectedNodeData"),
+    prevent_initial_call=True,
+)
+def copy_nodes(n_clicks, selected_node_data):
+    if not selected_node_data:
+        return []
+    return [node["value"] for node in selected_node_data]
