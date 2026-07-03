@@ -358,6 +358,10 @@ class ClusterState:
                         "ADD_EDGE",
                         "REMOVE_EDGE",
                         "TOGGLE_EDGE",
+                        "MX",
+                        "MZ",
+                        "MY",
+                        "FUSION_GATE",
                     }
                     and qubits
                 ):
