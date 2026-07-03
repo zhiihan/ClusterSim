@@ -113,4 +113,23 @@ def test_apply_operation_wrapper_add_node_offset():
     assert new_node_pos2 == {"x": 70, "y": 80}
 
 
+def test_action_panel_tooltips():
+    from components.components_2d.action_panel import qubit_panel
+    import dash_bootstrap_components as dbc
+
+    tooltips = [
+        child for child in qubit_panel.children
+        if isinstance(child, dbc.Tooltip)
+    ]
+
+    expected_targets = {
+        "undo-button", "redo-button", "duplicate", "remove-node",
+        "add-node", "toggle-edge", "remove-edge", "H", "LC"
+    }
+
+    actual_targets = {tooltip.target for tooltip in tooltips}
+    assert expected_targets == actual_targets
+
+
+
 

@@ -198,6 +198,15 @@ qubit_panel = dbc.Row(
             ],
             width=1
         ),
+        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
+        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
+        dbc.Tooltip("Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"),
+        dbc.Tooltip("Delete Node (Backspace)", target="remove-node", placement="top"),
+        dbc.Tooltip("Add Node (N)", target="add-node", placement="top"),
+        dbc.Tooltip("Toggle Edge (E)", target="toggle-edge", placement="top"),
+        dbc.Tooltip("Delete Edge (Shift+E)", target="remove-edge", placement="top"),
+        dbc.Tooltip("Hadamard Gate (H)", target="H", placement="top"),
+        dbc.Tooltip("Local Complementation (W)", target="LC", placement="top"),
     ],
     className="flex-nowrap"
 )
