@@ -1,8 +1,8 @@
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State
 import random
-from cluster_sim.app import layouts, BrowserState
+from clustersim.app import layouts, BrowserState
 import dash_bootstrap_components as dbc
 import logging
 

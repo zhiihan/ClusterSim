@@ -1,4 +1,4 @@
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update, callback_context, html
 import dash_bootstrap_components as dbc
 from typing import Any

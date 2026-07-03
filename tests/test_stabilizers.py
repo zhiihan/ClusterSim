@@ -1,5 +1,5 @@
 import stim
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 from hypothesis import given, strategies as st, assume
 import pytest
 

@@ -245,7 +245,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cluster-sim"
+name = "clustersim"
 version = "0.1.1"
 source = { editable = "." }
 dependencies = [
@@ -289,7 +289,7 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cluster-sim" },
+    { name = "clustersim" },
     { name = "dash" },
     { name = "dash-bootstrap-components" },
     { name = "dash-cytoscape", specifier = ">=1.0.2" },

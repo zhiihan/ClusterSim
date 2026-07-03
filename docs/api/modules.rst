@@ -1,7 +1,7 @@
-cluster_sim
+clustersim
 ===========
 
 .. toctree::
    :maxdepth: 4
 
-   cluster_sim
+   clustersim

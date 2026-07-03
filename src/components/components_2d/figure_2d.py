@@ -1,7 +1,7 @@
 from dash import dcc, html, callback, Input, Output, State, no_update
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 import dash_cytoscape as cyto
 from components.components_2d import (
     qubit_panel,

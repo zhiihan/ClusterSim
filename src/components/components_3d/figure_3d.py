@@ -1,6 +1,6 @@
-from cluster_sim.app.layout import update_plot_from_simulator
-from cluster_sim.app import BrowserState, update_plot_plotly, grid_graph_3d
-from cluster_sim.simulator import ClusterState
+from clustersim.app.layout import update_plot_from_simulator
+from clustersim.app import BrowserState, update_plot_plotly, grid_graph_3d
+from clustersim.simulator import ClusterState
 from dash import dcc, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 from dash import html

@@ -1,7 +1,7 @@
 cluster\_sim.app package
 ========================
 
-.. automodule:: cluster_sim.app
+.. automodule:: clustersim.app
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Submodules
 cluster\_sim.app.layout module
 ------------------------------
 
-.. automodule:: cluster_sim.app.layout
+.. automodule:: clustersim.app.layout
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ cluster\_sim.app.layout module
 cluster\_sim.app.state module
 -----------------------------
 
-.. automodule:: cluster_sim.app.state
+.. automodule:: clustersim.app.state
    :members:
    :show-inheritance:
    :undoc-members:
@@ -28,7 +28,7 @@ cluster\_sim.app.state module
 cluster\_sim.app.utils module
 -----------------------------
 
-.. automodule:: cluster_sim.app.utils
+.. automodule:: clustersim.app.utils
    :members:
    :show-inheritance:
    :undoc-members:

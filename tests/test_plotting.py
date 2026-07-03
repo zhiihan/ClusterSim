@@ -1,7 +1,7 @@
 import numpy as np
-from cluster_sim.app import Grid3D, BrowserState, rx_graph_to_plot
+from clustersim.app import Grid3D, BrowserState, rx_graph_to_plot
 import rustworkx as rx
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 
 
 def test_plotting():

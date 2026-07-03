@@ -1,8 +1,8 @@
 from dash import Dash, html, dcc, Input, Output, ClientsideFunction
 
 from components.components_2d import tab_ui_2d, figure_2d
-from cluster_sim.app import BrowserState
-from cluster_sim.simulator import ClusterState
+from clustersim.app import BrowserState
+from clustersim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle

@@ -1,7 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Input, Output, State, no_update
-from cluster_sim.app import BrowserState, grid_graph_3d, layouts
-from cluster_sim.simulator import ClusterState
+from clustersim.app import BrowserState, grid_graph_3d, layouts
+from clustersim.simulator import ClusterState
 import re
 
 import dash_bootstrap_components as dbc

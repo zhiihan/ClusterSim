@@ -1,9 +1,9 @@
-from cluster_sim.app import BrowserState, grid_graph_3d, layouts
+from clustersim.app import BrowserState, grid_graph_3d, layouts
 from dash import html, Input, Output, State, no_update, Dash, dcc
 import time
 from dash_resizable_panels import PanelGroup, Panel, PanelResizeHandle
 from components.components_3d import figure_3d, tab_ui_3d
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 
 import dash_bootstrap_components as dbc
 import logging

@@ -1,7 +1,7 @@
 import rustworkx as rx
 import numpy as np
-from cluster_sim.app import BrowserState
-from cluster_sim.simulator import ClusterState
+from clustersim.app import BrowserState
+from clustersim.simulator import ClusterState
 import plotly.graph_objects as go
 
 

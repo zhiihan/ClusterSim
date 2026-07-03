@@ -1,6 +1,6 @@
 from dash import callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
-from cluster_sim.app import BrowserState
+from clustersim.app import BrowserState
 
 plotoptions = dbc.Card(
     dbc.CardBody(

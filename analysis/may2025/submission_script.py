@@ -9,7 +9,7 @@ from analysis_funcs import (
 
 
 import networkx as nx
-from cluster_sim.simulator import ClusterState
+from clustersim.simulator import ClusterState
 import pandas as pd
 import sys
 

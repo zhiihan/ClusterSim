@@ -1,5 +1,5 @@
 import rustworkx as rx
-from cluster_sim.app import (
+from clustersim.app import (
     rx_graph_to_plot,
     Grid3D,
     BrowserState,

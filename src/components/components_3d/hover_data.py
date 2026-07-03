@@ -1,6 +1,6 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback, Output, Input, State, no_update
-from cluster_sim.app import BrowserState
+from clustersim.app import BrowserState
 import dash_bootstrap_components as dbc
 import jsons
 

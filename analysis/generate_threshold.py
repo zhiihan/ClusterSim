@@ -1,5 +1,5 @@
 import rustworkx as rx
-from cluster_sim.app import Grid3D, BrowserState
+from clustersim.app import Grid3D, BrowserState
 from algorithms import find_lattice, build_centers_graph
 import random
 import numpy as np

@@ -3,9 +3,9 @@ from __future__ import annotations
 import importlib.metadata
 from typing import Any
 
-project = "cluster_sim"
+project = "clustersim"
 author = "Zhihua Han"
-version = release = importlib.metadata.version("cluster_sim")
+version = release = importlib.metadata.version("clustersim")
 
 extensions = [
     "myst_parser",

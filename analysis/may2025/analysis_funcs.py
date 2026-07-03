@@ -1,8 +1,8 @@
 import random
 import numpy as np
 import networkx as nx
-from cluster_sim.app import get_node_index, get_node_coords, taxicab_metric
-from cluster_sim.simulator import NetworkXState
+from clustersim.app import get_node_index, get_node_coords, taxicab_metric
+from clustersim.simulator import NetworkXState
 import itertools
 import logging
 
