@@ -1,6 +1,6 @@
 from dash import Dash, html, dcc, Input, Output, ClientsideFunction
 
-from components.components_2d import tab_ui_2d, figure_2d
+from components.components_2d import tab_ui_2d, figure_2d, cytoscape_offcanvas
 from clustersim.app import BrowserState
 from clustersim.simulator import ClusterState
 
@@ -27,6 +27,7 @@ app.layout = html.Div(
             ],
             className="app-container",
         ),
+        cytoscape_offcanvas,
         dcc.Store(id="browser-data"),
         dcc.Store(id="graph-data"),
         dcc.Store(id="draw-plot"),  # This is a dummy variable

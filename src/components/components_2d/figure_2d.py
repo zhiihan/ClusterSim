@@ -122,6 +122,7 @@ tab_5 = dbc.Row(
         dbc.Col(
             [
                 dcc.Markdown("**Plot Options**", style={"margin": "0 0 4px 0"}),
+                dbc.Button("Customize Plot", id="open-offcanvas-btn-tab5", color="secondary", outline=True, style={"width": "100%", "marginBottom": "4px"}),
                 dbc.Button("Snap to Grid", id="snap-to-grid", style={"width": "100%"}),
                 dbc.Button("Export SVG", id="btn-get-svg"),
                 dbc.Button("Export JSON", id="btn-get-json"),
@@ -448,7 +449,47 @@ def update_stylesheet(_, node_labels: str):
         }
     ]
 
-    return label_style + color_styles + selected_style
+    custom_styles = [
+        {
+            "selector": "node",
+            "style": {
+                "shape": "data(shape)",
+            },
+        },
+        {
+            "selector": "edge",
+            "style": {
+                "label": "data(label)",
+                "text-rotation": "autorotate",
+                "text-margin-y": -10,
+                "font-size": "10px",
+                "color": "#475569",
+            },
+        },
+        {
+            "selector": "node:parent",
+            "style": {
+                "background-opacity": 0.333,
+                "background-color": "#cbd5e1",
+                "border-color": "#94a3b8",
+                "border-width": 2,
+                "label": "data(label)",
+                "font-size": "14px",
+                "font-weight": "bold",
+                "text-valign": "top",
+                "text-halign": "center",
+                "text-margin-y": -6,
+            },
+        },
+        {
+            "selector": "node:childless[!vop]",
+            "style": {
+                "display": "none",
+            },
+        },
+    ]
+
+    return label_style + color_styles + selected_style + custom_styles
 
 
 @callback(

@@ -1,5 +1,5 @@
 import itertools
-from clustersim.simulator import ClusterState
+from clustersim.simulator import ClusterState, FrontendClusterState
 from textwrap import dedent as d
 from dash import dcc, callback, Input, Output, State, no_update, callback_context, html
 import dash_bootstrap_components as dbc
@@ -309,12 +309,19 @@ qubit_panel = dbc.Row(
             ],
             width=3,
         ),
-        # Column 5: Advanced Options (Gear icon)
+        # Column 5: Advanced Options (Gear and Hamburger icon)
         dbc.Col(
             [
-                html.Div(style={"height": "20px"}),
                 html.Div(
                     [
+                        dbc.Button(
+                            "☰",
+                            id="open-offcanvas-btn",
+                            outline=True,
+                            color="secondary",
+                            style={"fontSize": "1.2rem", "padding": "2px 8px", "marginBottom": "4px"},
+                            title="Plot Customization Options",
+                        ),
                         dbc.Button(
                             "⚙",
                             id="open-modal-btn",
@@ -324,7 +331,7 @@ qubit_panel = dbc.Row(
                             title="Advanced Options",
                         ),
                     ],
-                    className="w-100 d-flex justify-content-center mt-1",
+                    className="w-100 d-flex flex-column align-items-center mt-1",
                 ),
             ],
             width=1,
@@ -427,9 +434,8 @@ def handle_buttons(*args):
             "redo_stack": list(history_data.get("redo_stack", [])),
         }
 
-    # Record the current state in history before performing the action
-    _, current_positions = preprocess_cyto_data_elements(cyto_data)
-    history_data["undo_stack"].append({"move_log": log, "positions": current_positions})
+    # Record the current elements state in history for Undo/Redo
+    history_data["undo_stack"].append({"move_log": log, "elements": cyto_data})
     history_data["redo_stack"] = []
 
     # Determine which button triggered the callback
@@ -473,7 +479,12 @@ def handle_buttons(*args):
         elif method_name == "measure":
             method_args["force"] = int(args[-5])
 
-        selected_nodes = [i["value"] for i in selected_node_data]
+        selected_nodes = []
+        for i in selected_node_data:
+            if i.get("id") is not None and str(i["id"]).isdigit():
+                selected_nodes.append(str(i["id"]))
+            elif i.get("value") is not None:
+                selected_nodes.append(i["value"])
 
         # If no nodes selected but an edge is selected, derive nodes from the edge
         # for edge operations (add/remove/toggle)
@@ -512,7 +523,7 @@ def apply_operation_wrapper(
     history_data,
     **kwargs,
 ):
-    """Take the buttons for all the call backs and apply the corresponding method in the simulator.
+    """Take the buttons for all the callbacks and apply the corresponding method in FrontendClusterState.
 
     Args:
         operation_name (str): ClusterState.method_name
@@ -522,13 +533,11 @@ def apply_operation_wrapper(
     Returns:
         _type_: processed cyto_data for use in figure-app.elements
     """
-
-    cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
-    g = ClusterState.from_cytoscape(cyto_data)
+    state = FrontendClusterState.from_cytoscape_elements(cyto_data)
 
     if method_name in ["add_edge", "remove_edge", "toggle_edge"]:
         for pair in itertools.combinations(selected_nodes, 2):
-            getattr(g, method_name)(*pair, **method_args)
+            getattr(state, method_name)(*pair, **method_args)
         ui = f"Applied {method_name} to {selected_nodes}"
     elif method_name in ["CX", "CZ"]:
         for pair in itertools.batched(selected_nodes, n=2):
@@ -540,7 +549,7 @@ def apply_operation_wrapper(
                     no_update,
                     no_update,
                 )
-            getattr(g, method_name)(*pair, **method_args)
+            getattr(state, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
     elif method_name in [
@@ -554,13 +563,13 @@ def apply_operation_wrapper(
         "S_DAG",
     ]:
         for i in selected_nodes:
-            getattr(g, method_name)(i, **method_args)
+            getattr(state, method_name)(i, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
     elif method_name in ["measure"]:
         outcomes = []
         for i in selected_nodes:
-            outcomes.append(getattr(g, method_name)(i, **method_args))
+            outcomes.append(getattr(state, method_name)(i, **method_args))
 
         ui = f"Measured selected nodes {selected_nodes} with outcomes {outcomes}"
     elif method_name in ["fusion_gate"]:
@@ -573,80 +582,53 @@ def apply_operation_wrapper(
                     no_update,
                     no_update,
                 )
-            getattr(g, method_name)(*pair, **method_args)
+            getattr(state, method_name)(*pair, **method_args)
 
         ui = f"Applied {method_name} to {selected_nodes}"
 
     elif method_name in ["add_node"]:
-        getattr(g, method_name)(**method_args)
-        new_node_id = len(g) - 1
-
         selected_positions = []
         if selected_nodes:
-            for parent_id in selected_nodes:
-                parent_pos = next(
-                    (
-                        item["position"]
-                        for item in cyto_data["elements"]["nodes"]
-                        if item.get("data") and item["data"].get("value") == parent_id
-                    ),
-                    None,
-                )
-                if parent_pos:
-                    selected_positions.append(parent_pos)
+            for q in selected_nodes:
+                if q < len(state):
+                    selected_positions.append(state.get_position(q))
 
         if selected_positions:
             avg_x = sum(p["x"] for p in selected_positions) / len(selected_positions)
             avg_y = sum(p["y"] for p in selected_positions) / len(selected_positions)
             new_pos = {"x": avg_x + 50, "y": avg_y + 50}
         else:
-            new_pos = {"x": random.randint(0, 100), "y": random.randint(0, 100)}
+            new_pos = {"x": float(random.randint(0, 100)), "y": float(random.randint(0, 100))}
 
-        positions.append(new_pos)
+        new_node_id = state.add_node(position=new_pos, **method_args)
 
         # Connect the new node to every selected node
         for neighbour in selected_nodes:
-            g.add_edge(new_node_id, neighbour)
+            if neighbour < new_node_id:
+                state.add_edge(new_node_id, neighbour)
         if selected_nodes:
             ui = f"Added node {new_node_id} with edges to {selected_nodes}!"
         else:
             ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
-        getattr(g, method_name)(selected_nodes, **method_args)
+        state.remove_node(selected_nodes)
         ui = f"Removed nodes {selected_nodes}"
-
-        # When a node is removed, the positions need to be updated to adjust
-        new_positions = []
-        for cyto_index, pos in enumerate(positions):
-            if cyto_index not in selected_nodes:
-                new_positions.append(pos)
-
-        cyto_data_new = g.to_cytoscape(export_elements=True)
-        cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, new_positions)
-
         log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
-
-        return ui, cyto_data_new, repr(g), log, history_data
+        cyto_data_new = state.to_cytoscape_elements()
+        return ui, cyto_data_new, repr(state.cluster_state), log, history_data
     elif method_name == "duplicate":
         selected_nodes.sort()
-        for parent_id in selected_nodes:
-            parent_pos = next(
-                (
-                    item["position"]
-                    for item in cyto_data["elements"]["nodes"]
-                    if item.get("data") and item["data"].get("value") == parent_id
-                ),
-                {"x": 0, "y": 0},
-            )
-            positions.append({"x": parent_pos["x"] + 50, "y": parent_pos["y"] + 50})
+        for q in selected_nodes:
+            if q < len(state):
+                pos = state.get_position(q)
+                state.add_node(position={"x": pos["x"] + 50, "y": pos["y"] + 50})
 
-        g = getattr(g, method_name)(selected_nodes, **method_args)
+        state.cluster_state = state.cluster_state.duplicate(selected_nodes)
         ui = f"Duplicated nodes {selected_nodes}"
     else:
         raise NotImplementedError(f"Do not know {method_name}")
 
-    cyto_data_new = g.to_cytoscape(export_elements=True)
-    cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
+    cyto_data_new = state.to_cytoscape_elements()
 
     if method_name == "measure":
         log += f"M{method_args['basis']}"
@@ -661,14 +643,14 @@ def apply_operation_wrapper(
     elif method_name == "local_complementation_rewrite":
         log += f"LCR {' '.join(map(str, selected_nodes))}\n"
     elif method_name == "add_node":
-        new_node_id = len(g) - 1
+        new_node_id = len(state) - 1
         log += f"ADD_NODE {new_node_id}\n"
         for neighbour in selected_nodes:
             log += f"ADD_EDGE {new_node_id} {neighbour}\n"
     else:
         log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 
-    return ui, cyto_data_new, repr(g), log, history_data
+    return ui, cyto_data_new, repr(state.cluster_state), log, history_data
 
 
 def preprocess_cyto_data_elements(
@@ -680,12 +662,15 @@ def preprocess_cyto_data_elements(
     for item in cyto_data:
         if item.get("data"):
             if item["data"].get("vop"):
-                nodes.append(item)  # This is a node
-                positions.append(item["position"])
+                nodes.append(item)  # This is a quantum qubit node
+                positions.append(item.get("position", {"x": 0.0, "y": 0.0}))
             elif item["data"].get("source"):
                 edges.append(item)  # This is an edge
+            else:
+                # Compound group container node (no vop, no source)
+                pass
         else:
-            raise NotImplementedError("Unknown or no data")
+            pass
     return {
         "data": [],
         "multigraph": False,
@@ -700,8 +685,6 @@ def postprocess_cyto_data_elements(
         if item.get("data"):
             if item["data"].get("vop"):
                 item["position"] = pos
-        else:
-            raise NotImplementedError("Unknown or no data")
     return cyto_data
 
 
@@ -783,18 +766,40 @@ def load_graph(
                 "",
             )
 
+    if triggered_id == "undo-button":
+        if not history_data["undo_stack"]:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                "Nothing to undo!",
+                no_update,
+                False,
+                False,
+                "",
+            )
+
         # Pop the state to restore
         prev_state = history_data["undo_stack"].pop()
 
         # Save the current state to the redo stack
-        _, current_positions = preprocess_cyto_data_elements(cyto_data)
         history_data["redo_stack"].append(
-            {"move_log": move_log, "positions": current_positions}
+            {"move_log": move_log, "elements": cyto_data}
         )
 
         move_log = prev_state["move_log"]
-        positions = prev_state["positions"]
-        g, parsed_log = ClusterState.from_string(move_log, return_log=True)
+        cyto_data_new = prev_state["elements"]
+        state = FrontendClusterState.from_cytoscape_elements(cyto_data_new)
+        return (
+            cyto_data_new,
+            repr(state.cluster_state),
+            move_log,
+            "Action completed!",
+            history_data,
+            valid,
+            invalid,
+            feedback,
+        )
 
     elif triggered_id == "redo-button":
         if not history_data["redo_stack"]:
@@ -813,14 +818,23 @@ def load_graph(
         next_state = history_data["redo_stack"].pop()
 
         # Save the current state to the undo stack
-        _, current_positions = preprocess_cyto_data_elements(cyto_data)
         history_data["undo_stack"].append(
-            {"move_log": move_log, "positions": current_positions}
+            {"move_log": move_log, "elements": cyto_data}
         )
 
         move_log = next_state["move_log"]
-        positions = next_state["positions"]
-        g, parsed_log = ClusterState.from_string(move_log, return_log=True)
+        cyto_data_new = next_state["elements"]
+        state = FrontendClusterState.from_cytoscape_elements(cyto_data_new)
+        return (
+            cyto_data_new,
+            repr(state.cluster_state),
+            move_log,
+            "Action completed!",
+            history_data,
+            valid,
+            invalid,
+            feedback,
+        )
 
     elif triggered_id == "load-button":
         try:
@@ -840,23 +854,26 @@ def load_graph(
                 err_msg,
             )
 
-        if len(positions) < len(g):
-            for i in range(len(g) - len(positions)):
-                positions += [
-                    {"x": random.randint(0, 300), "y": random.randint(0, 300)}
-                ]
-        positions = positions[: len(g)]
+        state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
         move_log = parsed_log
-        # Clear history on new graph load
         history_data = {"undo_stack": [], "redo_stack": []}
+        cyto_data_new = state.to_cytoscape_elements()
 
-    cyto_data_new = g.to_cytoscape(export_elements=True)
-    cyto_data_new = postprocess_cyto_data_elements(cyto_data_new, positions)
+        return (
+            cyto_data_new,
+            repr(g),
+            move_log,
+            "Action completed!",
+            history_data,
+            valid,
+            invalid,
+            feedback,
+        )
 
     return (
-        cyto_data_new,
-        repr(g),
-        move_log,
+        no_update,
+        no_update,
+        no_update,
         "Action completed!",
         history_data,
         valid,
@@ -872,11 +889,10 @@ def load_graph(
     prevent_initial_call=True,
 )
 def export_graph_to_json(n_clicks, cyto_data):
-    if not n_clicks:
+    if not n_clicks or not cyto_data:
         return no_update
-    cyto_data, positions = preprocess_cyto_data_elements(cyto_data)
-    g = ClusterState.from_cytoscape(cyto_data)
-    return dcc.send_string(g.to_json(), "cytoscape_graph.json")
+    state = FrontendClusterState.from_cytoscape_elements(cyto_data)
+    return dcc.send_string(state.to_json(), "cytoscape_graph.json")
 
 
 @callback(
