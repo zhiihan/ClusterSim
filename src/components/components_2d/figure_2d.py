@@ -54,8 +54,8 @@ node_labels = dbc.Select(
         {"label": "Label", "value": "data(label)"},
         {"label": "VOP", "value": "data(vop)"},
     ],
-    placeholder="ID",
-    value="data(id)",
+    placeholder="Label",
+    value="data(label)",
 )
 
 
