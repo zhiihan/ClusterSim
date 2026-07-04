@@ -1,7 +1,6 @@
 from textwrap import dedent as d
-from dash import dcc, html, Input, Output, callback, no_update, State
+from dash import dcc, html, Input, Output, callback, no_update
 import dash_bootstrap_components as dbc
-import json
 
 move_log = dbc.Card(
     dbc.CardBody(
@@ -44,7 +43,7 @@ move_log = dbc.Card(
     Input("btn-get-svg", "n_clicks"),
     prevent_initial_call=True,
 )
-def export_svg(n_clicks, ftype="svg"):
+def export_svg(n_clicks):
     if n_clicks > 0:
         return {"type": "svg", "action": "download", "filename": "cytoscape"}
     return no_update

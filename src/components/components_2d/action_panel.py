@@ -456,6 +456,26 @@ button_operations = {
 }
 
 
+
+def _normalize_history(history_data: Any) -> dict[str, list[Any]]:
+    if not history_data or not isinstance(history_data, dict):
+        return {"undo_stack": [], "redo_stack": []}
+    return {
+        "undo_stack": list(history_data.get("undo_stack", [])),
+        "redo_stack": list(history_data.get("redo_stack", [])),
+    }
+
+
+KEY_MAPPINGS = {
+    "backspace-btn": "remove-node",
+    "key-n-btn": "add-node",
+    "key-e-btn": "toggle-edge",
+    "key-shift-e-btn": "remove-edge",
+    "key-h-btn": "H",
+    "key-w-btn": "LC",
+}
+
+
 @callback(
     Output("ui", "children"),
     Output("figure-app", "elements", allow_duplicate=True),
@@ -493,14 +513,7 @@ def handle_buttons(*args):
 
     state = FrontendClusterState.from_cytoscape_elements(cyto_data)
 
-    history_data = args[-8]
-    if not history_data or not isinstance(history_data, dict):
-        history_data = {"undo_stack": [], "redo_stack": []}
-    else:
-        history_data = {
-            "undo_stack": list(history_data.get("undo_stack", [])),
-            "redo_stack": list(history_data.get("redo_stack", [])),
-        }
+    history_data = _normalize_history(args[-8])
 
     # Record the current elements state in history for Undo/Redo
     history_data["undo_stack"].append(
@@ -510,18 +523,7 @@ def handle_buttons(*args):
 
     # Determine which button triggered the callback
     triggered_id = callback_context.triggered_id
-    if triggered_id == "backspace-btn":
-        triggered_id = "remove-node"
-    elif triggered_id == "key-n-btn":
-        triggered_id = "add-node"
-    elif triggered_id == "key-e-btn":
-        triggered_id = "toggle-edge"
-    elif triggered_id == "key-shift-e-btn":
-        triggered_id = "remove-edge"
-    elif triggered_id == "key-h-btn":
-        triggered_id = "H"
-    elif triggered_id == "key-w-btn":
-        triggered_id = "LC"
+    triggered_id = KEY_MAPPINGS.get(triggered_id, triggered_id)
 
     if triggered_id == "ctrl-v-btn":
         clipboard_data = args[-9]
@@ -749,17 +751,12 @@ def preprocess_cyto_data_elements(
     edges = []
     positions = []
     for item in cyto_data:
-        if item.get("data"):
-            if item["data"].get("vop"):
-                nodes.append(item)  # This is a quantum qubit node
-                positions.append(item.get("position", {"x": 0.0, "y": 0.0}))
-            elif item["data"].get("source"):
-                edges.append(item)  # This is an edge
-            else:
-                # Compound group container node (no vop, no source)
-                pass
-        else:
-            pass
+        data = item.get("data", {})
+        if data.get("vop"):
+            nodes.append(item)
+            positions.append(item.get("position", {"x": 0.0, "y": 0.0}))
+        elif data.get("source"):
+            edges.append(item)
     return {
         "data": [],
         "multigraph": False,
@@ -816,13 +813,7 @@ def load_graph(
     elif triggered_id == "ctrl-y-btn":
         triggered_id = "redo-button"
 
-    if not history_data or not isinstance(history_data, dict):
-        history_data = {"undo_stack": [], "redo_stack": []}
-    else:
-        history_data = {
-            "undo_stack": list(history_data.get("undo_stack", [])),
-            "redo_stack": list(history_data.get("redo_stack", [])),
-        }
+    history_data = _normalize_history(history_data)
 
     _, positions = preprocess_cyto_data_elements(cyto_data)
 

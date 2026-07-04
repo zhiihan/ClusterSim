@@ -18,7 +18,6 @@ import logging
 cyto.load_extra_layouts()
 
 
-# Initialize the figure of the user's browsing section
 def _init_state():
     G = ClusterState(0)
     cyto_data = G.to_cytoscape(export_elements=True)
@@ -27,12 +26,15 @@ def _init_state():
     return cyto_data, repr(G)
 
 
+INIT_CYTO_ELEMENTS, INIT_SIM_REP = _init_state()
+
+
 figure_2d = cyto.Cytoscape(
     id="figure-app",
     layout={"name": "preset"},
     style={"width": "100%", "height": "100%"},
     stylesheet=[{"selector": "node", "style": {"label": "data(vop)"}}],
-    elements=_init_state()[0],
+    elements=INIT_CYTO_ELEMENTS,
     selectedNodeData=[],
     boxSelectionEnabled=True,
     wheelSensitivity=0.2,
@@ -195,7 +197,7 @@ tab_ui_2d = html.Div(
                                                             "fontFamily": "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                                                             "fontSize": "13px",
                                                         },
-                                                        children=_init_state()[1],
+                                                        children=INIT_SIM_REP,
                                                     ),
                                                 ],
                                                 id="modal-content-rep",
@@ -497,6 +499,9 @@ def toggle_modal(n1, n2, is_open):
     return not is_open
 
 
+TAB_KEYS = ["rep", "log", "ref", "reset"]
+
+
 @callback(
     Output("modal-tab-store", "data"),
     Output("modal-tab-rep", "active"),
@@ -509,19 +514,19 @@ def toggle_modal(n1, n2, is_open):
     Input("modal-tab-reset", "n_clicks"),
     prevent_initial_call=True,
 )
-def switch_modal_tab(n_rep, n_log, n_ref, n_reset):
+def switch_modal_tab(*_clicks):
     ctx = callback_context
     if not ctx.triggered:
         return "rep", True, False, False, False
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    if trigger_id == "modal-tab-log":
-        return "log", False, True, False, False
-    elif trigger_id == "modal-tab-ref":
-        return "ref", False, False, True, False
-    elif trigger_id == "modal-tab-reset":
-        return "reset", False, False, False, True
-    return "rep", True, False, False, False
+    tab = (
+        trigger_id.replace("modal-tab-", "")
+        if trigger_id.startswith("modal-tab-")
+        else "rep"
+    )
+    actives = [tab == key for key in TAB_KEYS]
+    return (tab, *actives)
 
 
 @callback(
@@ -532,13 +537,6 @@ def switch_modal_tab(n_rep, n_log, n_ref, n_reset):
     Input("modal-tab-store", "data"),
 )
 def toggle_modal_content_visibility(active_tab):
-    styles = [{"display": "none"} for _ in range(4)]
-    if active_tab == "rep":
-        styles[0] = {"display": "block"}
-    elif active_tab == "log":
-        styles[1] = {"display": "block"}
-    elif active_tab == "ref":
-        styles[2] = {"display": "block"}
-    elif active_tab == "reset":
-        styles[3] = {"display": "block"}
-    return styles[0], styles[1], styles[2], styles[3]
+    return tuple(
+        {"display": "block" if active_tab == key else "none"} for key in TAB_KEYS
+    )

@@ -202,17 +202,15 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
 
     if selected_nodes and elements:
         state = FrontendClusterState.from_cytoscape_elements(elements)
-        is_grouped = False
-        for node in selected_nodes:
-            n_id = str(node.get("id"))
+
+        def _is_node_grouped(n):
+            n_id = str(n.get("id"))
             if n_id in state.groups:
-                is_grouped = True
-                break
+                return True
             q = state.resolve_qubit(n_id)
-            if q is not None and state.get_group(q) is not None:
-                is_grouped = True
-                break
-        if is_grouped:
+            return q is not None and state.get_group(q) is not None
+
+        if any(_is_node_grouped(n) for n in selected_nodes):
             btn_text = "Ungroup Selection"
 
     if selected_nodes and len(selected_nodes) == 1:
@@ -299,6 +297,16 @@ def handle_cytoscape_options(
             "redo_stack": list(history_data.get("redo_stack", [])),
         }
 
+    # Record state before applying customization
+    history_data["undo_stack"].append(
+        {
+            "action_type": "frontend_customization",
+            "move_log": move_log or "",
+            "elements": elements,
+        }
+    )
+    history_data["redo_stack"] = []
+
     state = FrontendClusterState.from_cytoscape_elements(elements)
 
     if trigger_id == "apply-label-btn":
@@ -306,35 +314,16 @@ def handle_cytoscape_options(
             for n in selected_nodes:
                 n_id = str(n.get("id"))
                 if n_id in state.groups:
-                    state.groups[n_id]["label"] = lbl_text if lbl_text else ""
+                    state.groups[n_id]["label"] = lbl_text
                 else:
                     q = state.resolve_qubit(n_id)
                     if q is not None and 0 <= q < len(state):
                         state.node_metadata[q]["label"] = (
                             lbl_text if lbl_text else str(q)
                         )
-
-        # Record state before applying offcanvas customization
-        history_data["undo_stack"].append(
-            {
-                "action_type": "frontend_customization",
-                "move_log": move_log or "",
-                "elements": elements,
-            }
-        )
-        history_data["redo_stack"] = []
         return state.to_cytoscape_elements(), history_data
 
     elif trigger_id == "apply-shape-btn":
-        # Record state before applying offcanvas customization
-        history_data["undo_stack"].append(
-            {
-                "action_type": "frontend_customization",
-                "move_log": move_log or "",
-                "elements": elements,
-            }
-        )
-        history_data["redo_stack"] = []
         if selected_nodes:
             expanded_qubits = state.expand_selection(selected_nodes)
             for q in expanded_qubits:
@@ -364,16 +353,6 @@ def handle_cytoscape_options(
         has_group_container = len(selected_group_ids) > 0
         grouped_qubits = [q for q in selected_qubits if state.get_group(q) is not None]
         is_ungroup_action = has_group_container or len(grouped_qubits) > 0
-
-        # Record state before applying offcanvas customization
-        history_data["undo_stack"].append(
-            {
-                "action_type": "frontend_customization",
-                "move_log": move_log or "",
-                "elements": elements,
-            }
-        )
-        history_data["redo_stack"] = []
 
         if is_ungroup_action:
             # Ungroup action: remove selected group containers and unassign grouped qubits

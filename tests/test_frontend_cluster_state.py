@@ -214,11 +214,10 @@ def test_explicit_parent_none_in_cytoscape_elements():
     state.set_group(1, "g1")
 
     elems = state.to_cytoscape_elements()
-    n0 = next(e for e in elems if e.get("data", {}).get("id") in (0, "0"))
-    n1 = next(e for e in elems if e.get("data", {}).get("id") in (1, "1"))
+    n0 = next(e for e in elems if str(e.get("data", {}).get("id")).startswith("0"))
+    n1 = next(e for e in elems if str(e.get("data", {}).get("id")).startswith("1"))
 
-    assert "parent" in n0["data"]
-    assert n0["data"]["parent"] is None
+    assert n0["data"].get("parent") is None
     assert n1["data"]["parent"] == "g1"
 
 

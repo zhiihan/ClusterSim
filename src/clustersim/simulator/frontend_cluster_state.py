@@ -44,27 +44,26 @@ class FrontendClusterState:
         # Initialize node metadata list (1-to-1 with qubits 0..n-1)
         self.node_metadata: List[Dict[str, Any]] = []
 
-        for i in range(n):
-            pos = {"x": 0.0, "y": 0.0}
-            if positions is not None:
-                if isinstance(positions, list) and i < len(positions):
-                    pos = dict(positions[i])
-                elif isinstance(positions, dict) and i in positions:
-                    pos = dict(positions[i])
-                else:
-                    pos = {
-                        "x": float(random.randint(0, 300)),
-                        "y": float(random.randint(0, 300)),
-                    }
-            else:
-                pos = {
-                    "x": float(random.randint(0, 300)),
-                    "y": float(random.randint(0, 300)),
-                }
+        n = len(self.cluster_state)
 
+        # Initialize node metadata list (1-to-1 with qubits 0..n-1)
+        self.node_metadata: List[Dict[str, Any]] = []
+
+        def _get_init_pos(i: int) -> Dict[str, float]:
+            if positions:
+                if isinstance(positions, list) and i < len(positions):
+                    return dict(positions[i])
+                if isinstance(positions, dict) and i in positions:
+                    return dict(positions[i])
+            return {
+                "x": float(random.randint(0, 300)),
+                "y": float(random.randint(0, 300)),
+            }
+
+        for i in range(n):
             self.node_metadata.append(
                 {
-                    "position": pos,
+                    "position": _get_init_pos(i),
                     "parent": None,
                     "value": uuid.uuid4().hex[:8],
                     "label": str(i),
@@ -109,6 +108,16 @@ class FrontendClusterState:
             and self.node_metadata == other.node_metadata
             and self.groups == other.groups
         )
+
+    def _q(self, qubit: Union[int, str]) -> int:
+        """Resolve qubit identifier to integer index."""
+        q = self.resolve_qubit(qubit)
+        return q if q is not None else int(qubit)
+
+    def _cyto_node_id(self, idx: int) -> str:
+        """Get Cytoscape element ID for a qubit node, including parent tag if grouped."""
+        parent = self.node_metadata[idx].get("parent")
+        return f"{idx}_{parent}" if parent else str(idx)
 
     # ------------------------------------------------------------------
     # Undo / Redo Snapshot Management
@@ -177,72 +186,49 @@ class FrontendClusterState:
     # ------------------------------------------------------------------
 
     def measure(self, qubit: Union[int, str], force: int = -1, basis: str = "Z") -> int:
-        q = self.resolve_qubit(qubit)
-        return self.cluster_state.measure(
-            q if q is not None else int(qubit), force=force, basis=basis
-        )
+        return self.cluster_state.measure(self._q(qubit), force=force, basis=basis)
 
     def MX(self, qubit: Union[int, str], force: int = -1) -> int:
-        q = self.resolve_qubit(qubit)
-        return self.cluster_state.MX(q if q is not None else int(qubit), force=force)
+        return self.cluster_state.MX(self._q(qubit), force=force)
 
     def MY(self, qubit: Union[int, str], force: int = -1) -> int:
-        q = self.resolve_qubit(qubit)
-        return self.cluster_state.MY(q if q is not None else int(qubit), force=force)
+        return self.cluster_state.MY(self._q(qubit), force=force)
 
     def MZ(self, qubit: Union[int, str], force: int = -1) -> int:
-        q = self.resolve_qubit(qubit)
-        return self.cluster_state.MZ(q if q is not None else int(qubit), force=force)
+        return self.cluster_state.MZ(self._q(qubit), force=force)
 
     def M(self, qubit: Union[int, str], force: int = -1) -> int:
-        q = self.resolve_qubit(qubit)
-        return self.cluster_state.M(q if q is not None else int(qubit), force=force)
+        return self.cluster_state.M(self._q(qubit), force=force)
 
     def I(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.I(q if q is not None else int(qubit))
+        self.cluster_state.I(self._q(qubit))
 
     def X(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.X(q if q is not None else int(qubit))
+        self.cluster_state.X(self._q(qubit))
 
     def Y(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.Y(q if q is not None else int(qubit))
+        self.cluster_state.Y(self._q(qubit))
 
     def Z(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.Z(q if q is not None else int(qubit))
+        self.cluster_state.Z(self._q(qubit))
 
     def H(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.H(q if q is not None else int(qubit))
+        self.cluster_state.H(self._q(qubit))
 
     def S(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.S(q if q is not None else int(qubit))
+        self.cluster_state.S(self._q(qubit))
 
     def SH(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.SH(q if q is not None else int(qubit))
+        self.cluster_state.SH(self._q(qubit))
 
     def S_DAG(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.S_DAG(q if q is not None else int(qubit))
+        self.cluster_state.S_DAG(self._q(qubit))
 
     def CX(self, control: Union[int, str], qubit: Union[int, str]) -> None:
-        c = self.resolve_qubit(control)
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.CX(
-            c if c is not None else int(control), q if q is not None else int(qubit)
-        )
+        self.cluster_state.CX(self._q(control), self._q(qubit))
 
     def CZ(self, control: Union[int, str], qubit: Union[int, str]) -> None:
-        c = self.resolve_qubit(control)
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.CZ(
-            c if c is not None else int(control), q if q is not None else int(qubit)
-        )
+        self.cluster_state.CZ(self._q(control), self._q(qubit))
 
     def fusion_gate(
         self,
@@ -252,52 +238,33 @@ class FrontendClusterState:
         mode: str = "success",
         force: int = 0,
     ) -> None:
-        q1 = self.resolve_qubit(qubit1)
-        q2 = self.resolve_qubit(qubit2)
         self.cluster_state.fusion_gate(
-            q1 if q1 is not None else int(qubit1),
-            q2 if q2 is not None else int(qubit2),
+            self._q(qubit1),
+            self._q(qubit2),
             fusion_type=fusion_type,
             mode=mode,
             force=force,
         )
 
     def local_complementation(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.local_complementation(q if q is not None else int(qubit))
+        self.cluster_state.local_complementation(self._q(qubit))
 
     def local_complementation_rewrite(self, qubit: Union[int, str]) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.local_complementation_rewrite(
-            q if q is not None else int(qubit)
-        )
+        self.cluster_state.local_complementation_rewrite(self._q(qubit))
 
     def apply_VOP(
         self, qubit: Union[int, str], vop: Union[Tuple[int, int], int, str]
     ) -> None:
-        q = self.resolve_qubit(qubit)
-        self.cluster_state.apply_VOP(q if q is not None else int(qubit), vop)
+        self.cluster_state.apply_VOP(self._q(qubit), vop)
 
     def add_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
-        q1 = self.resolve_qubit(qubit1)
-        q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.add_edge(
-            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
-        )
+        self.cluster_state.add_edge(self._q(qubit1), self._q(qubit2))
 
     def remove_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
-        q1 = self.resolve_qubit(qubit1)
-        q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.remove_edge(
-            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
-        )
+        self.cluster_state.remove_edge(self._q(qubit1), self._q(qubit2))
 
     def toggle_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
-        q1 = self.resolve_qubit(qubit1)
-        q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.toggle_edge(
-            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
-        )
+        self.cluster_state.toggle_edge(self._q(qubit1), self._q(qubit2))
 
     # ------------------------------------------------------------------
     # Node Addition & Removal (with Metadata & Index Re-mapping)
@@ -350,26 +317,19 @@ class FrontendClusterState:
 
         s_id = str(identifier)
 
-        # Handle compound node ID format like "0_group_1"
-        if "_" in s_id and not s_id.startswith("group_"):
-            prefix = s_id.split("_")[0]
-            if prefix.isdigit():
-                q = int(prefix)
-                if 0 <= q < len(self):
-                    return q
-
-        # 1. If identifier is string digit matching Cytoscape element id str(i)
-        if s_id.isdigit():
-            q = int(s_id)
+        # Parse qubit index prefix from compound node ID like "0_group_1" or plain digit string "0"
+        prefix = s_id.split("_")[0] if not s_id.startswith("group_") else s_id
+        if prefix.isdigit():
+            q = int(prefix)
             if 0 <= q < len(self):
                 return q
 
-        # 2. Check if integer identifier matches persistent value attribute
+        # Check if matching persistent value attribute
         for i, meta in enumerate(self.node_metadata):
             if meta.get("value") == identifier or str(meta.get("value")) == s_id:
                 return i
 
-        # 3. Fallback to raw integer index within bounds
+        # Fallback to raw integer index within bounds
         if isinstance(identifier, int) and 0 <= identifier < len(self):
             return identifier
 
@@ -403,12 +363,11 @@ class FrontendClusterState:
         self.cluster_state.remove_node(list(qubits_to_remove))
 
         # Re-map node metadata list: keep only non-removed nodes in original relative order
-        new_metadata = []
-        for i, meta in enumerate(self.node_metadata):
-            if i not in qubits_to_remove:
-                new_metadata.append(meta)
-
-        self.node_metadata = new_metadata
+        self.node_metadata = [
+            meta
+            for i, meta in enumerate(self.node_metadata)
+            if i not in qubits_to_remove
+        ]
         return resolved_qubits
 
     # ------------------------------------------------------------------
@@ -416,36 +375,25 @@ class FrontendClusterState:
     # ------------------------------------------------------------------
 
     def get_position(self, qubit: Union[int, str]) -> Dict[str, float]:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
-        return self.node_metadata[idx]["position"]
+        return self.node_metadata[self._q(qubit)]["position"]
 
     def set_position(self, qubit: Union[int, str], position: Dict[str, float]) -> None:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
-        self.node_metadata[idx]["position"] = dict(position)
+        self.node_metadata[self._q(qubit)]["position"] = dict(position)
 
     def get_group(self, qubit: Union[int, str]) -> Optional[str]:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
-        return self.node_metadata[idx]["parent"]
+        return self.node_metadata[self._q(qubit)]["parent"]
 
     def set_group(self, qubit: Union[int, str], group_id: Optional[str]) -> None:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
+        idx = self._q(qubit)
         if group_id is not None and group_id not in self.groups:
             self.add_group(group_id)
         self.node_metadata[idx]["parent"] = group_id
 
     def get_value(self, qubit: Union[int, str]) -> Any:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
-        return self.node_metadata[idx]["value"]
+        return self.node_metadata[self._q(qubit)]["value"]
 
     def set_value(self, qubit: Union[int, str], value: Any) -> None:
-        q = self.resolve_qubit(qubit)
-        idx = q if q is not None else int(qubit)
-        self.node_metadata[idx]["value"] = value
+        self.node_metadata[self._q(qubit)]["value"] = value
 
     def add_group(
         self,
@@ -487,10 +435,7 @@ class FrontendClusterState:
         """
         result: List[int] = []
         for item in selected_items:
-            if isinstance(item, dict):
-                s_item = str(item.get("id", ""))
-            else:
-                s_item = str(item)
+            s_item = str(item.get("id", "")) if isinstance(item, dict) else str(item)
 
             if s_item in self.groups:
                 children = self.get_group_children(s_item)
@@ -527,8 +472,8 @@ class FrontendClusterState:
         # 1. Qubit Nodes (must come before compound group containers so parent update is processed first)
         for i in range(len(self)):
             meta = self.node_metadata[i]
+            cyto_id = self._cyto_node_id(i)
             parent_id = str(meta["parent"]) if meta.get("parent") else None
-            cyto_id = f"{i}_{parent_id}" if parent_id else str(i)
 
             node_data = {
                 "id": cyto_id,
@@ -580,25 +525,11 @@ class FrontendClusterState:
         for u, neighbors in enumerate(self.adjacency_list):
             for v in neighbors:
                 if u < v:
-                    u_parent = (
-                        str(self.node_metadata[u]["parent"])
-                        if self.node_metadata[u].get("parent")
-                        else None
-                    )
-                    u_id = f"{u}_{u_parent}" if u_parent else str(u)
-
-                    v_parent = (
-                        str(self.node_metadata[v]["parent"])
-                        if self.node_metadata[v].get("parent")
-                        else None
-                    )
-                    v_id = f"{v}_{v_parent}" if v_parent else str(v)
-
                     elements.append(
                         {
                             "data": {
-                                "source": u_id,
-                                "target": v_id,
+                                "source": self._cyto_node_id(u),
+                                "target": self._cyto_node_id(v),
                             }
                         }
                     )
