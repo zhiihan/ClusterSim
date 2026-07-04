@@ -8,7 +8,6 @@ from components.components_2d import (
     postprocess_cyto_data_elements,
     preprocess_cyto_data_elements,
     move_log,
-    fusion_menu,
 )
 from typing import List, Dict, Any
 import random
@@ -61,8 +60,6 @@ node_labels = dbc.Select(
 
 
 tab_1 = dbc.Row([dbc.Col(qubit_panel, width=12)])
-
-tab_2 = dbc.Row([dbc.Col(fusion_menu, width=12)])
 
 tab_3 = dbc.Row(
     [
