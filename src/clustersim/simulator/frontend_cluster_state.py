@@ -414,7 +414,7 @@ class FrontendClusterState:
     ) -> None:
         """Add or update a compound parent group container."""
         if label is None:
-            label = group_id
+            label = ""
         if style is None:
             style = {}
         if value is None:
@@ -456,7 +456,7 @@ class FrontendClusterState:
                 {
                     "data": {
                         "id": str(group_id),
-                        "label": group_info.get("label", str(group_id)),
+                        "label": group_info.get("label", ""),
                         "value": val,
                     },
                     "classes": "group container",
@@ -472,6 +472,11 @@ class FrontendClusterState:
                 "value": meta.get("value", i),
                 "vop": self.vertex_operators[i],
             }
+            if meta.get("shape"):
+                node_data["shape"] = meta["shape"]
+            elif meta.get("style", {}).get("shape"):
+                node_data["shape"] = meta["style"]["shape"]
+
             if meta.get("parent"):
                 node_data["parent"] = str(meta["parent"])
             else:
@@ -561,13 +566,18 @@ class FrontendClusterState:
             elem = node_elements[i]
             data = elem.get("data", {})
             pos = elem.get("position", {"x": 0.0, "y": 0.0})
+            node_shape = data.get("shape") or elem.get("style", {}).get("shape")
+            style_dict = dict(elem.get("style", {}))
+            if node_shape:
+                style_dict["shape"] = node_shape
             frontend_state.node_metadata[i] = {
                 "position": dict(pos),
                 "parent": data.get("parent"),
                 "value": data.get("value", i),
                 "label": data.get("label", str(i)),
+                "shape": node_shape,
                 "classes": elem.get("classes", ""),
-                "style": elem.get("style", {}),
+                "style": style_dict,
             }
 
         return frontend_state

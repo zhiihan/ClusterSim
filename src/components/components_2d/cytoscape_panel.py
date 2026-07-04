@@ -26,8 +26,6 @@ cytoscape_offcanvas = dbc.Offcanvas(
             [
                 html.Label("Label", className="form-label small fw-bold mb-1"),
                 dbc.Input(id="custom-label-input", type="text", placeholder="Enter label text...", size="sm"),
-                dbc.FormFeedback("Label applied successfully!", type="valid", id="custom-label-feedback-valid"),
-                dbc.FormFeedback("Empty label!", type="invalid", id="custom-label-feedback-invalid"),
             ],
             className="mb-3",
         ),
@@ -42,8 +40,7 @@ cytoscape_offcanvas = dbc.Offcanvas(
             [
                 dbc.Button("Apply Label", id="apply-label-btn", color="primary", size="sm", className="w-100 mb-2"),
                 dbc.Button("Apply Shape", id="apply-shape-btn", color="primary", size="sm", className="w-100 mb-2"),
-                dbc.Button("Create Group from Selection", id="create-group-btn", color="primary", size="sm", className="w-100 mb-2"),
-                dbc.Button("Delete Selected Group", id="remove-group-btn", color="primary", size="sm", className="w-100 mb-4"),
+                dbc.Button("Create Group from Selection", id="create-group-btn", color="primary", size="sm", className="w-100 mb-4"),
             ],
             className="d-flex flex-column",
         ),
@@ -74,15 +71,13 @@ def toggle_offcanvas(n1, n2, is_open):
 @callback(
     Output("custom-label-input", "value"),
     Output("node-shape-select", "value"),
-    Output("custom-label-input", "valid"),
-    Output("custom-label-input", "invalid"),
     Input("figure-app", "selectedNodeData"),
     Input("figure-app", "selectedEdgeData"),
     State("figure-app", "elements"),
 )
 def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
     label_val = ""
-    shape_val = "ellipse"
+    shape_val = no_update
 
     if selected_nodes and len(selected_nodes) == 1:
         node = selected_nodes[0]
@@ -93,7 +88,7 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
         label_val = data.get("label", "")
         if "vop" in data and label_val == str(data.get("value", data.get("id"))):
             label_val = ""
-        shape_val = data.get("shape", "ellipse")
+        shape_val = data.get("shape") or (actual.get("style", {}).get("shape") if actual else "ellipse")
 
     elif selected_edges and len(selected_edges) == 1:
         edge = selected_edges[0]
@@ -110,19 +105,15 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
         data = actual.get("data", {}) if actual else edge
         label_val = data.get("label", "")
 
-    return label_val, shape_val, False, False
+    return label_val, shape_val
 
 
 @callback(
     Output("figure-app", "elements", allow_duplicate=True),
     Output("history-store", "data", allow_duplicate=True),
-    Output("custom-label-input", "valid", allow_duplicate=True),
-    Output("custom-label-input", "invalid", allow_duplicate=True),
-    Output("custom-label-feedback-invalid", "children", allow_duplicate=True),
     Input("apply-label-btn", "n_clicks"),
     Input("apply-shape-btn", "n_clicks"),
     Input("create-group-btn", "n_clicks"),
-    Input("remove-group-btn", "n_clicks"),
     State("figure-app", "elements"),
     State("figure-app", "selectedNodeData"),
     State("figure-app", "selectedEdgeData"),
@@ -136,7 +127,6 @@ def handle_cytoscape_options(
     btn_label,
     btn_shape,
     btn_create_group,
-    btn_remove_group,
     elements,
     selected_nodes,
     selected_edges,
@@ -147,14 +137,10 @@ def handle_cytoscape_options(
 ):
     ctx = callback_context
     if not ctx.triggered or not elements:
-        return no_update, no_update, False, False, ""
+        return no_update, no_update
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     lbl_text = custom_label.strip() if custom_label else ""
-
-    if trigger_id == "apply-label-btn":
-        if not lbl_text:
-            return no_update, no_update, False, True, "Label cannot be empty!"
 
     if not history_data or not isinstance(history_data, dict):
         history_data = {"undo_stack": [], "redo_stack": []}
@@ -171,10 +157,10 @@ def handle_cytoscape_options(
             selected_ids = {str(n["id"]) for n in selected_nodes}
             for i in range(len(state)):
                 if str(i) in selected_ids:
-                    state.node_metadata[i]["label"] = lbl_text
+                    state.node_metadata[i]["label"] = lbl_text if lbl_text else str(i)
             for g_id in state.groups:
                 if g_id in selected_ids:
-                    state.groups[g_id]["label"] = lbl_text
+                    state.groups[g_id]["label"] = lbl_text if lbl_text else ""
         elif selected_edges:
             pass
 
@@ -183,7 +169,7 @@ def handle_cytoscape_options(
             {"action_type": "frontend_customization", "move_log": move_log or "", "elements": elements}
         )
         history_data["redo_stack"] = []
-        return state.to_cytoscape_elements(), history_data, True, False, ""
+        return state.to_cytoscape_elements(), history_data
 
     elif trigger_id == "apply-shape-btn":
         # Record state before applying offcanvas customization
@@ -195,14 +181,15 @@ def handle_cytoscape_options(
             selected_ids = {str(n["id"]) for n in selected_nodes}
             for i in range(len(state)):
                 if str(i) in selected_ids:
+                    state.node_metadata[i]["shape"] = node_shape
                     if "style" not in state.node_metadata[i]:
                         state.node_metadata[i]["style"] = {}
                     state.node_metadata[i]["style"]["shape"] = node_shape
-        return state.to_cytoscape_elements(), history_data, False, False, ""
+        return state.to_cytoscape_elements(), history_data
 
     elif trigger_id == "create-group-btn":
         if not selected_nodes:
-            return no_update, no_update, False, False, ""
+            return no_update, no_update
         selected_qubits = []
         for n in selected_nodes:
             try:
@@ -211,7 +198,7 @@ def handle_cytoscape_options(
                 pass
 
         if not selected_qubits:
-            return no_update, no_update, False, False, ""
+            return no_update, no_update
 
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
@@ -220,42 +207,11 @@ def handle_cytoscape_options(
         history_data["redo_stack"] = []
 
         g_id = f"group_{uuid.uuid4().hex[:8]}"
-        g_label = lbl_text if lbl_text else f"Group {g_id[-8:]}"
+        g_label = lbl_text if lbl_text else ""
         state.add_group(g_id, label=g_label)
         for q in selected_qubits:
             if q < len(state):
                 state.set_group(q, g_id)
-        return state.to_cytoscape_elements(), history_data, False, False, ""
+        return state.to_cytoscape_elements(), history_data
 
-    elif trigger_id == "remove-group-btn":
-        if not selected_nodes:
-            return no_update, no_update, False, False, ""
-        groups_to_remove = set()
-        for n in selected_nodes:
-            nid = str(n["id"])
-            if nid in state.groups:
-                groups_to_remove.add(nid)
-            else:
-                try:
-                    q = int(nid)
-                    grp = state.get_group(q)
-                    if grp:
-                        groups_to_remove.add(grp)
-                except ValueError:
-                    pass
-
-        if not groups_to_remove:
-            return no_update, no_update, False, False, ""
-
-        # Record state before applying offcanvas customization
-        history_data["undo_stack"].append(
-            {"action_type": "frontend_customization", "move_log": move_log or "", "elements": elements}
-        )
-        history_data["redo_stack"] = []
-
-        for g_id in groups_to_remove:
-            state.remove_group(g_id, unassign_children=True)
-
-        return state.to_cytoscape_elements(), history_data, False, False, ""
-
-    return no_update, no_update, False, False, ""
+    return no_update, no_update

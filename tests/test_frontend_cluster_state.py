@@ -245,3 +245,20 @@ def test_undo_group_creation():
     assert state.get_group(1) is None
     assert "group_123" not in state.groups
     assert len(state) == 2
+
+
+def test_custom_node_shape_export_and_reconstruction():
+    state = FrontendClusterState(2)
+    state.node_metadata[0]["shape"] = "star"
+    state.node_metadata[1]["shape"] = "diamond"
+
+    elems = state.to_cytoscape_elements()
+    n0 = next(e for e in elems if e.get("data", {}).get("id") in (0, "0"))
+    n1 = next(e for e in elems if e.get("data", {}).get("id") in (1, "1"))
+
+    assert n0["data"]["shape"] == "star"
+    assert n1["data"]["shape"] == "diamond"
+
+    reconstructed = FrontendClusterState.from_cytoscape_elements(elems)
+    assert reconstructed.node_metadata[0]["shape"] == "star"
+    assert reconstructed.node_metadata[1]["shape"] == "diamond"
