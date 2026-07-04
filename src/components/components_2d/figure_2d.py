@@ -54,8 +54,8 @@ node_labels = dbc.Select(
         {"label": "Label", "value": "data(label)"},
         {"label": "VOP", "value": "data(vop)"},
     ],
-    placeholder="Value",
-    value="data(value)",
+    placeholder="ID",
+    value="data(id)",
 )
 
 
@@ -377,8 +377,20 @@ def displaySelectedNodeData(data_list: List[Dict[str, Any]]):
     if not data_list:
         return "Click on the graph to select nodes, or SHIFT+click to select multiple nodes."
     else:
-        logging.debug(f"Selected {[i['value'] for i in data_list]}")
-        return f"Selected {[i['value'] for i in data_list]}"
+        selected_ids = []
+        for i in data_list:
+            if "id" in i:
+                raw_id = i["id"]
+                if isinstance(raw_id, str) and (raw_id.startswith("group_") or "group" in str(i.get("classes", ""))):
+                    group_disp = i.get("label") or raw_id
+                    selected_ids.append(group_disp)
+                elif isinstance(raw_id, int) or (isinstance(raw_id, str) and raw_id.isdigit()):
+                    selected_ids.append(int(raw_id))
+                else:
+                    selected_ids.append(raw_id)
+        selected_values = [i["value"] for i in data_list if "value" in i]
+        logging.debug(f"Selected {selected_values}")
+        return f"Selected {selected_ids}"
 
 
 @callback(
@@ -449,6 +461,8 @@ def update_stylesheet(_, node_labels: str):
         }
     ]
 
+    parent_label = "data(value)" if node_labels == "data(value)" else "data(label)"
+
     custom_styles = [
         {
             "selector": "node",
@@ -473,7 +487,7 @@ def update_stylesheet(_, node_labels: str):
                 "background-color": "#cbd5e1",
                 "border-color": "#94a3b8",
                 "border-width": 2,
-                "label": "data(label)",
+                "label": parent_label,
                 "font-size": "14px",
                 "font-weight": "bold",
                 "text-valign": "top",

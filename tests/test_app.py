@@ -84,7 +84,7 @@ def test_apply_operation_wrapper_add_node_offset():
     new_node_pos = next(
         item["position"]
         for item in cyto_data_new
-        if item.get("data") and item["data"].get("value") == 2
+        if item.get("data") and str(item["data"].get("id")) == "2"
     )
     assert 0 <= new_node_pos["x"] <= 100
     assert 0 <= new_node_pos["y"] <= 100
@@ -109,7 +109,7 @@ def test_apply_operation_wrapper_add_node_offset():
     new_node_pos2 = next(
         item["position"]
         for item in cyto_data_new2
-        if item.get("data") and item["data"].get("value") == 2
+        if item.get("data") and str(item["data"].get("id")) == "2"
     )
     assert new_node_pos2 == {"x": 70, "y": 80}
 

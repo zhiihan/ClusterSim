@@ -3,6 +3,7 @@ import random
 import copy
 import json
 from typing import Any, Dict, List, Optional, Tuple, Set, Union
+import uuid
 import rustworkx as rx
 import graphsim
 from clustersim.simulator.cluster_state import ClusterState
@@ -57,7 +58,7 @@ class FrontendClusterState:
                 {
                     "position": pos,
                     "parent": None,
-                    "value": i,
+                    "value": uuid.uuid4().hex[:8],
                     "label": str(i),
                     "classes": "",
                     "style": {},
@@ -294,7 +295,7 @@ class FrontendClusterState:
             position = {"x": float(random.randint(0, 300)), "y": float(random.randint(0, 300))}
 
         if value is None:
-            value = idx
+            value = uuid.uuid4().hex[:8]
 
         if label is None:
             label = str(idx)
@@ -372,38 +373,59 @@ class FrontendClusterState:
     # Frontend Metadata & Group Management
     # ------------------------------------------------------------------
 
-    def get_position(self, qubit: int) -> Dict[str, float]:
-        return self.node_metadata[qubit]["position"]
+    def get_position(self, qubit: Union[int, str]) -> Dict[str, float]:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
+        return self.node_metadata[idx]["position"]
 
-    def set_position(self, qubit: int, position: Dict[str, float]) -> None:
-        self.node_metadata[qubit]["position"] = dict(position)
+    def set_position(self, qubit: Union[int, str], position: Dict[str, float]) -> None:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
+        self.node_metadata[idx]["position"] = dict(position)
 
-    def get_group(self, qubit: int) -> Optional[str]:
-        return self.node_metadata[qubit]["parent"]
+    def get_group(self, qubit: Union[int, str]) -> Optional[str]:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
+        return self.node_metadata[idx]["parent"]
 
-    def set_group(self, qubit: int, group_id: Optional[str]) -> None:
+    def set_group(self, qubit: Union[int, str], group_id: Optional[str]) -> None:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
         if group_id is not None and group_id not in self.groups:
             self.add_group(group_id)
-        self.node_metadata[qubit]["parent"] = group_id
+        self.node_metadata[idx]["parent"] = group_id
 
-    def get_value(self, qubit: int) -> Any:
-        return self.node_metadata[qubit]["value"]
+    def get_value(self, qubit: Union[int, str]) -> Any:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
+        return self.node_metadata[idx]["value"]
 
-    def set_value(self, qubit: int, value: Any) -> None:
-        self.node_metadata[qubit]["value"] = value
+    def set_value(self, qubit: Union[int, str], value: Any) -> None:
+        q = self.resolve_qubit(qubit)
+        idx = q if q is not None else int(qubit)
+        self.node_metadata[idx]["value"] = value
 
     def add_group(
         self,
         group_id: str,
         label: Optional[str] = None,
         style: Optional[Dict[str, Any]] = None,
+        value: Optional[str] = None,
     ) -> None:
         """Add or update a compound parent group container."""
         if label is None:
             label = group_id
         if style is None:
             style = {}
-        self.groups[group_id] = {"label": label, "style": style}
+        if value is None:
+            if group_id in self.groups and self.groups[group_id].get("value"):
+                value = self.groups[group_id]["value"]
+            elif group_id.startswith("group_") and len(group_id) > 6:
+                value = group_id[6:]
+            else:
+                value = uuid.uuid4().hex[:8]
+
+        self.groups[group_id] = {"label": label, "style": style, "value": value}
 
     def remove_group(self, group_id: str, unassign_children: bool = True) -> None:
         """Remove a compound group container."""
@@ -424,14 +446,18 @@ class FrontendClusterState:
         """
         elements: List[Dict[str, Any]] = []
 
-        # 1. Compound Parent Group Container Nodes (value = None)
+        # 1. Compound Parent Group Container Nodes
         for group_id, group_info in self.groups.items():
+            val = group_info.get("value")
+            if not val:
+                val = group_id[6:] if group_id.startswith("group_") and len(group_id) > 6 else uuid.uuid4().hex[:8]
+                group_info["value"] = val
             elements.append(
                 {
                     "data": {
                         "id": str(group_id),
                         "label": group_info.get("label", str(group_id)),
-                        "value": None,
+                        "value": val,
                     },
                     "classes": "group container",
                 }
@@ -448,6 +474,8 @@ class FrontendClusterState:
             }
             if meta.get("parent"):
                 node_data["parent"] = str(meta["parent"])
+            else:
+                node_data["parent"] = None
 
             node_elem = {
                 "data": node_data,
@@ -494,9 +522,13 @@ class FrontendClusterState:
             elif "id" in data:
                 # Group container node
                 group_id = str(data["id"])
+                val = data.get("value")
+                if not val:
+                    val = group_id[6:] if group_id.startswith("group_") and len(group_id) > 6 else uuid.uuid4().hex[:8]
                 groups[group_id] = {
                     "label": data.get("label", group_id),
                     "style": item.get("style", {}),
+                    "value": val,
                 }
 
         # Sort qubit nodes by integer ID

@@ -113,7 +113,7 @@ def test_cytoscape_elements_roundtrip():
     # Verify group element exists with value = None
     group_elems = [e for e in elements if e.get("data", {}).get("id") == "group_main"]
     assert len(group_elems) == 1
-    assert group_elems[0]["data"]["value"] is None
+    assert isinstance(group_elems[0]["data"]["value"], str)
 
     # Reconstruct from elements
     reconstructed = FrontendClusterState.from_cytoscape_elements(elements)
@@ -153,12 +153,12 @@ def test_remove_node_by_position_id():
     # Cytoscape ID "0" has pos (0, 0)
     # Cytoscape ID "1" has pos (200, 200) and value=2
     elements = state.to_cytoscape_elements()
-    n0 = next(e for e in elements if e.get("data", {}).get("id") == "0")
-    n1 = next(e for e in elements if e.get("data", {}).get("id") == "1")
+    n0 = next(e for e in elements if e.get("data", {}).get("id") in (0, "0"))
+    n1 = next(e for e in elements if e.get("data", {}).get("id") in (1, "1"))
 
     assert n0["position"] == {"x": 0.0, "y": 0.0}
     assert n1["position"] == {"x": 200.0, "y": 200.0}
-    assert n1["data"]["value"] == 2
+    assert isinstance(n1["data"]["value"], str)
 
     # User highlights node at position (200, 200) which has Cytoscape ID "1" and deletes it
     removed2 = state.remove_node("1")
@@ -206,3 +206,42 @@ def test_quantum_operations_with_string_identifiers():
     state.remove_edge("1", "2")
     res = state.MZ("2", force=1)
     assert res == 0
+
+
+def test_explicit_parent_none_in_cytoscape_elements():
+    state = FrontendClusterState(2)
+    state.add_group("g1")
+    state.set_group(1, "g1")
+
+    elems = state.to_cytoscape_elements()
+    n0 = next(e for e in elems if e.get("data", {}).get("id") in (0, "0"))
+    n1 = next(e for e in elems if e.get("data", {}).get("id") in (1, "1"))
+
+    assert "parent" in n0["data"]
+    assert n0["data"]["parent"] is None
+    assert n1["data"]["parent"] == "g1"
+
+
+def test_undo_group_creation():
+    state = FrontendClusterState(2)
+    state.set_position(0, {"x": 0.0, "y": 0.0})
+    state.set_position(1, {"x": 100.0, "y": 100.0})
+
+    # Save state before creating group
+    state.push_state()
+
+    # Action: Create group for node 1
+    state.add_group("group_123", label="My Group")
+    state.set_group(1, "group_123")
+
+    # Verify group exists
+    assert state.get_group(1) == "group_123"
+    assert "group_123" in state.groups
+
+    # Undo group creation
+    assert state.undo() is True
+
+    # Group should be undone!
+    assert state.get_group(1) is None
+    assert "group_123" not in state.groups
+    assert len(state) == 2

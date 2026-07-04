@@ -111,6 +111,7 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
 
 @callback(
     Output("figure-app", "elements", allow_duplicate=True),
+    Output("history-store", "data", allow_duplicate=True),
     Input("apply-label-btn", "n_clicks"),
     Input("apply-shape-btn", "n_clicks"),
     Input("create-group-btn", "n_clicks"),
@@ -120,6 +121,8 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
     State("figure-app", "selectedEdgeData"),
     State("custom-label-input", "value"),
     State("node-shape-select", "value"),
+    State("history-store", "data"),
+    State("move-log", "children"),
     prevent_initial_call=True,
 )
 def handle_cytoscape_options(
@@ -132,10 +135,24 @@ def handle_cytoscape_options(
     selected_edges,
     custom_label,
     node_shape,
+    history_data,
+    move_log,
 ):
     ctx = callback_context
     if not ctx.triggered or not elements:
-        return no_update
+        return no_update, no_update
+
+    if not history_data or not isinstance(history_data, dict):
+        history_data = {"undo_stack": [], "redo_stack": []}
+    else:
+        history_data = {
+            "undo_stack": list(history_data.get("undo_stack", [])),
+            "redo_stack": list(history_data.get("redo_stack", [])),
+        }
+
+    # Record state before applying offcanvas customization
+    history_data["undo_stack"].append({"move_log": move_log or "", "elements": elements})
+    history_data["redo_stack"] = []
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     lbl_text = custom_label.strip() if custom_label else ""
@@ -166,7 +183,7 @@ def handle_cytoscape_options(
 
     elif trigger_id == "create-group-btn":
         if not selected_nodes:
-            return no_update
+            return no_update, no_update
         selected_qubits = []
         for n in selected_nodes:
             try:
@@ -175,7 +192,7 @@ def handle_cytoscape_options(
                 pass
 
         if not selected_qubits:
-            return no_update
+            return no_update, no_update
 
         g_id = f"group_{uuid.uuid4().hex[:8]}"
         g_label = lbl_text if lbl_text else f"Group {g_id[-8:]}"
@@ -186,7 +203,7 @@ def handle_cytoscape_options(
 
     elif trigger_id == "remove-group-btn":
         if not selected_nodes:
-            return no_update
+            return no_update, no_update
         groups_to_remove = set()
         for n in selected_nodes:
             nid = str(n["id"])
@@ -204,4 +221,4 @@ def handle_cytoscape_options(
         for g_id in groups_to_remove:
             state.remove_group(g_id, unassign_children=True)
 
-    return state.to_cytoscape_elements()
+    return state.to_cytoscape_elements(), history_data
