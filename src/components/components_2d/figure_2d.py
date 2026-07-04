@@ -40,25 +40,6 @@ figure_2d = cyto.Cytoscape(
     maxZoom=20,
 )
 
-layout_dropdown = dcc.Dropdown(
-    ["random", "grid", "circle", "breadthfirst", "cose", "concentric", "preset"],
-    "preset",
-    id="graph_layout_dropdown",
-)
-
-node_labels = dbc.Select(
-    id="node_labels",
-    options=[
-        {"label": "Value", "value": "data(value)"},
-        {"label": "ID", "value": "data(id)"},
-        {"label": "Label", "value": "data(label)"},
-        {"label": "VOP", "value": "data(vop)"},
-    ],
-    placeholder="Label",
-    value="data(label)",
-)
-
-
 tab_1 = dbc.Row([dbc.Col(qubit_panel, width=12)])
 
 tab_3 = dbc.Row(
@@ -89,48 +70,36 @@ tab_3 = dbc.Row(
                             ],
                             width=6,
                         ),
-                        dbc.Col(dbc.Button("Load", id="load-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Undo", id="undo-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Redo", id="redo-button", style={"width": "100%"}), width=2),
-                        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
-        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
+                        dbc.Col(
+                            dbc.Button(
+                                "Load", id="load-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Undo", id="undo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Redo", id="redo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Tooltip(
+                            "Undo (Ctrl+Z)", target="undo-button", placement="top"
+                        ),
+                        dbc.Tooltip(
+                            "Redo (Ctrl+Y)", target="redo-button", placement="top"
+                        ),
                     ],
                     className="align-items-center",
                 ),
             ],
             width=12,
         )
-    ]
-)
-
-tab_5 = dbc.Row(
-    [
-        dbc.Col(
-            [
-                dcc.Markdown("**Select Layout**", style={"margin": "0 0 4px 0"}),
-                layout_dropdown,
-            ],
-            width=4,
-        ),
-        dbc.Col(
-            [
-                dcc.Markdown("**Select Node Labels**", style={"margin": "0 0 4px 0"}),
-                node_labels,
-            ],
-            width=4,
-        ),
-        dbc.Col(
-            [
-                dcc.Markdown("**Plot Options**", style={"margin": "0 0 4px 0"}),
-                dbc.Button("Customize Plot", id="open-offcanvas-btn-tab5", color="secondary", outline=True, style={"width": "100%", "marginBottom": "4px"}),
-                dbc.Button("Snap to Grid", id="snap-to-grid", style={"width": "100%"}),
-                dbc.Button("Export SVG", id="btn-get-svg"),
-                dbc.Button("Export JSON", id="btn-get-json"),
-                dcc.Download(id="download-json"),
-            ],
-            width=4,
-            className="d-flex flex-column justify-content-end",
-        ),
     ]
 )
 
@@ -185,11 +154,6 @@ tab_ui_2d = html.Div(
                                             dbc.NavLink(
                                                 "Reset & Load",
                                                 id="modal-tab-reset",
-                                                style={"cursor": "pointer"},
-                                            ),
-                                            dbc.NavLink(
-                                                "Plot Options",
-                                                id="modal-tab-plot",
                                                 style={"cursor": "pointer"},
                                             ),
                                         ],
@@ -302,12 +266,6 @@ tab_ui_2d = html.Div(
                                                 id="modal-content-reset",
                                                 style={"display": "none"},
                                             ),
-                                            # Page 5: Plot Options
-                                            html.Div(
-                                                tab_5,
-                                                id="modal-content-plot",
-                                                style={"display": "none"},
-                                            ),
                                         ],
                                         style={"paddingLeft": "20px"},
                                     )
@@ -381,10 +339,14 @@ def displaySelectedNodeData(data_list: List[Dict[str, Any]]):
         for i in data_list:
             if "id" in i:
                 raw_id = i["id"]
-                if isinstance(raw_id, str) and (raw_id.startswith("group_") or "group" in str(i.get("classes", ""))):
+                if isinstance(raw_id, str) and (
+                    raw_id.startswith("group_") or "group" in str(i.get("classes", ""))
+                ):
                     group_disp = i.get("label") or raw_id
                     selected_ids.append(group_disp)
-                elif isinstance(raw_id, int) or (isinstance(raw_id, str) and raw_id.isdigit()):
+                elif isinstance(raw_id, int) or (
+                    isinstance(raw_id, str) and raw_id.isdigit()
+                ):
                     selected_ids.append(int(raw_id))
                 else:
                     selected_ids.append(raw_id)
@@ -541,29 +503,25 @@ def toggle_modal(n1, n2, is_open):
     Output("modal-tab-log", "active"),
     Output("modal-tab-ref", "active"),
     Output("modal-tab-reset", "active"),
-    Output("modal-tab-plot", "active"),
     Input("modal-tab-rep", "n_clicks"),
     Input("modal-tab-log", "n_clicks"),
     Input("modal-tab-ref", "n_clicks"),
     Input("modal-tab-reset", "n_clicks"),
-    Input("modal-tab-plot", "n_clicks"),
     prevent_initial_call=True,
 )
-def switch_modal_tab(n_rep, n_log, n_ref, n_reset, n_plot):
+def switch_modal_tab(n_rep, n_log, n_ref, n_reset):
     ctx = callback_context
     if not ctx.triggered:
-        return "rep", True, False, False, False, False
+        return "rep", True, False, False, False
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if trigger_id == "modal-tab-log":
-        return "log", False, True, False, False, False
+        return "log", False, True, False, False
     elif trigger_id == "modal-tab-ref":
-        return "ref", False, False, True, False, False
+        return "ref", False, False, True, False
     elif trigger_id == "modal-tab-reset":
-        return "reset", False, False, False, True, False
-    elif trigger_id == "modal-tab-plot":
-        return "plot", False, False, False, False, True
-    return "rep", True, False, False, False, False
+        return "reset", False, False, False, True
+    return "rep", True, False, False, False
 
 
 @callback(
@@ -571,11 +529,10 @@ def switch_modal_tab(n_rep, n_log, n_ref, n_reset, n_plot):
     Output("modal-content-log", "style"),
     Output("modal-content-ref", "style"),
     Output("modal-content-reset", "style"),
-    Output("modal-content-plot", "style"),
     Input("modal-tab-store", "data"),
 )
 def toggle_modal_content_visibility(active_tab):
-    styles = [{"display": "none"} for _ in range(5)]
+    styles = [{"display": "none"} for _ in range(4)]
     if active_tab == "rep":
         styles[0] = {"display": "block"}
     elif active_tab == "log":
@@ -584,6 +541,4 @@ def toggle_modal_content_visibility(active_tab):
         styles[2] = {"display": "block"}
     elif active_tab == "reset":
         styles[3] = {"display": "block"}
-    elif active_tab == "plot":
-        styles[4] = {"display": "block"}
-    return styles[0], styles[1], styles[2], styles[3], styles[4]
+    return styles[0], styles[1], styles[2], styles[3]

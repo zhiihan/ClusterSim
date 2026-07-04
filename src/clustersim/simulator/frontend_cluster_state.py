@@ -20,7 +20,9 @@ class FrontendClusterState:
         self,
         num_nodes: int = 0,
         cluster_state: Optional[ClusterState] = None,
-        positions: Optional[Union[List[Dict[str, float]], Dict[int, Dict[str, float]]]] = None,
+        positions: Optional[
+            Union[List[Dict[str, float]], Dict[int, Dict[str, float]]]
+        ] = None,
         groups: Optional[Dict[str, Dict[str, Any]]] = None,
     ):
         """
@@ -50,9 +52,15 @@ class FrontendClusterState:
                 elif isinstance(positions, dict) and i in positions:
                     pos = dict(positions[i])
                 else:
-                    pos = {"x": float(random.randint(0, 300)), "y": float(random.randint(0, 300))}
+                    pos = {
+                        "x": float(random.randint(0, 300)),
+                        "y": float(random.randint(0, 300)),
+                    }
             else:
-                pos = {"x": float(random.randint(0, 300)), "y": float(random.randint(0, 300))}
+                pos = {
+                    "x": float(random.randint(0, 300)),
+                    "y": float(random.randint(0, 300)),
+                }
 
             self.node_metadata.append(
                 {
@@ -157,7 +165,9 @@ class FrontendClusterState:
 
     def _restore_from_snapshot(self, state_dict: Dict[str, Any]) -> None:
         """Restore instance state from a snapshot dictionary."""
-        restored = FrontendClusterState.from_cytoscape_elements(state_dict["to_cytoscape"])
+        restored = FrontendClusterState.from_cytoscape_elements(
+            state_dict["to_cytoscape"]
+        )
         self.cluster_state = restored.cluster_state
         self.node_metadata = copy.deepcopy(state_dict["node_metadata"])
         self.groups = copy.deepcopy(state_dict["groups"])
@@ -168,7 +178,9 @@ class FrontendClusterState:
 
     def measure(self, qubit: Union[int, str], force: int = -1, basis: str = "Z") -> int:
         q = self.resolve_qubit(qubit)
-        return self.cluster_state.measure(q if q is not None else int(qubit), force=force, basis=basis)
+        return self.cluster_state.measure(
+            q if q is not None else int(qubit), force=force, basis=basis
+        )
 
     def MX(self, qubit: Union[int, str], force: int = -1) -> int:
         q = self.resolve_qubit(qubit)
@@ -221,12 +233,16 @@ class FrontendClusterState:
     def CX(self, control: Union[int, str], qubit: Union[int, str]) -> None:
         c = self.resolve_qubit(control)
         q = self.resolve_qubit(qubit)
-        self.cluster_state.CX(c if c is not None else int(control), q if q is not None else int(qubit))
+        self.cluster_state.CX(
+            c if c is not None else int(control), q if q is not None else int(qubit)
+        )
 
     def CZ(self, control: Union[int, str], qubit: Union[int, str]) -> None:
         c = self.resolve_qubit(control)
         q = self.resolve_qubit(qubit)
-        self.cluster_state.CZ(c if c is not None else int(control), q if q is not None else int(qubit))
+        self.cluster_state.CZ(
+            c if c is not None else int(control), q if q is not None else int(qubit)
+        )
 
     def fusion_gate(
         self,
@@ -252,26 +268,36 @@ class FrontendClusterState:
 
     def local_complementation_rewrite(self, qubit: Union[int, str]) -> None:
         q = self.resolve_qubit(qubit)
-        self.cluster_state.local_complementation_rewrite(q if q is not None else int(qubit))
+        self.cluster_state.local_complementation_rewrite(
+            q if q is not None else int(qubit)
+        )
 
-    def apply_VOP(self, qubit: Union[int, str], vop: Union[Tuple[int, int], int, str]) -> None:
+    def apply_VOP(
+        self, qubit: Union[int, str], vop: Union[Tuple[int, int], int, str]
+    ) -> None:
         q = self.resolve_qubit(qubit)
         self.cluster_state.apply_VOP(q if q is not None else int(qubit), vop)
 
     def add_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
         q1 = self.resolve_qubit(qubit1)
         q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.add_edge(q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2))
+        self.cluster_state.add_edge(
+            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
+        )
 
     def remove_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
         q1 = self.resolve_qubit(qubit1)
         q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.remove_edge(q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2))
+        self.cluster_state.remove_edge(
+            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
+        )
 
     def toggle_edge(self, qubit1: Union[int, str], qubit2: Union[int, str]) -> None:
         q1 = self.resolve_qubit(qubit1)
         q2 = self.resolve_qubit(qubit2)
-        self.cluster_state.toggle_edge(q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2))
+        self.cluster_state.toggle_edge(
+            q1 if q1 is not None else int(qubit1), q2 if q2 is not None else int(qubit2)
+        )
 
     # ------------------------------------------------------------------
     # Node Addition & Removal (with Metadata & Index Re-mapping)
@@ -292,7 +318,10 @@ class FrontendClusterState:
         self.cluster_state.add_node(vop=vop)
 
         if position is None:
-            position = {"x": float(random.randint(0, 300)), "y": float(random.randint(0, 300))}
+            position = {
+                "x": float(random.randint(0, 300)),
+                "y": float(random.randint(0, 300)),
+            }
 
         if value is None:
             value = uuid.uuid4().hex[:8]
@@ -324,7 +353,9 @@ class FrontendClusterState:
 
         # 2. Check if integer identifier matches persistent value attribute
         for i, meta in enumerate(self.node_metadata):
-            if meta.get("value") == identifier or str(meta.get("value")) == str(identifier):
+            if meta.get("value") == identifier or str(meta.get("value")) == str(
+                identifier
+            ):
                 return i
 
         # 3. Fallback to raw integer index within bounds
@@ -450,7 +481,11 @@ class FrontendClusterState:
         for group_id, group_info in self.groups.items():
             val = group_info.get("value")
             if not val:
-                val = group_id[6:] if group_id.startswith("group_") and len(group_id) > 6 else uuid.uuid4().hex[:8]
+                val = (
+                    group_id[6:]
+                    if group_id.startswith("group_") and len(group_id) > 6
+                    else uuid.uuid4().hex[:8]
+                )
                 group_info["value"] = val
             elements.append(
                 {
@@ -509,7 +544,9 @@ class FrontendClusterState:
         return elements
 
     @classmethod
-    def from_cytoscape_elements(cls, elements: List[Dict[str, Any]]) -> FrontendClusterState:
+    def from_cytoscape_elements(
+        cls, elements: List[Dict[str, Any]]
+    ) -> FrontendClusterState:
         """
         Reconstruct FrontendClusterState from a list of Cytoscape elements.
         """
@@ -522,14 +559,20 @@ class FrontendClusterState:
             # Distinguish group nodes vs qubit nodes vs edges
             if "source" in data and "target" in data:
                 edge_elements.append(item)
-            elif "vop" in data or (data.get("value") is not None and str(data.get("id", "")).isdigit()):
+            elif "vop" in data or (
+                data.get("value") is not None and str(data.get("id", "")).isdigit()
+            ):
                 node_elements.append(item)
             elif "id" in data:
                 # Group container node
                 group_id = str(data["id"])
                 val = data.get("value")
                 if not val:
-                    val = group_id[6:] if group_id.startswith("group_") and len(group_id) > 6 else uuid.uuid4().hex[:8]
+                    val = (
+                        group_id[6:]
+                        if group_id.startswith("group_") and len(group_id) > 6
+                        else uuid.uuid4().hex[:8]
+                    )
                 groups[group_id] = {
                     "label": data.get("label", group_id),
                     "style": item.get("style", {}),
@@ -559,7 +602,9 @@ class FrontendClusterState:
             rx_graph.add_edge(u, v, None)
 
         base_cluster_state = ClusterState.from_rustworkx(rx_graph)
-        frontend_state = cls(num_nodes=num_nodes, cluster_state=base_cluster_state, groups=groups)
+        frontend_state = cls(
+            num_nodes=num_nodes, cluster_state=base_cluster_state, groups=groups
+        )
 
         # Restore node metadata
         for i in range(num_nodes):
@@ -598,7 +643,11 @@ class FrontendClusterState:
     def from_dict(cls, data: Dict[str, Any]) -> FrontendClusterState:
         """Create FrontendClusterState from a dictionary."""
         base_state = ClusterState.from_json(data["cluster_state_json"])
-        obj = cls(num_nodes=len(base_state), cluster_state=base_state, groups=data.get("groups", {}))
+        obj = cls(
+            num_nodes=len(base_state),
+            cluster_state=base_state,
+            groups=data.get("groups", {}),
+        )
         if "node_metadata" in data:
             obj.node_metadata = copy.deepcopy(data["node_metadata"])
         return obj

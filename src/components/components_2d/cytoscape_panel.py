@@ -19,34 +19,149 @@ SHAPE_OPTIONS = [
     {"label": "Rhombus", "value": "rhombus"},
 ]
 
+layout_dropdown = dcc.Dropdown(
+    ["random", "grid", "circle", "breadthfirst", "cose", "concentric", "preset"],
+    "preset",
+    id="graph_layout_dropdown",
+)
+
+node_labels = dbc.Select(
+    id="node_labels",
+    options=[
+        {"label": "Value", "value": "data(value)"},
+        {"label": "ID", "value": "data(id)"},
+        {"label": "Label", "value": "data(label)"},
+        {"label": "VOP", "value": "data(vop)"},
+    ],
+    placeholder="Label",
+    value="data(label)",
+    size="sm",
+)
+
 # Offcanvas UI component definition
 cytoscape_offcanvas = dbc.Offcanvas(
     [
         html.Div(
             [
-                html.Label("Label", className="form-label small fw-bold mb-1"),
-                dbc.Input(id="custom-label-input", type="text", placeholder="Enter label text...", size="sm"),
-            ],
-            className="mb-3",
+                html.Div(
+                    [
+                        html.Label(
+                            "Graph Layout", className="form-label small fw-bold mb-1"
+                        ),
+                        layout_dropdown,
+                    ],
+                    className="mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Label(
+                            "Node Labels Display",
+                            className="form-label small fw-bold mb-1",
+                        ),
+                        node_labels,
+                    ],
+                    className="mb-3",
+                ),
+                html.Hr(className="my-3"),
+            ]
         ),
         html.Div(
             [
-                html.Label("Node Shape", className="form-label small fw-bold mb-1"),
-                dbc.Select(id="node-shape-select", options=SHAPE_OPTIONS, value="ellipse", size="sm"),
-            ],
-            className="mb-4",
+                html.Div(
+                    [
+                        html.Label(
+                            "Custom Label", className="form-label small fw-bold mb-1"
+                        ),
+                        dbc.Input(
+                            id="custom-label-input",
+                            type="text",
+                            placeholder="Enter label text...",
+                            size="sm",
+                        ),
+                    ],
+                    className="mb-2",
+                ),
+                html.Div(
+                    [
+                        html.Label(
+                            "Node Shape", className="form-label small fw-bold mb-1"
+                        ),
+                        dbc.Select(
+                            id="node-shape-select",
+                            options=SHAPE_OPTIONS,
+                            value="ellipse",
+                            size="sm",
+                            placeholder="Ellipse (Default)",
+                        ),
+                    ],
+                    className="mb-3",
+                ),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Apply Label",
+                            id="apply-label-btn",
+                            color="primary",
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                        dbc.Button(
+                            "Apply Shape",
+                            id="apply-shape-btn",
+                            color="primary",
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                        dbc.Button(
+                            "Create Group from Selection",
+                            id="create-group-btn",
+                            color="primary",
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                    ],
+                    className="d-flex flex-column mb-3",
+                ),
+                html.Hr(className="my-3"),
+            ]
         ),
         html.Div(
             [
-                dbc.Button("Apply Label", id="apply-label-btn", color="primary", size="sm", className="w-100 mb-2"),
-                dbc.Button("Apply Shape", id="apply-shape-btn", color="primary", size="sm", className="w-100 mb-2"),
-                dbc.Button("Create Group from Selection", id="create-group-btn", color="primary", size="sm", className="w-100 mb-4"),
-            ],
-            className="d-flex flex-column",
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Snap to Grid",
+                            id="snap-to-grid",
+                            color="secondary",
+                            outline=True,
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                        dbc.Button(
+                            "Export SVG",
+                            id="btn-get-svg",
+                            color="secondary",
+                            outline=True,
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                        dbc.Button(
+                            "Export JSON",
+                            id="btn-get-json",
+                            color="secondary",
+                            outline=True,
+                            size="sm",
+                            className="w-100 mb-2",
+                        ),
+                        dcc.Download(id="download-json"),
+                    ],
+                    className="d-flex flex-column",
+                ),
+            ]
         ),
     ],
     id="cytoscape-offcanvas",
-    title="Plot Customization",
+    title="Plot Options & Customization",
     is_open=False,
     scrollable=True,
     backdrop=False,
@@ -58,12 +173,11 @@ cytoscape_offcanvas = dbc.Offcanvas(
 @callback(
     Output("cytoscape-offcanvas", "is_open"),
     Input("open-offcanvas-btn", "n_clicks"),
-    Input("open-offcanvas-btn-tab5", "n_clicks"),
     State("cytoscape-offcanvas", "is_open"),
     prevent_initial_call=True,
 )
-def toggle_offcanvas(n1, n2, is_open):
-    if n1 or n2:
+def toggle_offcanvas(n_clicks, is_open):
+    if n_clicks:
         return not is_open
     return is_open
 
@@ -82,13 +196,22 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
     if selected_nodes and len(selected_nodes) == 1:
         node = selected_nodes[0]
         node_id = str(node.get("id"))
-        actual = next((el for el in (elements or []) if str(el.get("data", {}).get("id")) == node_id), None)
+        actual = next(
+            (
+                el
+                for el in (elements or [])
+                if str(el.get("data", {}).get("id")) == node_id
+            ),
+            None,
+        )
         data = actual.get("data", {}) if actual else node
 
         label_val = data.get("label", "")
         if "vop" in data and label_val == str(data.get("value", data.get("id"))):
             label_val = ""
-        shape_val = data.get("shape") or (actual.get("style", {}).get("shape") if actual else "ellipse")
+        shape_val = data.get("shape") or (
+            actual.get("style", {}).get("shape") if actual else "ellipse"
+        )
 
     elif selected_edges and len(selected_edges) == 1:
         edge = selected_edges[0]
@@ -166,7 +289,11 @@ def handle_cytoscape_options(
 
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
-            {"action_type": "frontend_customization", "move_log": move_log or "", "elements": elements}
+            {
+                "action_type": "frontend_customization",
+                "move_log": move_log or "",
+                "elements": elements,
+            }
         )
         history_data["redo_stack"] = []
         return state.to_cytoscape_elements(), history_data
@@ -174,7 +301,11 @@ def handle_cytoscape_options(
     elif trigger_id == "apply-shape-btn":
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
-            {"action_type": "frontend_customization", "move_log": move_log or "", "elements": elements}
+            {
+                "action_type": "frontend_customization",
+                "move_log": move_log or "",
+                "elements": elements,
+            }
         )
         history_data["redo_stack"] = []
         if selected_nodes:
@@ -202,7 +333,11 @@ def handle_cytoscape_options(
 
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
-            {"action_type": "frontend_customization", "move_log": move_log or "", "elements": elements}
+            {
+                "action_type": "frontend_customization",
+                "move_log": move_log or "",
+                "elements": elements,
+            }
         )
         history_data["redo_stack"] = []
 

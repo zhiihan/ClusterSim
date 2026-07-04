@@ -175,6 +175,7 @@ def random_graph_program(draw):
 
 from hypothesis import settings
 
+
 @settings(deadline=None)
 @given(program=random_graph_program())
 def test_load_undo(program):

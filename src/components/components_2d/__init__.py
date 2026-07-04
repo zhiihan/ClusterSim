@@ -17,4 +17,3 @@ __all__ = [
     "postprocess_cyto_data_elements",
     "cytoscape_offcanvas",
 ]
-

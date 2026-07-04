@@ -77,7 +77,15 @@ qubit_panel = dbc.Row(
                             [
                                 dbc.Col(
                                     [
-                                        html.Span("Force Meas.", style={"fontSize": "0.85rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
+                                        html.Span(
+                                            "Force Meas.",
+                                            style={
+                                                "fontSize": "0.85rem",
+                                                "fontWeight": "600",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
                                         dbc.Select(
                                             id="fusion-force-measurement",
                                             options=[
@@ -89,15 +97,27 @@ qubit_panel = dbc.Row(
                                             ],
                                             placeholder="00",
                                             value=0,
-                                            style={"fontSize": "0.85rem", "padding": "2px 4px", "height": "auto"},
+                                            style={
+                                                "fontSize": "0.85rem",
+                                                "padding": "2px 4px",
+                                                "height": "auto",
+                                            },
                                         ),
                                     ],
                                     width=6,
-                                    className="pe-1"
+                                    className="pe-1",
                                 ),
                                 dbc.Col(
                                     [
-                                        html.Span("Fusion Mode", style={"fontSize": "0.85rem", "fontWeight": "600", "display": "block", "marginBottom": "2px"}),
+                                        html.Span(
+                                            "Fusion Mode",
+                                            style={
+                                                "fontSize": "0.85rem",
+                                                "fontWeight": "600",
+                                                "display": "block",
+                                                "marginBottom": "2px",
+                                            },
+                                        ),
                                         dbc.Select(
                                             id="fusion-mode",
                                             options=[
@@ -112,14 +132,18 @@ qubit_panel = dbc.Row(
                                                 {"label": "Random", "value": "random"},
                                             ],
                                             value="success",
-                                            style={"fontSize": "0.85rem", "padding": "2px 4px", "height": "auto"},
+                                            style={
+                                                "fontSize": "0.85rem",
+                                                "padding": "2px 4px",
+                                                "height": "auto",
+                                            },
                                         ),
                                     ],
                                     width=6,
-                                    className="ps-1"
+                                    className="ps-1",
                                 ),
                             ],
-                            className="mb-2 g-0"
+                            className="mb-2 g-0",
                         ),
                         dbc.Row(
                             [
@@ -127,14 +151,41 @@ qubit_panel = dbc.Row(
                                     [
                                         dbc.ButtonGroup(
                                             [
-                                                dbc.Button("XXZZ", outline=True, color="primary", id="fusion-gate-xxzz", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
-                                                dbc.Button("XZZX", outline=True, color="primary", id="fusion-gate-xzzx", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
-                                                dbc.Button("XYYZ", outline=True, color="primary", id="fusion-gate-xyyz", style={"fontSize": "0.8rem", "padding": "4px 2px"}),
+                                                dbc.Button(
+                                                    "XXZZ",
+                                                    outline=True,
+                                                    color="primary",
+                                                    id="fusion-gate-xxzz",
+                                                    style={
+                                                        "fontSize": "0.8rem",
+                                                        "padding": "4px 2px",
+                                                    },
+                                                ),
+                                                dbc.Button(
+                                                    "XZZX",
+                                                    outline=True,
+                                                    color="primary",
+                                                    id="fusion-gate-xzzx",
+                                                    style={
+                                                        "fontSize": "0.8rem",
+                                                        "padding": "4px 2px",
+                                                    },
+                                                ),
+                                                dbc.Button(
+                                                    "XYYZ",
+                                                    outline=True,
+                                                    color="primary",
+                                                    id="fusion-gate-xyyz",
+                                                    style={
+                                                        "fontSize": "0.8rem",
+                                                        "padding": "4px 2px",
+                                                    },
+                                                ),
                                             ],
-                                            className="w-100"
+                                            className="w-100",
                                         ),
                                     ],
-                                    width=12
+                                    width=12,
                                 ),
                             ],
                             className="g-0",
@@ -319,7 +370,11 @@ qubit_panel = dbc.Row(
                             id="open-offcanvas-btn",
                             outline=True,
                             color="secondary",
-                            style={"fontSize": "1.2rem", "padding": "2px 8px", "marginBottom": "4px"},
+                            style={
+                                "fontSize": "1.2rem",
+                                "padding": "2px 8px",
+                                "marginBottom": "4px",
+                            },
                             title="Plot Customization Options",
                         ),
                         dbc.Button(
@@ -336,7 +391,9 @@ qubit_panel = dbc.Row(
             ],
             width=1,
         ),
-        dbc.Tooltip("Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"),
+        dbc.Tooltip(
+            "Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"
+        ),
         dbc.Tooltip("Delete Node (Backspace)", target="remove-node", placement="top"),
         dbc.Tooltip("Add Node (N)", target="add-node", placement="top"),
         dbc.Tooltip("Toggle Edge (E)", target="toggle-edge", placement="top"),
@@ -367,9 +424,18 @@ button_operations = {
     "MX": ("measure", {"force": 0, "basis": "X"}),
     "MY": ("measure", {"force": 0, "basis": "Y"}),
     "MZ": ("measure", {"force": 0, "basis": "Z"}),
-    "fusion-gate-xxzz": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XXZZ"}),
-    "fusion-gate-xzzx": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XZZX"}),
-    "fusion-gate-xyyz": ("fusion_gate", {"force": 0, "mode": "success", "fusion_type": "XYYZ"}),
+    "fusion-gate-xxzz": (
+        "fusion_gate",
+        {"force": 0, "mode": "success", "fusion_type": "XXZZ"},
+    ),
+    "fusion-gate-xzzx": (
+        "fusion_gate",
+        {"force": 0, "mode": "success", "fusion_type": "XZZX"},
+    ),
+    "fusion-gate-xyyz": (
+        "fusion_gate",
+        {"force": 0, "mode": "success", "fusion_type": "XYYZ"},
+    ),
     # simple operations with no extra args
     "LCR": ("local_complementation_rewrite", {}),
     "LC": ("local_complementation", {}),
@@ -612,7 +678,10 @@ def apply_operation_wrapper(
             avg_y = sum(p["y"] for p in selected_positions) / len(selected_positions)
             new_pos = {"x": avg_x + 50, "y": avg_y + 50}
         else:
-            new_pos = {"x": float(random.randint(0, 100)), "y": float(random.randint(0, 100))}
+            new_pos = {
+                "x": float(random.randint(0, 100)),
+                "y": float(random.randint(0, 100)),
+            }
 
         new_node_id = state.add_node(position=new_pos, **method_args)
 
@@ -639,7 +708,11 @@ def apply_operation_wrapper(
         cyto_data_new = state.to_cytoscape_elements()
         return ui, cyto_data_new, repr(state.cluster_state), log, history_data
     elif method_name == "duplicate":
-        resolved_selected = [state.resolve_qubit(q) for q in selected_nodes if state.resolve_qubit(q) is not None]
+        resolved_selected = [
+            state.resolve_qubit(q)
+            for q in selected_nodes
+            if state.resolve_qubit(q) is not None
+        ]
         resolved_selected.sort()
         for q in resolved_selected:
             if q < len(state):
@@ -827,7 +900,9 @@ def load_graph(
             # Preserve active groups from curr_state if present
             for g_id, g_info in curr_state.groups.items():
                 if g_id not in state.groups:
-                    state.add_group(g_id, label=g_info.get("label"), style=g_info.get("style"))
+                    state.add_group(
+                        g_id, label=g_info.get("label"), style=g_info.get("style")
+                    )
 
             cyto_data_new = state.to_cytoscape_elements()
 
