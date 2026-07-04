@@ -1,4 +1,53 @@
-from dash import dcc, html, callback, Input, Output, State, no_update, callback_context
+from dash import (
+    dcc,
+    html,
+    callback,
+    clientside_callback,
+    Input,
+    Output,
+    State,
+    no_update,
+    callback_context,
+)
+
+COLOR_PALETTE = {
+    "IA": "#93C5FD",
+    "IB": "#60A5FA",
+    "IC": "#3B82F6",
+    "ID": "#2563EB",
+    "IE": "#1D4ED8",
+    "IF": "#1F3A8A",
+    "XA": "#6EE7B7",
+    "XB": "#34D399",
+    "XC": "#10B981",
+    "XD": "#059669",
+    "XE": "#166534",
+    "XF": "#14532D",
+    "YA": "#FCD34D",
+    "YB": "#FBBF24",
+    "YC": "#F59E0B",
+    "YD": "#EA580C",
+    "YE": "#C2410C",
+    "YF": "#9A3412",
+    "ZA": "#DDD6FE",
+    "ZB": "#C084FC",
+    "ZC": "#A855F7",
+    "ZD": "#9333EA",
+    "ZE": "#7E22CE",
+    "ZF": "#581C87",
+}
+
+COLOR_STYLES = [
+    {
+        "selector": f'[vop *= "{label}"]',
+        "style": {
+            "background-color": color,
+            "border-width": 2,
+            "border-color": "#000000",
+        },
+    }
+    for label, color in COLOR_PALETTE.items()
+]
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from clustersim.simulator import ClusterState
@@ -357,13 +406,16 @@ def displaySelectedNodeData(data_list: List[Dict[str, Any]]):
         return f"Selected {selected_ids}"
 
 
-@callback(
+clientside_callback(
+    """
+    function(value) {
+        return {name: value};
+    }
+    """,
     Output("figure-app", "layout"),
     Input("graph_layout_dropdown", "value"),
     prevent_initial_call=True,
 )
-def update_layout(value):
-    return {"name": value}
 
 
 @callback(
@@ -372,48 +424,7 @@ def update_layout(value):
     Input("node_labels", "value"),
 )
 def update_stylesheet(_, node_labels: str):
-
     label_style = [{"selector": "node", "style": {"label": node_labels}}]
-
-    color_palette = {
-        "IA": "#93C5FD",
-        "IB": "#60A5FA",
-        "IC": "#3B82F6",
-        "ID": "#2563EB",
-        "IE": "#1D4ED8",
-        "IF": "#1F3A8A",
-        "XA": "#6EE7B7",
-        "XB": "#34D399",
-        "XC": "#10B981",
-        "XD": "#059669",
-        "XE": "#166534",
-        "XF": "#14532D",
-        "YA": "#FCD34D",
-        "YB": "#FBBF24",
-        "YC": "#F59E0B",
-        "YD": "#EA580C",
-        "YE": "#C2410C",
-        "YF": "#9A3412",
-        "ZA": "#DDD6FE",
-        "ZB": "#C084FC",
-        "ZC": "#A855F7",
-        "ZD": "#9333EA",
-        "ZE": "#7E22CE",
-        "ZF": "#581C87",
-    }
-
-    color_styles = []
-    for label, color in color_palette.items():
-        color_styles.append(
-            {
-                "selector": f'[vop *= "{label}"]',
-                "style": {
-                    "background-color": color,
-                    "border-width": 2,
-                    "border-color": "#000000",
-                },
-            }
-        )
 
     selected_style = [
         {
@@ -467,7 +478,7 @@ def update_stylesheet(_, node_labels: str):
         },
     ]
 
-    return label_style + color_styles + selected_style + custom_styles
+    return label_style + COLOR_STYLES + selected_style + custom_styles
 
 
 @callback(

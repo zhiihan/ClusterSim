@@ -1,6 +1,11 @@
 window.dash_clientside = window.dash_clientside || {};
 window.dash_clientside.clientside = {
     keydown_listener: function (dummy) {
+        if (window._keydown_listener_attached) {
+            return window.dash_clientside.no_update;
+        }
+        window._keydown_listener_attached = true;
+
         document.addEventListener('keydown', function (e) {
             // Do not capture keys if the user is typing in an input or textarea
             const active = document.activeElement;

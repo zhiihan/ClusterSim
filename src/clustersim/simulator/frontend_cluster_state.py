@@ -44,11 +44,6 @@ class FrontendClusterState:
         # Initialize node metadata list (1-to-1 with qubits 0..n-1)
         self.node_metadata: List[Dict[str, Any]] = []
 
-        n = len(self.cluster_state)
-
-        # Initialize node metadata list (1-to-1 with qubits 0..n-1)
-        self.node_metadata: List[Dict[str, Any]] = []
-
         def _get_init_pos(i: int) -> Dict[str, float]:
             if positions:
                 if isinstance(positions, list) and i < len(positions):

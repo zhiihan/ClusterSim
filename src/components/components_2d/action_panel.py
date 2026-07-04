@@ -6,6 +6,30 @@ import dash_bootstrap_components as dbc
 from typing import Any
 import random
 
+TOOLTIPS = {
+    "duplicate": "Copy (Ctrl+C) / Paste (Ctrl+V)",
+    "remove-node": "Delete Node (Backspace)",
+    "add-node": "Add Node (N)",
+    "toggle-edge": "Toggle Edge (E)",
+    "remove-edge": "Delete Edge (Shift+E)",
+    "H": "Hadamard Gate (H)",
+    "LC": "Local Complementation (W)",
+    "fusion-gate-xxzz": "Fusion Gate XXZZ",
+    "fusion-gate-xzzx": "Fusion Gate XZZX",
+    "fusion-gate-xyyz": "Fusion Gate XYYZ",
+    "X": "Pauli X",
+    "Y": "Pauli Y",
+    "Z": "Pauli Z",
+    "S": "Pauli S",
+    "S_DAG": "Pauli S Dagger",
+    "CX": "Controlled X",
+    "CZ": "Controlled Z",
+    "LCR": "Rewrite",
+    "MX": "Measure X",
+    "MY": "Measure Y",
+    "MZ": "Measure Z",
+}
+
 qubit_panel = dbc.Row(
     [
         # Column 1: Select Measurement Basis
@@ -391,29 +415,10 @@ qubit_panel = dbc.Row(
             ],
             width=1,
         ),
-        dbc.Tooltip(
-            "Copy (Ctrl+C) / Paste (Ctrl+V)", target="duplicate", placement="top"
-        ),
-        dbc.Tooltip("Delete Node (Backspace)", target="remove-node", placement="top"),
-        dbc.Tooltip("Add Node (N)", target="add-node", placement="top"),
-        dbc.Tooltip("Toggle Edge (E)", target="toggle-edge", placement="top"),
-        dbc.Tooltip("Delete Edge (Shift+E)", target="remove-edge", placement="top"),
-        dbc.Tooltip("Hadamard Gate (H)", target="H", placement="top"),
-        dbc.Tooltip("Local Complementation (W)", target="LC", placement="top"),
-        dbc.Tooltip("Fusion Gate XXZZ", target="fusion-gate-xxzz", placement="top"),
-        dbc.Tooltip("Fusion Gate XZZX", target="fusion-gate-xzzx", placement="top"),
-        dbc.Tooltip("Fusion Gate XYYZ", target="fusion-gate-xyyz", placement="top"),
-        dbc.Tooltip("Pauli X", target="X", placement="top"),
-        dbc.Tooltip("Pauli Y", target="Y", placement="top"),
-        dbc.Tooltip("Pauli Z", target="Z", placement="top"),
-        dbc.Tooltip("Pauli S", target="S", placement="top"),
-        dbc.Tooltip("Pauli S Dagger", target="S_DAG", placement="top"),
-        dbc.Tooltip("Controlled X", target="CX", placement="top"),
-        dbc.Tooltip("Controlled Z", target="CZ", placement="top"),
-        dbc.Tooltip("Rewrite", target="LCR", placement="top"),
-        dbc.Tooltip("Measure X", target="MX", placement="top"),
-        dbc.Tooltip("Measure Y", target="MY", placement="top"),
-        dbc.Tooltip("Measure Z", target="MZ", placement="top"),
+        *[
+            dbc.Tooltip(text, target=target, placement="top")
+            for target, text in TOOLTIPS.items()
+        ],
     ],
     className="flex-nowrap",
 )
@@ -454,7 +459,6 @@ button_operations = {
     "remove-node": ("remove_node", {}),
     "duplicate": ("duplicate", {}),
 }
-
 
 
 def _normalize_history(history_data: Any) -> dict[str, list[Any]]:
@@ -504,16 +508,22 @@ KEY_MAPPINGS = {
 def handle_buttons(*args):
     kwargs = {}
 
-    log = args[-4]
-
-    # The last three args are selectedNodeData, selectedEdgeData, and elements
-    selected_node_data = args[-3]
-    selected_edge_data = args[-2]
-    cyto_data = args[-1]
+    num_inputs = len(button_operations) + len(KEY_MAPPINGS) + 1
+    (
+        clipboard_data,
+        raw_history_data,
+        fusion_mode_val,
+        fusion_force_val,
+        force_meas_val,
+        log,
+        selected_node_data,
+        selected_edge_data,
+        cyto_data,
+    ) = args[num_inputs:]
 
     state = FrontendClusterState.from_cytoscape_elements(cyto_data)
 
-    history_data = _normalize_history(args[-8])
+    history_data = _normalize_history(raw_history_data)
 
     # Record the current elements state in history for Undo/Redo
     history_data["undo_stack"].append(
@@ -526,7 +536,6 @@ def handle_buttons(*args):
     triggered_id = KEY_MAPPINGS.get(triggered_id, triggered_id)
 
     if triggered_id == "ctrl-v-btn":
-        clipboard_data = args[-9]
         if not clipboard_data:
             return (
                 "Clipboard is empty!",
@@ -545,11 +554,11 @@ def handle_buttons(*args):
         method_name, base_args = button_operations[triggered_id]
         method_args = base_args.copy()
         if method_name == "fusion_gate":
-            method_args["force"] = int(args[-6])
-            method_args["mode"] = args[-7]
+            method_args["force"] = int(fusion_force_val)
+            method_args["mode"] = fusion_mode_val
 
         elif method_name == "measure":
-            method_args["force"] = int(args[-5])
+            method_args["force"] = int(force_meas_val)
 
         selected_nodes = []
         for i in selected_node_data:
@@ -703,9 +712,6 @@ def apply_operation_wrapper(
             state.remove_node(expanded_qubits)
 
         ui = f"Removed nodes {display_nodes}"
-        log += f"REMOVE_NODE {' '.join(map(str, expanded_qubits))}\n"
-        cyto_data_new = state.to_cytoscape_elements()
-        return ui, cyto_data_new, repr(state.cluster_state), log, history_data
     elif method_name == "duplicate":
         resolved_selected = list(expanded_qubits)
         resolved_selected.sort()
@@ -738,6 +744,8 @@ def apply_operation_wrapper(
         log += f"ADD_NODE {new_node_id}\n"
         for neighbour in selected_nodes:
             log += f"ADD_EDGE {new_node_id} {neighbour}\n"
+    elif method_name == "remove_node":
+        log += f"REMOVE_NODE {' '.join(map(str, expanded_qubits))}\n"
     else:
         log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
 
@@ -772,6 +780,28 @@ def postprocess_cyto_data_elements(
             if item["data"].get("vop"):
                 item["position"] = pos
     return cyto_data
+
+
+def _make_load_response(
+    cyto_data=no_update,
+    sim_rep=no_update,
+    move_log=no_update,
+    ui_msg="Action completed!",
+    history_data=no_update,
+    valid=False,
+    invalid=False,
+    feedback="",
+):
+    return (
+        cyto_data,
+        sim_rep,
+        move_log,
+        ui_msg,
+        history_data,
+        valid,
+        invalid,
+        feedback,
+    )
 
 
 @callback(
@@ -815,36 +845,16 @@ def load_graph(
 
     history_data = _normalize_history(history_data)
 
-    _, positions = preprocess_cyto_data_elements(cyto_data)
-
-    valid = False
-    invalid = False
-    feedback = ""
-
     if not load_graph_input and triggered_id == "load-button":
-        return (
-            no_update,
-            no_update,
-            no_update,
-            "Cannot load empty input!",
-            no_update,
-            False,
-            True,
-            "Cannot load empty input!",
+        return _make_load_response(
+            ui_msg="Cannot load empty input!",
+            invalid=True,
+            feedback="Cannot load empty input!",
         )
 
     if triggered_id == "undo-button":
         if not history_data["undo_stack"]:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                "Nothing to undo!",
-                no_update,
-                False,
-                False,
-                "",
-            )
+            return _make_load_response(ui_msg="Nothing to undo!")
 
         # Pop the state to restore
         prev_state = history_data["undo_stack"].pop()
@@ -866,15 +876,12 @@ def load_graph(
             # Undoing a plot customization (group creation/removal, label, shape):
             # Restore FrontendClusterState elements without resetting simulator state or move_log
             state = FrontendClusterState.from_cytoscape_elements(cyto_data_new)
-            return (
+            return _make_load_response(
                 cyto_data_new,
                 repr(state.cluster_state),
                 move_log,
                 "Undid plot customization!",
                 history_data,
-                valid,
-                invalid,
-                feedback,
             )
         else:
             # Undoing a quantum operation: restore quantum state while preserving active groups and plot customizations
@@ -890,29 +897,17 @@ def load_graph(
 
             cyto_data_new = state.to_cytoscape_elements()
 
-            return (
+            return _make_load_response(
                 cyto_data_new,
                 repr(state.cluster_state),
                 move_log,
                 "Undid operation!",
                 history_data,
-                valid,
-                invalid,
-                feedback,
             )
 
     elif triggered_id == "redo-button":
         if not history_data["redo_stack"]:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                "Nothing to redo!",
-                no_update,
-                False,
-                False,
-                "",
-            )
+            return _make_load_response(ui_msg="Nothing to redo!")
 
         # Pop the state to restore
         next_state = history_data["redo_stack"].pop()
@@ -931,33 +926,21 @@ def load_graph(
         cyto_data_new = next_state["elements"]
 
         state = FrontendClusterState.from_cytoscape_elements(cyto_data_new)
-        return (
+        return _make_load_response(
             cyto_data_new,
             repr(state.cluster_state),
             move_log,
             "Action completed!",
             history_data,
-            valid,
-            invalid,
-            feedback,
         )
 
     elif triggered_id == "load-button":
         try:
             g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
-            valid = True
-            invalid = False
         except Exception as e:
             err_msg = str(e)
-            return (
-                no_update,
-                no_update,
-                no_update,
-                f"Failed to load: {err_msg}",
-                no_update,
-                False,
-                True,
-                err_msg,
+            return _make_load_response(
+                ui_msg=f"Failed to load: {err_msg}", invalid=True, feedback=err_msg
             )
 
         state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
@@ -965,27 +948,16 @@ def load_graph(
         history_data = {"undo_stack": [], "redo_stack": []}
         cyto_data_new = state.to_cytoscape_elements()
 
-        return (
+        return _make_load_response(
             cyto_data_new,
             repr(g),
             move_log,
             "Action completed!",
             history_data,
-            valid,
-            invalid,
-            feedback,
+            valid=True,
         )
 
-    return (
-        no_update,
-        no_update,
-        no_update,
-        "Action completed!",
-        history_data,
-        valid,
-        invalid,
-        feedback,
-    )
+    return _make_load_response(history_data=history_data)
 
 
 @callback(
