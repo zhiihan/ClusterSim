@@ -185,6 +185,7 @@ def toggle_offcanvas(n_clicks, is_open):
 @callback(
     Output("custom-label-input", "value"),
     Output("node-shape-select", "value"),
+    Output("create-group-btn", "children"),
     Input("figure-app", "selectedNodeData"),
     Input("figure-app", "selectedEdgeData"),
     State("figure-app", "elements"),
@@ -192,6 +193,22 @@ def toggle_offcanvas(n_clicks, is_open):
 def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
     label_val = ""
     shape_val = no_update
+    btn_text = "Create Group from Selection"
+
+    if selected_nodes and elements:
+        state = FrontendClusterState.from_cytoscape_elements(elements)
+        is_grouped = False
+        for node in selected_nodes:
+            n_id = str(node.get("id"))
+            if n_id in state.groups:
+                is_grouped = True
+                break
+            q = state.resolve_qubit(n_id)
+            if q is not None and state.get_group(q) is not None:
+                is_grouped = True
+                break
+        if is_grouped:
+            btn_text = "Ungroup Selection"
 
     if selected_nodes and len(selected_nodes) == 1:
         node = selected_nodes[0]
@@ -228,7 +245,7 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
         data = actual.get("data", {}) if actual else edge
         label_val = data.get("label", "")
 
-    return label_val, shape_val
+    return label_val, shape_val, btn_text
 
 
 @callback(
@@ -277,15 +294,16 @@ def handle_cytoscape_options(
 
     if trigger_id == "apply-label-btn":
         if selected_nodes:
-            selected_ids = {str(n["id"]) for n in selected_nodes}
-            for i in range(len(state)):
-                if str(i) in selected_ids:
-                    state.node_metadata[i]["label"] = lbl_text if lbl_text else str(i)
-            for g_id in state.groups:
-                if g_id in selected_ids:
-                    state.groups[g_id]["label"] = lbl_text if lbl_text else ""
-        elif selected_edges:
-            pass
+            for n in selected_nodes:
+                n_id = str(n.get("id"))
+                if n_id in state.groups:
+                    state.groups[n_id]["label"] = lbl_text if lbl_text else ""
+                else:
+                    q = state.resolve_qubit(n_id)
+                    if q is not None and 0 <= q < len(state):
+                        state.node_metadata[q]["label"] = (
+                            lbl_text if lbl_text else str(q)
+                        )
 
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
@@ -309,27 +327,35 @@ def handle_cytoscape_options(
         )
         history_data["redo_stack"] = []
         if selected_nodes:
-            selected_ids = {str(n["id"]) for n in selected_nodes}
-            for i in range(len(state)):
-                if str(i) in selected_ids:
-                    state.node_metadata[i]["shape"] = node_shape
-                    if "style" not in state.node_metadata[i]:
-                        state.node_metadata[i]["style"] = {}
-                    state.node_metadata[i]["style"]["shape"] = node_shape
+            for n in selected_nodes:
+                n_id = str(n.get("id"))
+                q = state.resolve_qubit(n_id)
+                if q is not None and 0 <= q < len(state):
+                    state.node_metadata[q]["shape"] = node_shape
+                    if "style" not in state.node_metadata[q]:
+                        state.node_metadata[q]["style"] = {}
+                    state.node_metadata[q]["style"]["shape"] = node_shape
         return state.to_cytoscape_elements(), history_data
 
     elif trigger_id == "create-group-btn":
         if not selected_nodes:
             return no_update, no_update
-        selected_qubits = []
-        for n in selected_nodes:
-            try:
-                selected_qubits.append(int(n["id"]))
-            except (ValueError, KeyError):
-                pass
 
-        if not selected_qubits:
-            return no_update, no_update
+        selected_group_ids = []
+        selected_qubits = []
+
+        for n in selected_nodes:
+            n_id = str(n.get("id"))
+            if n_id in state.groups:
+                selected_group_ids.append(n_id)
+            else:
+                q = state.resolve_qubit(n_id)
+                if q is not None:
+                    selected_qubits.append(q)
+
+        has_group_container = len(selected_group_ids) > 0
+        grouped_qubits = [q for q in selected_qubits if state.get_group(q) is not None]
+        is_ungroup_action = has_group_container or len(grouped_qubits) > 0
 
         # Record state before applying offcanvas customization
         history_data["undo_stack"].append(
@@ -341,12 +367,37 @@ def handle_cytoscape_options(
         )
         history_data["redo_stack"] = []
 
-        g_id = f"group_{uuid.uuid4().hex[:8]}"
-        g_label = lbl_text if lbl_text else ""
-        state.add_group(g_id, label=g_label)
-        for q in selected_qubits:
-            if q < len(state):
-                state.set_group(q, g_id)
+        if is_ungroup_action:
+            # Ungroup action: remove selected group containers and unassign grouped qubits
+            for g_id in selected_group_ids:
+                state.remove_group(g_id, unassign_children=True)
+
+            affected_groups = set()
+            for q in grouped_qubits:
+                g_id = state.get_group(q)
+                if g_id:
+                    affected_groups.add(g_id)
+                    state.set_group(q, None)
+
+            # Clean up any affected groups that no longer have member nodes
+            for g_id in affected_groups:
+                remaining = any(
+                    meta.get("parent") == g_id for meta in state.node_metadata
+                )
+                if not remaining:
+                    state.remove_group(g_id)
+        else:
+            # Group action: create a new group for selected un-grouped qubits
+            if not selected_qubits:
+                return no_update, no_update
+
+            g_id = f"group_{uuid.uuid4().hex[:8]}"
+            g_label = lbl_text if lbl_text else ""
+            state.add_group(g_id, label=g_label)
+            for q in selected_qubits:
+                if q < len(state):
+                    state.set_group(q, g_id)
+
         return state.to_cytoscape_elements(), history_data
 
     return no_update, no_update

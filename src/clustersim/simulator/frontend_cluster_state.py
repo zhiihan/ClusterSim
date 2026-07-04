@@ -345,17 +345,28 @@ class FrontendClusterState:
         """
         Translate a Cytoscape node ID, qubit index, or persistent value into a valid ClusterState qubit index (0..N-1).
         """
+        if identifier is None:
+            return None
+
+        s_id = str(identifier)
+
+        # Handle compound node ID format like "0_group_1"
+        if "_" in s_id and not s_id.startswith("group_"):
+            prefix = s_id.split("_")[0]
+            if prefix.isdigit():
+                q = int(prefix)
+                if 0 <= q < len(self):
+                    return q
+
         # 1. If identifier is string digit matching Cytoscape element id str(i)
-        if isinstance(identifier, str) and identifier.isdigit():
-            q = int(identifier)
+        if s_id.isdigit():
+            q = int(s_id)
             if 0 <= q < len(self):
                 return q
 
         # 2. Check if integer identifier matches persistent value attribute
         for i, meta in enumerate(self.node_metadata):
-            if meta.get("value") == identifier or str(meta.get("value")) == str(
-                identifier
-            ):
+            if meta.get("value") == identifier or str(meta.get("value")) == s_id:
                 return i
 
         # 3. Fallback to raw integer index within bounds
@@ -477,7 +488,38 @@ class FrontendClusterState:
         """
         elements: List[Dict[str, Any]] = []
 
-        # 1. Compound Parent Group Container Nodes
+        # 1. Qubit Nodes (must come before compound group containers so parent update is processed first)
+        for i in range(len(self)):
+            meta = self.node_metadata[i]
+            parent_id = str(meta["parent"]) if meta.get("parent") else None
+            cyto_id = f"{i}_{parent_id}" if parent_id else str(i)
+
+            node_data = {
+                "id": cyto_id,
+                "label": meta.get("label", str(i)),
+                "value": meta.get("value", i),
+                "vop": self.vertex_operators[i],
+            }
+            if meta.get("shape"):
+                node_data["shape"] = meta["shape"]
+            elif meta.get("style", {}).get("shape"):
+                node_data["shape"] = meta["style"]["shape"]
+
+            if parent_id:
+                node_data["parent"] = parent_id
+
+            node_elem = {
+                "data": node_data,
+                "position": meta.get("position", {"x": 0.0, "y": 0.0}),
+            }
+            if meta.get("classes"):
+                node_elem["classes"] = meta["classes"]
+            if meta.get("style"):
+                node_elem["style"] = meta["style"]
+
+            elements.append(node_elem)
+
+        # 2. Compound Parent Group Container Nodes
         for group_id, group_info in self.groups.items():
             val = group_info.get("value")
             if not val:
@@ -498,45 +540,29 @@ class FrontendClusterState:
                 }
             )
 
-        # 2. Qubit Nodes
-        for i in range(len(self)):
-            meta = self.node_metadata[i]
-            node_data = {
-                "id": str(i),
-                "label": meta.get("label", str(i)),
-                "value": meta.get("value", i),
-                "vop": self.vertex_operators[i],
-            }
-            if meta.get("shape"):
-                node_data["shape"] = meta["shape"]
-            elif meta.get("style", {}).get("shape"):
-                node_data["shape"] = meta["style"]["shape"]
-
-            if meta.get("parent"):
-                node_data["parent"] = str(meta["parent"])
-            else:
-                node_data["parent"] = None
-
-            node_elem = {
-                "data": node_data,
-                "position": meta.get("position", {"x": 0.0, "y": 0.0}),
-            }
-            if meta.get("classes"):
-                node_elem["classes"] = meta["classes"]
-            if meta.get("style"):
-                node_elem["style"] = meta["style"]
-
-            elements.append(node_elem)
-
         # 3. Edges between Qubit Nodes
         for u, neighbors in enumerate(self.adjacency_list):
             for v in neighbors:
                 if u < v:
+                    u_parent = (
+                        str(self.node_metadata[u]["parent"])
+                        if self.node_metadata[u].get("parent")
+                        else None
+                    )
+                    u_id = f"{u}_{u_parent}" if u_parent else str(u)
+
+                    v_parent = (
+                        str(self.node_metadata[v]["parent"])
+                        if self.node_metadata[v].get("parent")
+                        else None
+                    )
+                    v_id = f"{v}_{v_parent}" if v_parent else str(v)
+
                     elements.append(
                         {
                             "data": {
-                                "source": str(u),
-                                "target": str(v),
+                                "source": u_id,
+                                "target": v_id,
                             }
                         }
                     )
@@ -560,7 +586,8 @@ class FrontendClusterState:
             if "source" in data and "target" in data:
                 edge_elements.append(item)
             elif "vop" in data or (
-                data.get("value") is not None and str(data.get("id", "")).isdigit()
+                data.get("value") is not None
+                and not str(data.get("id", "")).startswith("group_")
             ):
                 node_elements.append(item)
             elif "id" in data:
@@ -581,8 +608,11 @@ class FrontendClusterState:
 
         # Sort qubit nodes by integer ID
         def get_node_id(elem):
+            raw_id = str(elem.get("data", {}).get("id", "0"))
+            if "_" in raw_id and not raw_id.startswith("group_"):
+                raw_id = raw_id.split("_")[0]
             try:
-                return int(elem["data"]["id"])
+                return int(raw_id)
             except (ValueError, KeyError):
                 return 0
 
@@ -597,8 +627,10 @@ class FrontendClusterState:
             rx_graph.add_node({"vop": vop_val})
 
         for edge in edge_elements:
-            u = int(edge["data"]["source"])
-            v = int(edge["data"]["target"])
+            src_str = str(edge["data"]["source"])
+            tgt_str = str(edge["data"]["target"])
+            u = int(src_str.split("_")[0]) if "_" in src_str else int(src_str)
+            v = int(tgt_str.split("_")[0]) if "_" in tgt_str else int(tgt_str)
             rx_graph.add_edge(u, v, None)
 
         base_cluster_state = ClusterState.from_rustworkx(rx_graph)
