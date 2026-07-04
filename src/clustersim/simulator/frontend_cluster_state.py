@@ -469,6 +469,42 @@ class FrontendClusterState:
 
         self.groups[group_id] = {"label": label, "style": style, "value": value}
 
+    def get_group_children(self, group_id: str) -> List[int]:
+        """Return list of qubit indices that belong to the specified group."""
+        return [
+            i
+            for i, meta in enumerate(self.node_metadata)
+            if meta.get("parent") == str(group_id)
+        ]
+
+    def expand_selection(
+        self, selected_items: List[Union[int, str, Dict[str, Any]]]
+    ) -> List[int]:
+        """
+        Expand selected items (which may contain group container IDs, qubit indices, or Cytoscape node dicts)
+        into a deduplicated list of valid qubit indices.
+        If a group container ID is present, it is expanded to all of its child qubits.
+        """
+        result: List[int] = []
+        for item in selected_items:
+            if isinstance(item, dict):
+                s_item = str(item.get("id", ""))
+            else:
+                s_item = str(item)
+
+            if s_item in self.groups:
+                children = self.get_group_children(s_item)
+                for q in children:
+                    if q not in result:
+                        result.append(q)
+            else:
+                q = self.resolve_qubit(
+                    item if not isinstance(item, dict) else item.get("id")
+                )
+                if q is not None and q not in result:
+                    result.append(q)
+        return result
+
     def remove_group(self, group_id: str, unassign_children: bool = True) -> None:
         """Remove a compound group container."""
         if group_id in self.groups:

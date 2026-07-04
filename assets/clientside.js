@@ -87,6 +87,14 @@ window.dash_clientside.clientside = {
                     btn.click();
                 }
             }
+            // Check if G (Group / Ungroup)
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+                const btn = document.getElementById('key-g-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
         }, true);
         return window.dash_clientside.no_update;
     }

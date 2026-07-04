@@ -119,6 +119,11 @@ cytoscape_offcanvas = dbc.Offcanvas(
                             size="sm",
                             className="w-100 mb-2",
                         ),
+                        dbc.Tooltip(
+                            "Group / Ungroup Selection (G)",
+                            target="create-group-btn",
+                            placement="top",
+                        ),
                     ],
                     className="d-flex flex-column mb-3",
                 ),
@@ -254,6 +259,7 @@ def update_offcanvas_inputs(selected_nodes, selected_edges, elements):
     Input("apply-label-btn", "n_clicks"),
     Input("apply-shape-btn", "n_clicks"),
     Input("create-group-btn", "n_clicks"),
+    Input("key-g-btn", "n_clicks"),
     State("figure-app", "elements"),
     State("figure-app", "selectedNodeData"),
     State("figure-app", "selectedEdgeData"),
@@ -267,6 +273,7 @@ def handle_cytoscape_options(
     btn_label,
     btn_shape,
     btn_create_group,
+    key_g,
     elements,
     selected_nodes,
     selected_edges,
@@ -280,6 +287,8 @@ def handle_cytoscape_options(
         return no_update, no_update
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if trigger_id == "key-g-btn":
+        trigger_id = "create-group-btn"
     lbl_text = custom_label.strip() if custom_label else ""
 
     if not history_data or not isinstance(history_data, dict):
@@ -327,10 +336,9 @@ def handle_cytoscape_options(
         )
         history_data["redo_stack"] = []
         if selected_nodes:
-            for n in selected_nodes:
-                n_id = str(n.get("id"))
-                q = state.resolve_qubit(n_id)
-                if q is not None and 0 <= q < len(state):
+            expanded_qubits = state.expand_selection(selected_nodes)
+            for q in expanded_qubits:
+                if 0 <= q < len(state):
                     state.node_metadata[q]["shape"] = node_shape
                     if "style" not in state.node_metadata[q]:
                         state.node_metadata[q]["style"] = {}

@@ -43,6 +43,7 @@ app.layout = html.Div(
         html.Button(id="key-shift-e-btn", style={"display": "none"}),
         html.Button(id="key-h-btn", style={"display": "none"}),
         html.Button(id="key-w-btn", style={"display": "none"}),
+        html.Button(id="key-g-btn", style={"display": "none"}),
         html.Div(
             id="none",
             children=[],

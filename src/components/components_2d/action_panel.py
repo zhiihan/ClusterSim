@@ -589,7 +589,7 @@ def handle_buttons(*args):
 
 def apply_operation_wrapper(
     method_name: str,
-    selected_nodes: list[int],
+    selected_nodes: list,
     cyto_data,
     log,
     method_args,
@@ -607,17 +607,15 @@ def apply_operation_wrapper(
         _type_: processed cyto_data for use in figure-app.elements
     """
     state = FrontendClusterState.from_cytoscape_elements(cyto_data)
-    display_nodes = [
-        int(q) if (isinstance(q, int) or (isinstance(q, str) and q.isdigit())) else q
-        for q in selected_nodes
-    ]
+    expanded_qubits = state.expand_selection(selected_nodes)
+    display_nodes = list(expanded_qubits)
 
     if method_name in ["add_edge", "remove_edge", "toggle_edge"]:
-        for pair in itertools.combinations(selected_nodes, 2):
+        for pair in itertools.combinations(expanded_qubits, 2):
             getattr(state, method_name)(*pair, **method_args)
         ui = f"Applied {method_name} to {display_nodes}"
     elif method_name in ["CX", "CZ"]:
-        for pair in itertools.batched(selected_nodes, n=2):
+        for pair in itertools.batched(expanded_qubits, n=2):
             if len(pair) < 2:
                 return (
                     "Odd number of gates!",
@@ -639,18 +637,18 @@ def apply_operation_wrapper(
         "S",
         "S_DAG",
     ]:
-        for i in selected_nodes:
+        for i in expanded_qubits:
             getattr(state, method_name)(i, **method_args)
 
         ui = f"Applied {method_name} to {display_nodes}"
     elif method_name in ["measure"]:
         outcomes = []
-        for i in selected_nodes:
+        for i in expanded_qubits:
             outcomes.append(getattr(state, method_name)(i, **method_args))
 
         ui = f"Measured selected nodes {display_nodes} with outcomes {outcomes}"
     elif method_name in ["fusion_gate"]:
-        for pair in itertools.batched(selected_nodes, n=2):
+        for pair in itertools.batched(expanded_qubits, n=2):
             if len(pair) < 2:
                 return (
                     "Odd number of qubits!",
@@ -666,8 +664,8 @@ def apply_operation_wrapper(
     elif method_name in ["add_node"]:
         selected_positions = []
         resolved_selected = []
-        if selected_nodes:
-            for q in selected_nodes:
+        if expanded_qubits:
+            for q in expanded_qubits:
                 idx = state.resolve_qubit(q)
                 if idx is not None and idx < len(state):
                     resolved_selected.append(idx)
@@ -689,30 +687,25 @@ def apply_operation_wrapper(
         for neighbour in resolved_selected:
             if neighbour < new_node_id:
                 state.add_edge(new_node_id, neighbour)
-        if selected_nodes:
+        if expanded_qubits:
             ui = f"Added node {new_node_id} with edges to {display_nodes}!"
         else:
             ui = f"Added node {new_node_id}!"
     elif method_name in ["remove_node"]:
         groups_to_remove = [q for q in selected_nodes if str(q) in state.groups]
-        qubits_to_remove = [q for q in selected_nodes if str(q) not in state.groups]
 
         for g_id in groups_to_remove:
             state.remove_group(str(g_id), unassign_children=True)
 
-        if qubits_to_remove:
-            state.remove_node(qubits_to_remove)
+        if expanded_qubits:
+            state.remove_node(expanded_qubits)
 
         ui = f"Removed nodes {display_nodes}"
-        log += f"REMOVE_NODE {' '.join(map(str, selected_nodes))}\n"
+        log += f"REMOVE_NODE {' '.join(map(str, expanded_qubits))}\n"
         cyto_data_new = state.to_cytoscape_elements()
         return ui, cyto_data_new, repr(state.cluster_state), log, history_data
     elif method_name == "duplicate":
-        resolved_selected = [
-            state.resolve_qubit(q)
-            for q in selected_nodes
-            if state.resolve_qubit(q) is not None
-        ]
+        resolved_selected = list(expanded_qubits)
         resolved_selected.sort()
         for q in resolved_selected:
             if q < len(state):
@@ -720,7 +713,7 @@ def apply_operation_wrapper(
                 state.add_node(position={"x": pos["x"] + 50, "y": pos["y"] + 50})
 
         state.cluster_state = state.cluster_state.duplicate(resolved_selected)
-        ui = f"Duplicated nodes {selected_nodes}"
+        ui = f"Duplicated nodes {display_nodes}"
     else:
         raise NotImplementedError(f"Do not know {method_name}")
 
