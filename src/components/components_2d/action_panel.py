@@ -318,7 +318,7 @@ qubit_panel = dbc.Row(
                                     style={"fontSize": "0.8rem", "padding": "4px 6px"},
                                 ),
                                 dbc.Button(
-                                    "Del Node",
+                                    "Delete Node",
                                     outline=True,
                                     color="primary",
                                     id="remove-node",
@@ -330,14 +330,14 @@ qubit_panel = dbc.Row(
                         dbc.ButtonGroup(
                             [
                                 dbc.Button(
-                                    "Toggle",
+                                    "Toggle Edge",
                                     outline=True,
                                     color="primary",
                                     id="toggle-edge",
                                     style={"fontSize": "0.8rem", "padding": "4px 6px"},
                                 ),
                                 dbc.Button(
-                                    "Del Edge",
+                                    "Delete Edge",
                                     outline=True,
                                     color="primary",
                                     id="remove-edge",
@@ -818,6 +818,8 @@ def _make_load_response(
     Input("redo-button", "n_clicks"),
     Input("ctrl-y-btn", "n_clicks"),
     Input("load-button", "n_clicks"),
+    Input("upload-graph-json", "contents"),
+    State("upload-graph-json", "filename"),
     State("load-graph-input", "value"),
     State("move-log", "children"),
     State("figure-app", "elements"),
@@ -830,6 +832,8 @@ def load_graph(
     _redo,
     _ctrl_y,
     _load,
+    upload_contents,
+    upload_filename,
     load_graph_input,
     move_log,
     cyto_data,
@@ -844,13 +848,6 @@ def load_graph(
         triggered_id = "redo-button"
 
     history_data = _normalize_history(history_data)
-
-    if not load_graph_input and triggered_id == "load-button":
-        return _make_load_response(
-            ui_msg="Cannot load empty input!",
-            invalid=True,
-            feedback="Cannot load empty input!",
-        )
 
     if triggered_id == "undo-button":
         if not history_data["undo_stack"]:
@@ -935,24 +932,103 @@ def load_graph(
         )
 
     elif triggered_id == "load-button":
-        try:
-            g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
-        except Exception as e:
-            err_msg = str(e)
-            return _make_load_response(
-                ui_msg=f"Failed to load: {err_msg}", invalid=True, feedback=err_msg
-            )
+        load_graph_input_str = load_graph_input.strip()
+        if load_graph_input_str.startswith("{") or load_graph_input_str.startswith("["):
+            try:
+                import json
+                data = json.loads(load_graph_input_str)
+                if isinstance(data, dict) and "cluster_state_json" in data:
+                    state = FrontendClusterState.from_dict(data)
+                    g = state.cluster_state
+                    new_move_log = "# Reconstructed from Frontend JSON string\n"
+                else:
+                    g = ClusterState.from_json(data)
+                    state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
+                    new_move_log = "# Reconstructed from Graph JSON string\n"
+            except Exception as e:
+                err_msg = str(e)
+                return _make_load_response(
+                    ui_msg=f"Failed to load JSON: {err_msg}", invalid=True, feedback=err_msg
+                )
+        else:
+            try:
+                g, parsed_log = ClusterState.from_string(load_graph_input, return_log=True)
+                state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
+                new_move_log = parsed_log
+            except Exception as e:
+                err_msg = str(e)
+                return _make_load_response(
+                    ui_msg=f"Failed to load: {err_msg}", invalid=True, feedback=err_msg
+                )
 
-        state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
-        move_log = parsed_log
-        history_data = {"undo_stack": [], "redo_stack": []}
+        # Record the state before loading to the undo stack
+        history_data["undo_stack"].append(
+            {
+                "action_type": "quantum_operation",
+                "move_log": move_log,
+                "elements": cyto_data,
+            }
+        )
+        history_data["redo_stack"] = []
         cyto_data_new = state.to_cytoscape_elements()
 
         return _make_load_response(
             cyto_data_new,
             repr(g),
-            move_log,
+            new_move_log,
             "Action completed!",
+            history_data,
+            valid=True,
+        )
+
+    elif triggered_id == "upload-graph-json":
+        if not upload_contents:
+            return no_update
+        try:
+            import base64
+            import json
+            content_type, content_string = upload_contents.split(",")
+            decoded_bytes = base64.b64decode(content_string)
+            decoded = decoded_bytes.decode("utf-8")
+
+            # Check if JSON
+            try:
+                data = json.loads(decoded)
+                if isinstance(data, dict) and "cluster_state_json" in data:
+                    state = FrontendClusterState.from_dict(data)
+                    g = state.cluster_state
+                    new_move_log = f"# Reconstructed from Frontend JSON file: {upload_filename}\n"
+                else:
+                    g = ClusterState.from_json(data)
+                    state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
+                    new_move_log = f"# Reconstructed from Graph JSON file: {upload_filename}\n"
+            except json.JSONDecodeError:
+                # Treat as move log operations text
+                g, parsed_log = ClusterState.from_string(decoded, return_log=True)
+                state = FrontendClusterState(num_nodes=len(g), cluster_state=g)
+                new_move_log = parsed_log
+        except Exception as e:
+            err_msg = str(e)
+            return _make_load_response(
+                ui_msg=f"Failed to load file: {err_msg}", invalid=True, feedback=err_msg
+            )
+
+        # Record the state before loading to the undo stack
+        history_data["undo_stack"].append(
+            {
+                "action_type": "quantum_operation",
+                "move_log": move_log,
+                "elements": cyto_data,
+            }
+        )
+        history_data["redo_stack"] = []
+        cyto_data_new = state.to_cytoscape_elements()
+
+        return _make_load_response(
+            cyto_data_new,
+            repr(g),
+            new_move_log,
+            f"Successfully loaded {upload_filename}!",
             history_data,
             valid=True,
         )

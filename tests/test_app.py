@@ -166,3 +166,76 @@ def test_fusion_buttons_mapping():
         op_name, op_args = button_operations[key]
         assert op_name == "fusion_gate"
         assert op_args["fusion_type"] == expected_type
+
+
+def test_load_graph_callback_json():
+    from components.components_2d.action_panel import load_graph
+    from clustersim.simulator import FrontendClusterState
+    from unittest.mock import patch
+    import json
+    import base64
+
+    # Create dummy initial state data
+    initial_state = FrontendClusterState(2)
+    initial_elements = initial_state.to_cytoscape_elements()
+    initial_log = "original log content"
+    initial_history = {"undo_stack": [], "redo_stack": []}
+
+    # Target state we want to load
+    target_state = FrontendClusterState(3)
+    target_state.node_metadata[0]["shape"] = "star"
+    target_state.set_position(1, {"x": 100.0, "y": 200.0})
+    target_json_str = target_state.to_json()
+
+    # 1. Test loading via JSON text input box
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "load-button"
+        res = load_graph(
+            _undo=None,
+            _ctrl_z=None,
+            _redo=None,
+            _ctrl_y=None,
+            _load=1,
+            upload_contents=None,
+            upload_filename=None,
+            load_graph_input=target_json_str,
+            move_log=initial_log,
+            cyto_data=initial_elements,
+            history_data=initial_history.copy(),
+        )
+        assert len(res) == 8
+        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert valid is True
+        assert invalid is False
+        assert ui_msg == "Action completed!"
+        # Check that history_data has pushed the prior state onto the undo stack!
+        assert len(history_data_new["undo_stack"]) == 1
+        assert history_data_new["undo_stack"][0]["move_log"] == initial_log
+        assert history_data_new["undo_stack"][0]["elements"] == initial_elements
+
+    # 2. Test loading via file upload (dcc.Upload)
+    upload_contents_b64 = "data:application/json;base64," + base64.b64encode(target_json_str.encode("utf-8")).decode("utf-8")
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "upload-graph-json"
+        res = load_graph(
+            _undo=None,
+            _ctrl_z=None,
+            _redo=None,
+            _ctrl_y=None,
+            _load=None,
+            upload_contents=upload_contents_b64,
+            upload_filename="test_graph.json",
+            load_graph_input="",
+            move_log=initial_log,
+            cyto_data=initial_elements,
+            history_data=initial_history.copy(),
+        )
+        assert len(res) == 8
+        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert valid is True
+        assert invalid is False
+        assert "Successfully loaded test_graph.json" in ui_msg
+        assert len(history_data_new["undo_stack"]) == 1
+        assert history_data_new["undo_stack"][0]["move_log"] == initial_log
+        assert history_data_new["undo_stack"][0]["elements"] == initial_elements
+

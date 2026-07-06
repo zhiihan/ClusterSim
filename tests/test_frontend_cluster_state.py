@@ -261,3 +261,24 @@ def test_custom_node_shape_export_and_reconstruction():
     reconstructed = FrontendClusterState.from_cytoscape_elements(elems)
     assert reconstructed.node_metadata[0]["shape"] == "star"
     assert reconstructed.node_metadata[1]["shape"] == "diamond"
+
+
+def test_json_serialization_deserialization():
+    state = FrontendClusterState(3)
+    state.node_metadata[0]["shape"] = "star"
+    state.set_position(1, {"x": 12.3, "y": 45.6})
+    state.add_group("group_test", label="Test Group")
+    state.set_group(2, "group_test")
+
+    # Serialize to JSON
+    json_str = state.to_json()
+
+    # Deserialize from JSON
+    reconstructed = FrontendClusterState.from_json(json_str)
+
+    assert len(reconstructed) == 3
+    assert reconstructed.node_metadata[0]["shape"] == "star"
+    assert reconstructed.get_position(1) == {"x": 12.3, "y": 45.6}
+    assert reconstructed.get_group(2) == "group_test"
+    assert "group_test" in reconstructed.groups
+    assert reconstructed.groups["group_test"]["label"] == "Test Group"

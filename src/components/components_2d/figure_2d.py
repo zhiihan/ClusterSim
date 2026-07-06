@@ -148,6 +148,32 @@ tab_3 = dbc.Row(
                     ],
                     className="align-items-center",
                 ),
+                html.Div(style={"height": "10px"}),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dcc.Upload(
+                                id="upload-graph-json",
+                                children=html.Div(
+                                    [
+                                        "Drag & Drop or ",
+                                        html.A("Select JSON/Text File", style={"textDecoration": "underline", "cursor": "pointer"})
+                                    ],
+                                    style={
+                                        "border": "1px dashed #ced4da",
+                                        "borderRadius": "5px",
+                                        "padding": "10px",
+                                        "textAlign": "center",
+                                        "backgroundColor": "#f8f9fa",
+                                        "color": "#495057",
+                                    }
+                                ),
+                                multiple=False,
+                            ),
+                            width=12,
+                        )
+                    ]
+                ),
             ],
             width=12,
         )
