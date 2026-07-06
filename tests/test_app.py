@@ -114,6 +114,109 @@ def test_apply_operation_wrapper_add_node_offset():
     assert new_node_pos2 == {"x": 70, "y": 80}
 
 
+def test_apply_operation_wrapper_duplicate():
+    from components.components_2d.action_panel import apply_operation_wrapper
+    from clustersim.simulator import FrontendClusterState
+
+    # 1. Setup a FrontendClusterState with 3 nodes, two of which are in a group
+    state = FrontendClusterState(3)
+    state.add_group("group_alpha", label="Alpha Group")
+    state.set_group(0, "group_alpha")
+    state.set_group(1, "group_alpha")
+    
+    state.set_position(0, {"x": 10.0, "y": 20.0})
+    state.set_position(1, {"x": 30.0, "y": 40.0})
+    state.set_position(2, {"x": 50.0, "y": 60.0})
+    
+    state.CZ(0, 1)
+
+    cyto_data = state.to_cytoscape_elements()
+
+    # 2. Duplicate node 0 (which is in group_alpha)
+    res = apply_operation_wrapper(
+        method_name="duplicate",
+        selected_nodes=["0"],
+        cyto_data=cyto_data,
+        log="",
+        method_args={},
+        history_data={"undo_stack": [], "redo_stack": []},
+    )
+    
+    ui, cyto_data_new, repr_g, log_out, history_data_out = res
+    assert ui == "Duplicated nodes [0]"
+    
+    # 3. Reconstruct to check metadata and counts
+    reconstructed = FrontendClusterState.from_cytoscape_elements(cyto_data_new)
+    assert len(reconstructed) == 4 # Original 3 + 1 duplicated
+    
+    assert reconstructed.get_position(3) == {"x": 60.0, "y": 70.0}
+    new_group_id = reconstructed.get_group(3)
+    assert new_group_id is not None
+    assert new_group_id != "group_alpha"
+    assert new_group_id in reconstructed.groups
+    assert reconstructed.groups[new_group_id]["label"] == "Alpha Group"
+    
+    # 4. Duplicate the whole group "group_alpha"
+    res_group = apply_operation_wrapper(
+        method_name="duplicate",
+        selected_nodes=["group_alpha"],
+        cyto_data=cyto_data_new,
+        log="",
+        method_args={},
+        history_data={"undo_stack": [], "redo_stack": []},
+    )
+    ui_g, cyto_data_group, _, _, _ = res_group
+    
+    reconstructed_g = FrontendClusterState.from_cytoscape_elements(cyto_data_group)
+    # The group contains 0 and 1. So duplication adds 2 nodes.
+    # Total nodes should be 4 (from cyto_data_new) + 2 = 6.
+    assert len(reconstructed_g) == 6
+    
+    parent_4 = reconstructed_g.get_group(4)
+    parent_5 = reconstructed_g.get_group(5)
+    
+    assert parent_4 is not None
+    assert parent_4 == parent_5
+    assert parent_4 != "group_alpha"
+    assert parent_4 in reconstructed_g.groups
+    assert reconstructed_g.groups[parent_4]["label"] == "Alpha Group"
+
+
+def test_copy_nodes_with_group():
+    from components.components_2d.action_panel import copy_nodes
+    from clustersim.simulator import FrontendClusterState
+
+    # 1. Setup a FrontendClusterState with 2 nodes inside a group
+    state = FrontendClusterState(2)
+    state.add_group("group_alpha", label="Alpha Group")
+    state.set_group(0, "group_alpha")
+    state.set_group(1, "group_alpha")
+    
+    cyto_data = state.to_cytoscape_elements()
+    
+    # 2. Case A: Only the group is selected
+    selected_node_data_group = [
+        {"id": "group_alpha", "value": state.groups["group_alpha"]["value"]}
+    ]
+    
+    clipboard = copy_nodes(1, selected_node_data_group, cyto_data)
+    assert len(clipboard) == 2
+    assert state.get_value(0) in clipboard
+    assert state.get_value(1) in clipboard
+
+    # 3. Case B: The group AND its children are selected (should only copy/duplicate once)
+    selected_node_data_both = [
+        {"id": "group_alpha", "value": state.groups["group_alpha"]["value"]},
+        {"id": "0", "value": state.get_value(0)},
+        {"id": "1", "value": state.get_value(1)},
+    ]
+    
+    clipboard_both = copy_nodes(1, selected_node_data_both, cyto_data)
+    assert len(clipboard_both) == 2
+    assert state.get_value(0) in clipboard_both
+    assert state.get_value(1) in clipboard_both
+
+
 def test_action_panel_tooltips():
     from components.components_2d.action_panel import qubit_panel
     import dash_bootstrap_components as dbc

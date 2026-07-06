@@ -713,14 +713,50 @@ def apply_operation_wrapper(
 
         ui = f"Removed nodes {display_nodes}"
     elif method_name == "duplicate":
+        import uuid
+        import copy
         resolved_selected = list(expanded_qubits)
         resolved_selected.sort()
-        for q in resolved_selected:
-            if q < len(state):
-                pos = state.get_position(q)
-                state.add_node(position={"x": pos["x"] + 50, "y": pos["y"] + 50})
-
+        
+        # 1. Duplicate backend simulator state
         state.cluster_state = state.cluster_state.duplicate(resolved_selected)
+        
+        # 2. Track mapping from original parent group ID to new duplicated group ID
+        group_mapping = {}
+        
+        # 3. Append corresponding metadata for the newly created nodes
+        for q in resolved_selected:
+            meta = state.node_metadata[q]
+            pos = meta.get("position", {"x": 0.0, "y": 0.0})
+            new_pos = {"x": pos["x"] + 50, "y": pos["y"] + 50}
+            
+            orig_parent = meta.get("parent")
+            new_parent = None
+            if orig_parent is not None:
+                if orig_parent not in group_mapping:
+                    new_group_id = f"group_{uuid.uuid4().hex[:8]}"
+                    orig_group = state.groups.get(orig_parent, {})
+                    new_label = orig_group.get("label", orig_parent)
+                    new_style = copy.deepcopy(orig_group.get("style", {}))
+                    new_val = uuid.uuid4().hex[:8]
+                    
+                    state.add_group(new_group_id, label=new_label, style=new_style, value=new_val)
+                    group_mapping[orig_parent] = new_group_id
+                
+                new_parent = group_mapping[orig_parent]
+            
+            new_meta = {
+                "position": new_pos,
+                "parent": new_parent,
+                "value": uuid.uuid4().hex[:8],
+                "label": str(len(state.node_metadata)),
+                "classes": meta.get("classes", ""),
+                "style": copy.deepcopy(meta.get("style", {})),
+            }
+            if "shape" in meta:
+                new_meta["shape"] = meta["shape"]
+            state.node_metadata.append(new_meta)
+
         ui = f"Duplicated nodes {display_nodes}"
     else:
         raise NotImplementedError(f"Do not know {method_name}")
@@ -1053,9 +1089,12 @@ def export_graph_to_json(n_clicks, cyto_data):
     Output("clipboard-store", "data"),
     Input("ctrl-c-btn", "n_clicks"),
     State("figure-app", "selectedNodeData"),
+    State("figure-app", "elements"),
     prevent_initial_call=True,
 )
-def copy_nodes(n_clicks, selected_node_data):
-    if not selected_node_data:
+def copy_nodes(n_clicks, selected_node_data, cyto_data):
+    if not selected_node_data or not cyto_data:
         return []
-    return [node["value"] for node in selected_node_data]
+    state = FrontendClusterState.from_cytoscape_elements(cyto_data)
+    expanded_qubits = state.expand_selection(selected_node_data)
+    return [state.get_value(q) for q in expanded_qubits]

@@ -497,6 +497,15 @@ def update_stylesheet(_, node_labels: str):
             },
         },
         {
+            "selector": "node:parent:selected",
+            "style": {
+                "background-opacity": 0.5,
+                "background-color": "#bae6fd",
+                "border-color": "#0284c7",
+                "border-width": 3,
+            },
+        },
+        {
             "selector": "node:childless[!vop]",
             "style": {
                 "display": "none",
