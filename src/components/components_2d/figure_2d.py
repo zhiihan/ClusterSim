@@ -367,8 +367,8 @@ tab_ui_2d = html.Div(
                         html.H2(
                             "Cluster Sim",
                             style={
-                                "margin": "0 0 4px 0",
-                                "fontSize": "22px",
+                                "margin": "0 0 2px 0",
+                                "fontSize": "18px",
                                 "fontWeight": "bold",
                             },
                         ),
@@ -378,9 +378,9 @@ tab_ui_2d = html.Div(
                                 color="primary",
                                 id="ui",
                                 style={
-                                    "padding": "4px 10px",
+                                    "padding": "2px 6px",
                                     "margin": "0",
-                                    "fontSize": "0.8rem",
+                                    "fontSize": "0.75rem",
                                 },
                             ),
                             delay_show=100,
@@ -388,16 +388,18 @@ tab_ui_2d = html.Div(
                             custom_spinner=dbc.Spinner(color="primary", size="sm"),
                         ),
                     ],
-                    width=2,
+                    xs=3,
+                    md=2,
                     className="d-flex flex-column justify-content-center",
                 ),
                 # Center: Operations panel
                 dbc.Col(
-                    tab_1,
-                    width=10,
+                    html.Div(tab_1, className="scrollable-toolbar-container"),
+                    xs=9,
+                    md=10,
                 ),
             ],
-            className="align-items-start mb-2 flex-nowrap",
+            className="align-items-center flex-nowrap",
         ),
     ]
 )
