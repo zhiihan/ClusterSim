@@ -452,6 +452,7 @@ KEY_MAPPINGS = {
 
 @callback(
     Output("ui", "children"),
+    Output("ui", "color"),
     Output("figure-app", "elements", allow_duplicate=True),
     Output("simulator-representation", "children"),
     Output("move-log", "children"),
@@ -508,7 +509,8 @@ def handle_buttons(*args):
     if triggered_id == "ctrl-v-btn":
         if not clipboard_data:
             return (
-                "Clipboard is empty!",
+                "Error: Clipboard is empty!",
+                "danger",
                 no_update,
                 no_update,
                 no_update,
@@ -567,11 +569,16 @@ def handle_buttons(*args):
                 )  # deduplicate, preserve order
 
     if not selected_nodes and method_name != "add_node":
-        return no_update, no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update, no_update
 
-    return apply_operation_wrapper(
+    res = apply_operation_wrapper(
         method_name, selected_nodes, cyto_data, log, method_args, history_data, **kwargs
     )
+    if res is not no_update and isinstance(res, tuple) and len(res) == 5:
+        ui, cyto_data_new, repr_g, log_new, history_data_new = res
+        color = "danger" if ui.startswith("Error") else "success"
+        return ui, color, cyto_data_new, repr_g, log_new, history_data_new
+    return no_update, no_update, no_update, no_update, no_update, no_update
 
 
 def apply_operation_wrapper(
@@ -605,7 +612,7 @@ def apply_operation_wrapper(
         for pair in itertools.batched(expanded_qubits, n=2):
             if len(pair) < 2:
                 return (
-                    "Odd number of gates!",
+                    "Error: Odd number of gates!",
                     no_update,
                     no_update,
                     no_update,
@@ -638,7 +645,7 @@ def apply_operation_wrapper(
         for pair in itertools.batched(expanded_qubits, n=2):
             if len(pair) < 2:
                 return (
-                    "Odd number of qubits!",
+                    "Error: Odd number of qubits!",
                     no_update,
                     no_update,
                     no_update,
@@ -815,12 +822,22 @@ def _make_load_response(
     valid=False,
     invalid=False,
     feedback="",
+    color=None,
 ):
+    if ui_msg is not no_update and ui_msg is not None:
+        if color is None:
+            color = "primary"
+            if invalid is True or (isinstance(ui_msg, str) and ui_msg.startswith("Error")):
+                color = "danger"
+            elif valid is True:
+                color = "success"
+
     return (
         cyto_data,
         sim_rep,
         move_log,
         ui_msg,
+        color or no_update,
         history_data,
         valid,
         invalid,
@@ -833,6 +850,7 @@ def _make_load_response(
     Output("simulator-representation", "children", allow_duplicate=True),
     Output("move-log", "children", allow_duplicate=True),
     Output("ui", "children", allow_duplicate=True),
+    Output("ui", "color", allow_duplicate=True),
     Output("history-store", "data", allow_duplicate=True),
     Output("load-graph-input", "valid", allow_duplicate=True),
     Output("load-graph-input", "invalid", allow_duplicate=True),
@@ -881,7 +899,7 @@ def load_graph(
 
     if triggered_id == "undo-button":
         if not history_data["undo_stack"]:
-            return _make_load_response(ui_msg="Nothing to undo!")
+            return _make_load_response(ui_msg="Error: Nothing to undo!")
 
         # Pop the state to restore
         prev_state = history_data["undo_stack"].pop()
@@ -934,7 +952,7 @@ def load_graph(
 
     elif triggered_id == "redo-button":
         if not history_data["redo_stack"]:
-            return _make_load_response(ui_msg="Nothing to redo!")
+            return _make_load_response(ui_msg="Error: Nothing to redo!")
 
         # Pop the state to restore
         next_state = history_data["redo_stack"].pop()
@@ -993,7 +1011,7 @@ def load_graph(
         except Exception as e:
             err_msg = str(e)
             return _make_load_response(
-                ui_msg=f"Failed to load: {err_msg}", invalid=True, feedback=err_msg
+                ui_msg=f"Error: Failed to load: {err_msg}", invalid=True, feedback=err_msg
             )
 
         return _make_load_response(
@@ -1045,7 +1063,7 @@ def load_graph(
         except Exception as e:
             err_msg = str(e)
             return _make_load_response(
-                ui_msg=f"Failed to load file: {err_msg}", invalid=True, feedback=err_msg
+                ui_msg=f"Error: Failed to load file: {err_msg}", invalid=True, feedback=err_msg
             )
 
         return _make_load_response(

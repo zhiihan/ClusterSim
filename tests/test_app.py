@@ -44,7 +44,7 @@ def test_apply_operation_wrapper_errors():
         history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res_cz) == 5
-    assert res_cz[0] == "Odd number of gates!"
+    assert res_cz[0] == "Error: Odd number of gates!"
     assert res_cz[1:] == (no_update, no_update, no_update, no_update)
 
     res_fusion = apply_operation_wrapper(
@@ -56,7 +56,7 @@ def test_apply_operation_wrapper_errors():
         history_data={"undo_stack": [], "redo_stack": []},
     )
     assert len(res_fusion) == 5
-    assert res_fusion[0] == "Odd number of qubits!"
+    assert res_fusion[0] == "Error: Odd number of qubits!"
     assert res_fusion[1:] == (no_update, no_update, no_update, no_update)
 
 
@@ -307,8 +307,8 @@ def test_load_graph_callback_json():
             cyto_data=initial_elements,
             history_data=initial_history.copy(),
         )
-        assert len(res) == 8
-        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert len(res) == 9
+        cyto_data_new, repr_g, new_move_log, ui_msg, color, history_data_new, valid, invalid, feedback = res
         assert valid is True
         assert invalid is False
         assert ui_msg == "Action completed!"
@@ -335,8 +335,8 @@ def test_load_graph_callback_json():
             cyto_data=initial_elements,
             history_data=initial_history.copy(),
         )
-        assert len(res) == 8
-        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert len(res) == 9
+        cyto_data_new, repr_g, new_move_log, ui_msg, color, history_data_new, valid, invalid, feedback = res
         assert valid is True
         assert invalid is False
         assert "Successfully loaded test_graph.json" in ui_msg
@@ -373,7 +373,7 @@ def test_load_graph_exception_handling():
             cyto_data=initial_elements,
             history_data=initial_history.copy(),
         )
-        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        cyto_data_new, repr_g, new_move_log, ui_msg, color, history_data_new, valid, invalid, feedback = res
         assert invalid is False
         assert valid is True
         assert cyto_data_new == []
@@ -404,7 +404,7 @@ def test_load_graph_exception_handling():
             cyto_data=initial_elements,
             history_data=initial_history.copy(),
         )
-        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        cyto_data_new, repr_g, new_move_log, ui_msg, color, history_data_new, valid, invalid, feedback = res
         assert invalid is True
         assert valid is False
         assert "Failed to load file" in ui_msg
@@ -444,7 +444,7 @@ def test_handle_buttons_edge_grouped_nodes():
         ]
 
         res = handle_buttons(*args)
-        ui, cyto_data_new, repr_g, log, history_data = res
+        ui, color, cyto_data_new, repr_g, log, history_data = res
         assert "Applied toggle_edge" in ui
 
 
@@ -475,7 +475,7 @@ def test_load_graph_reset_button():
             cyto_data=initial_elements,
             history_data=initial_history.copy(),
         )
-        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        cyto_data_new, repr_g, new_move_log, ui_msg, color, history_data_new, valid, invalid, feedback = res
         assert invalid is False
         assert valid is True
         assert cyto_data_new == []
@@ -517,7 +517,7 @@ def test_move_log_uses_ids_not_values():
         ]
 
         res = handle_buttons(*args)
-        ui, cyto_data_new, repr_g, log, history_data = res
+        ui, color, cyto_data_new, repr_g, log, history_data = res
         assert "CZ 0 1\n" in log
         assert v0 not in log
         assert v1 not in log
