@@ -119,11 +119,17 @@ tab_3 = dbc.Row(
                                     "", type="invalid", id="load-feedback-invalid"
                                 ),
                             ],
-                            width=6,
+                            width=4,
                         ),
                         dbc.Col(
                             dbc.Button(
                                 "Load", id="load-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Reset", id="reset-button", style={"width": "100%"}, color="danger", outline=True
                             ),
                             width=2,
                         ),

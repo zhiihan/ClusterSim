@@ -299,6 +299,7 @@ def test_load_graph_callback_json():
             _redo=None,
             _ctrl_y=None,
             _load=1,
+            _reset=None,
             upload_contents=None,
             upload_filename=None,
             load_graph_input=target_json_str,
@@ -326,6 +327,7 @@ def test_load_graph_callback_json():
             _redo=None,
             _ctrl_y=None,
             _load=None,
+            _reset=None,
             upload_contents=upload_contents_b64,
             upload_filename="test_graph.json",
             load_graph_input="",
@@ -341,4 +343,143 @@ def test_load_graph_callback_json():
         assert len(history_data_new["undo_stack"]) == 1
         assert history_data_new["undo_stack"][0]["move_log"] == initial_log
         assert history_data_new["undo_stack"][0]["elements"] == initial_elements
+
+
+def test_load_graph_exception_handling():
+    from components.components_2d.action_panel import load_graph
+    from clustersim.simulator import FrontendClusterState
+    from unittest.mock import patch
+    import base64
+
+    initial_state = FrontendClusterState(2)
+    initial_elements = initial_state.to_cytoscape_elements()
+    initial_log = "original log content"
+    initial_history = {"undo_stack": [], "redo_stack": []}
+
+    # 1. Test empty load input (should succeed and result in a valid empty graph)
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "load-button"
+        res = load_graph(
+            _undo=None,
+            _ctrl_z=None,
+            _redo=None,
+            _ctrl_y=None,
+            _load=1,
+            _reset=None,
+            upload_contents=None,
+            upload_filename=None,
+            load_graph_input="",
+            move_log=initial_log,
+            cyto_data=initial_elements,
+            history_data=initial_history.copy(),
+        )
+        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert invalid is False
+        assert valid is True
+        assert cyto_data_new == []
+
+    # 2. Test invalid/malformed JSON upload (triggers IndexError or parse error)
+    # The JSON state has non-contiguous node IDs: 0, 2, 3, which induces dynamic expansion and IndexError in node_metadata.
+    non_contiguous_json = (
+        '{"cluster_state_json": "{\\"directed\\":false,\\"multigraph\\":false,\\"attrs\\":null,'
+        '\\"nodes\\":[{\\"id\\":0,\\"data\\":{\\"id\\":\\"0\\",\\"vop\\":\\"IA\\"}},'
+        '{\\"id\\":2,\\"data\\":{\\"id\\":\\"1\\",\\"vop\\":\\"IA\\"}},'
+        '{\\"id\\":3,\\"data\\":{\\"id\\":\\"2\\",\\"vop\\":\\"IA\\"}}],\\"links\\":[]}",'
+        '"node_metadata": [{}, {}, {}], "groups": {}}'
+    )
+    upload_contents_b64 = "data:application/json;base64," + base64.b64encode(non_contiguous_json.encode("utf-8")).decode("utf-8")
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "upload-graph-json"
+        res = load_graph(
+            _undo=None,
+            _ctrl_z=None,
+            _redo=None,
+            _ctrl_y=None,
+            _load=None,
+            _reset=None,
+            upload_contents=upload_contents_b64,
+            upload_filename="test_graph.json",
+            load_graph_input="",
+            move_log=initial_log,
+            cyto_data=initial_elements,
+            history_data=initial_history.copy(),
+        )
+        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert invalid is True
+        assert valid is False
+        assert "Failed to load file" in ui_msg
+        assert "list index out of range" in feedback
+
+
+def test_handle_buttons_edge_grouped_nodes():
+    from components.components_2d.action_panel import handle_buttons, button_operations, KEY_MAPPINGS
+    from clustersim.simulator import FrontendClusterState
+    from unittest.mock import patch
+
+    state = FrontendClusterState(3)
+    state.add_group("group_alpha", label="Alpha Group")
+    state.set_group(0, "group_alpha")
+    state.set_group(1, "group_alpha")
+
+    cyto_data = state.to_cytoscape_elements()
+
+    # Edge between grouped nodes: '0_group_alpha' and '1_group_alpha'
+    selected_edge_data = [
+        {"source": "0_group_alpha", "target": "1_group_alpha"}
+    ]
+
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "toggle-edge"
+        num_inputs = len(button_operations) + len(KEY_MAPPINGS) + 1
+        args = [0] * num_inputs + [
+            [],  # clipboard_data
+            {"undo_stack": [], "redo_stack": []},  # history_data
+            "success",  # fusion_mode_val
+            0,  # fusion_force_val
+            0,  # force_meas_val
+            "",  # log
+            [],  # selected_node_data (empty, so it falls back to edge)
+            selected_edge_data,
+            cyto_data,
+        ]
+
+        res = handle_buttons(*args)
+        ui, cyto_data_new, repr_g, log, history_data = res
+        assert "Applied toggle_edge" in ui
+
+
+def test_load_graph_reset_button():
+    from components.components_2d.action_panel import load_graph
+    from clustersim.simulator import FrontendClusterState
+    from unittest.mock import patch
+
+    initial_state = FrontendClusterState(2)
+    initial_elements = initial_state.to_cytoscape_elements()
+    initial_log = "original log content"
+    initial_history = {"undo_stack": [], "redo_stack": []}
+
+    # Test loading via reset-button triggers load of empty graph
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "reset-button"
+        res = load_graph(
+            _undo=None,
+            _ctrl_z=None,
+            _redo=None,
+            _ctrl_y=None,
+            _load=None,
+            _reset=1,
+            upload_contents=None,
+            upload_filename=None,
+            load_graph_input="some previous text input",  # Should be ignored and treated as ""
+            move_log=initial_log,
+            cyto_data=initial_elements,
+            history_data=initial_history.copy(),
+        )
+        cyto_data_new, repr_g, new_move_log, ui_msg, history_data_new, valid, invalid, feedback = res
+        assert invalid is False
+        assert valid is True
+        assert cyto_data_new == []
+
+
+
 

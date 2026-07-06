@@ -323,9 +323,6 @@ class ClusterState:
 
         full_text = " ".join(lines)
 
-        if not full_text:
-            raise ValueError("Cannot construct ClusterState from empty text.")
-
         parsed_ops = []
 
         # Regex to find commands: NAME followed optionally by [numbers]
