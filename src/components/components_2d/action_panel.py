@@ -739,27 +739,39 @@ def apply_operation_wrapper(
 
     cyto_data_new = state.to_cytoscape_elements()
 
+    # Map selected_nodes to resolved integer/group IDs for the log
+    log_nodes = []
+    for n in selected_nodes:
+        if str(n) in state.groups:
+            log_nodes.append(str(n))
+        else:
+            q = state.resolve_qubit(n)
+            if q is not None:
+                log_nodes.append(str(q))
+            else:
+                log_nodes.append(str(n))
+
     if method_name == "measure":
         log += f"M{method_args['basis']}"
         if method_args["force"] != -1:
             log += f"[{method_args['force']}]"
-        log += f" {' '.join(map(str, selected_nodes))}\n"
+        log += f" {' '.join(map(str, log_nodes))}\n"
         log += f"# OUTCOME {' '.join(map(str, outcomes))}\n"
     elif method_name == "fusion_gate":
-        log += f"FUSION_GATE[{method_args['fusion_type']}] {' '.join(map(str, selected_nodes))}\n"
+        log += f"FUSION_GATE[{method_args['fusion_type']}] {' '.join(map(str, log_nodes))}\n"
     elif method_name == "local_complementation":
-        log += f"LC {' '.join(map(str, selected_nodes))}\n"
+        log += f"LC {' '.join(map(str, log_nodes))}\n"
     elif method_name == "local_complementation_rewrite":
-        log += f"LCR {' '.join(map(str, selected_nodes))}\n"
+        log += f"LCR {' '.join(map(str, log_nodes))}\n"
     elif method_name == "add_node":
         new_node_id = len(state) - 1
         log += f"ADD_NODE {new_node_id}\n"
-        for neighbour in selected_nodes:
+        for neighbour in log_nodes:
             log += f"ADD_EDGE {new_node_id} {neighbour}\n"
     elif method_name == "remove_node":
         log += f"REMOVE_NODE {' '.join(map(str, expanded_qubits))}\n"
     else:
-        log += f"{method_name.upper()} {' '.join(map(str, selected_nodes))}\n"
+        log += f"{method_name.upper()} {' '.join(map(str, log_nodes))}\n"
 
     return ui, cyto_data_new, repr(state.cluster_state), log, history_data
 

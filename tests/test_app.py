@@ -481,5 +481,48 @@ def test_load_graph_reset_button():
         assert cyto_data_new == []
 
 
+def test_move_log_uses_ids_not_values():
+    from components.components_2d.action_panel import handle_buttons, button_operations, KEY_MAPPINGS
+    from clustersim.simulator import FrontendClusterState
+    from unittest.mock import patch
+
+    state = FrontendClusterState(3)
+    state.set_position(0, {"x": 10, "y": 20})
+    state.set_position(1, {"x": 30, "y": 40})
+    state.set_position(2, {"x": 50, "y": 60})
+
+    v0 = state.node_metadata[0]["value"]
+    v1 = state.node_metadata[1]["value"]
+
+    cyto_data = state.to_cytoscape_elements()
+
+    selected_node_data = [
+        {"id": "0", "value": v0},
+        {"id": "1", "value": v1},
+    ]
+
+    with patch("components.components_2d.action_panel.callback_context") as mock_ctx:
+        mock_ctx.triggered_id = "CZ"
+        num_inputs = len(button_operations) + len(KEY_MAPPINGS) + 1
+        args = [0] * num_inputs + [
+            [],  # clipboard_data
+            {"undo_stack": [], "redo_stack": []},  # history_data
+            "success",  # fusion_mode_val
+            0,  # fusion_force_val
+            0,  # force_meas_val
+            "",  # log
+            selected_node_data,
+            [],  # selected_edge_data
+            cyto_data,
+        ]
+
+        res = handle_buttons(*args)
+        ui, cyto_data_new, repr_g, log, history_data = res
+        assert "CZ 0 1\n" in log
+        assert v0 not in log
+        assert v1 not in log
+
+
+
 
 
