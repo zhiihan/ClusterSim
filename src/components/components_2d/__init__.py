@@ -5,6 +5,7 @@ from .action_panel import (
 )
 from .move_log_2d import move_log
 from .figure_2d import figure_2d, tab_ui_2d
+from .cytoscape_panel import cytoscape_offcanvas
 
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "qubit_panel",
     "preprocess_cyto_data_elements",
     "postprocess_cyto_data_elements",
+    "cytoscape_offcanvas",
 ]

@@ -1,4 +1,53 @@
-from dash import dcc, html, callback, Input, Output, State, no_update, callback_context
+from dash import (
+    dcc,
+    html,
+    callback,
+    clientside_callback,
+    Input,
+    Output,
+    State,
+    no_update,
+    callback_context,
+)
+
+COLOR_PALETTE = {
+    "IA": "#93C5FD",
+    "IB": "#60A5FA",
+    "IC": "#3B82F6",
+    "ID": "#2563EB",
+    "IE": "#1D4ED8",
+    "IF": "#1F3A8A",
+    "XA": "#6EE7B7",
+    "XB": "#34D399",
+    "XC": "#10B981",
+    "XD": "#059669",
+    "XE": "#166534",
+    "XF": "#14532D",
+    "YA": "#FCD34D",
+    "YB": "#FBBF24",
+    "YC": "#F59E0B",
+    "YD": "#EA580C",
+    "YE": "#C2410C",
+    "YF": "#9A3412",
+    "ZA": "#DDD6FE",
+    "ZB": "#C084FC",
+    "ZC": "#A855F7",
+    "ZD": "#9333EA",
+    "ZE": "#7E22CE",
+    "ZF": "#581C87",
+}
+
+COLOR_STYLES = [
+    {
+        "selector": f'[vop *= "{label}"]',
+        "style": {
+            "background-color": color,
+            "border-width": 2,
+            "border-color": "#000000",
+        },
+    }
+    for label, color in COLOR_PALETTE.items()
+]
 from textwrap import dedent as d
 import dash_bootstrap_components as dbc
 from clustersim.simulator import ClusterState
@@ -18,7 +67,6 @@ import logging
 cyto.load_extra_layouts()
 
 
-# Initialize the figure of the user's browsing section
 def _init_state():
     G = ClusterState(0)
     cyto_data = G.to_cytoscape(export_elements=True)
@@ -27,37 +75,21 @@ def _init_state():
     return cyto_data, repr(G)
 
 
+INIT_CYTO_ELEMENTS, INIT_SIM_REP = _init_state()
+
+
 figure_2d = cyto.Cytoscape(
     id="figure-app",
     layout={"name": "preset"},
     style={"width": "100%", "height": "100%"},
     stylesheet=[{"selector": "node", "style": {"label": "data(vop)"}}],
-    elements=_init_state()[0],
+    elements=INIT_CYTO_ELEMENTS,
     selectedNodeData=[],
     boxSelectionEnabled=True,
     wheelSensitivity=0.2,
     minZoom=0.2,
     maxZoom=20,
 )
-
-layout_dropdown = dcc.Dropdown(
-    ["random", "grid", "circle", "breadthfirst", "cose", "concentric", "preset"],
-    "preset",
-    id="graph_layout_dropdown",
-)
-
-node_labels = dbc.Select(
-    id="node_labels",
-    options=[
-        {"label": "Value", "value": "data(value)"},
-        {"label": "ID", "value": "data(id)"},
-        {"label": "Label", "value": "data(label)"},
-        {"label": "VOP", "value": "data(vop)"},
-    ],
-    placeholder="Value",
-    value="data(value)",
-)
-
 
 tab_1 = dbc.Row([dbc.Col(qubit_panel, width=12)])
 
@@ -87,49 +119,70 @@ tab_3 = dbc.Row(
                                     "", type="invalid", id="load-feedback-invalid"
                                 ),
                             ],
-                            width=6,
+                            width=4,
                         ),
-                        dbc.Col(dbc.Button("Load", id="load-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Undo", id="undo-button", style={"width": "100%"}), width=2),
-                        dbc.Col(dbc.Button("Redo", id="redo-button", style={"width": "100%"}), width=2),
-                        dbc.Tooltip("Undo (Ctrl+Z)", target="undo-button", placement="top"),
-        dbc.Tooltip("Redo (Ctrl+Y)", target="redo-button", placement="top"),
+                        dbc.Col(
+                            dbc.Button(
+                                "Load", id="load-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Reset", id="reset-button", style={"width": "100%"}, color="danger", outline=True
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Undo", id="undo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Redo", id="redo-button", style={"width": "100%"}
+                            ),
+                            width=2,
+                        ),
+                        dbc.Tooltip(
+                            "Undo (Ctrl+Z)", target="undo-button", placement="top"
+                        ),
+                        dbc.Tooltip(
+                            "Redo (Ctrl+Y)", target="redo-button", placement="top"
+                        ),
                     ],
                     className="align-items-center",
+                ),
+                html.Div(style={"height": "10px"}),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dcc.Upload(
+                                id="upload-graph-json",
+                                children=html.Div(
+                                    [
+                                        "Drag & Drop or ",
+                                        html.A("Select JSON/Text File", style={"textDecoration": "underline", "cursor": "pointer"})
+                                    ],
+                                    style={
+                                        "border": "1px dashed #ced4da",
+                                        "borderRadius": "5px",
+                                        "padding": "10px",
+                                        "textAlign": "center",
+                                        "backgroundColor": "#f8f9fa",
+                                        "color": "#495057",
+                                    }
+                                ),
+                                multiple=False,
+                            ),
+                            width=12,
+                        )
+                    ]
                 ),
             ],
             width=12,
         )
-    ]
-)
-
-tab_5 = dbc.Row(
-    [
-        dbc.Col(
-            [
-                dcc.Markdown("**Select Layout**", style={"margin": "0 0 4px 0"}),
-                layout_dropdown,
-            ],
-            width=4,
-        ),
-        dbc.Col(
-            [
-                dcc.Markdown("**Select Node Labels**", style={"margin": "0 0 4px 0"}),
-                node_labels,
-            ],
-            width=4,
-        ),
-        dbc.Col(
-            [
-                dcc.Markdown("**Plot Options**", style={"margin": "0 0 4px 0"}),
-                dbc.Button("Snap to Grid", id="snap-to-grid", style={"width": "100%"}),
-                dbc.Button("Export SVG", id="btn-get-svg"),
-                dbc.Button("Export JSON", id="btn-get-json"),
-                dcc.Download(id="download-json"),
-            ],
-            width=4,
-            className="d-flex flex-column justify-content-end",
-        ),
     ]
 )
 
@@ -186,11 +239,6 @@ tab_ui_2d = html.Div(
                                                 id="modal-tab-reset",
                                                 style={"cursor": "pointer"},
                                             ),
-                                            dbc.NavLink(
-                                                "Plot Options",
-                                                id="modal-tab-plot",
-                                                style={"cursor": "pointer"},
-                                            ),
                                         ],
                                         vertical=True,
                                         pills=True,
@@ -230,7 +278,7 @@ tab_ui_2d = html.Div(
                                                             "fontFamily": "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                                                             "fontSize": "13px",
                                                         },
-                                                        children=_init_state()[1],
+                                                        children=INIT_SIM_REP,
                                                     ),
                                                 ],
                                                 id="modal-content-rep",
@@ -301,12 +349,6 @@ tab_ui_2d = html.Div(
                                                 id="modal-content-reset",
                                                 style={"display": "none"},
                                             ),
-                                            # Page 5: Plot Options
-                                            html.Div(
-                                                tab_5,
-                                                id="modal-content-plot",
-                                                style={"display": "none"},
-                                            ),
                                         ],
                                         style={"paddingLeft": "20px"},
                                     )
@@ -331,8 +373,8 @@ tab_ui_2d = html.Div(
                         html.H2(
                             "Cluster Sim",
                             style={
-                                "margin": "0 0 4px 0",
-                                "fontSize": "22px",
+                                "margin": "0 0 2px 0",
+                                "fontSize": "18px",
                                 "fontWeight": "bold",
                             },
                         ),
@@ -342,9 +384,9 @@ tab_ui_2d = html.Div(
                                 color="primary",
                                 id="ui",
                                 style={
-                                    "padding": "4px 10px",
+                                    "padding": "2px 6px",
                                     "margin": "0",
-                                    "fontSize": "0.8rem",
+                                    "fontSize": "0.75rem",
                                 },
                             ),
                             delay_show=100,
@@ -352,16 +394,18 @@ tab_ui_2d = html.Div(
                             custom_spinner=dbc.Spinner(color="primary", size="sm"),
                         ),
                     ],
-                    width=2,
+                    xs=3,
+                    md=2,
                     className="d-flex flex-column justify-content-center",
                 ),
                 # Center: Operations panel
                 dbc.Col(
-                    tab_1,
-                    width=10,
+                    html.Div(tab_1, className="scrollable-toolbar-container"),
+                    xs=9,
+                    md=10,
                 ),
             ],
-            className="align-items-start mb-2 flex-nowrap",
+            className="align-items-center flex-nowrap",
         ),
     ]
 )
@@ -376,17 +420,36 @@ def displaySelectedNodeData(data_list: List[Dict[str, Any]]):
     if not data_list:
         return "Click on the graph to select nodes, or SHIFT+click to select multiple nodes."
     else:
-        logging.debug(f"Selected {[i['value'] for i in data_list]}")
-        return f"Selected {[i['value'] for i in data_list]}"
+        selected_ids = []
+        for i in data_list:
+            if "id" in i:
+                raw_id = i["id"]
+                if isinstance(raw_id, str) and (
+                    raw_id.startswith("group_") or "group" in str(i.get("classes", ""))
+                ):
+                    group_disp = i.get("label") or raw_id
+                    selected_ids.append(group_disp)
+                elif isinstance(raw_id, int) or (
+                    isinstance(raw_id, str) and raw_id.isdigit()
+                ):
+                    selected_ids.append(int(raw_id))
+                else:
+                    selected_ids.append(raw_id)
+        selected_values = [i["value"] for i in data_list if "value" in i]
+        logging.debug(f"Selected {selected_values}")
+        return f"Selected {selected_ids}"
 
 
-@callback(
+clientside_callback(
+    """
+    function(value) {
+        return {name: value};
+    }
+    """,
     Output("figure-app", "layout"),
     Input("graph_layout_dropdown", "value"),
     prevent_initial_call=True,
 )
-def update_layout(value):
-    return {"name": value}
 
 
 @callback(
@@ -395,48 +458,7 @@ def update_layout(value):
     Input("node_labels", "value"),
 )
 def update_stylesheet(_, node_labels: str):
-
     label_style = [{"selector": "node", "style": {"label": node_labels}}]
-
-    color_palette = {
-        "IA": "#93C5FD",
-        "IB": "#60A5FA",
-        "IC": "#3B82F6",
-        "ID": "#2563EB",
-        "IE": "#1D4ED8",
-        "IF": "#1F3A8A",
-        "XA": "#6EE7B7",
-        "XB": "#34D399",
-        "XC": "#10B981",
-        "XD": "#059669",
-        "XE": "#166534",
-        "XF": "#14532D",
-        "YA": "#FCD34D",
-        "YB": "#FBBF24",
-        "YC": "#F59E0B",
-        "YD": "#EA580C",
-        "YE": "#C2410C",
-        "YF": "#9A3412",
-        "ZA": "#DDD6FE",
-        "ZB": "#C084FC",
-        "ZC": "#A855F7",
-        "ZD": "#9333EA",
-        "ZE": "#7E22CE",
-        "ZF": "#581C87",
-    }
-
-    color_styles = []
-    for label, color in color_palette.items():
-        color_styles.append(
-            {
-                "selector": f'[vop *= "{label}"]',
-                "style": {
-                    "background-color": color,
-                    "border-width": 2,
-                    "border-color": "#000000",
-                },
-            }
-        )
 
     selected_style = [
         {
@@ -448,7 +470,58 @@ def update_stylesheet(_, node_labels: str):
         }
     ]
 
-    return label_style + color_styles + selected_style
+    parent_label = "data(value)" if node_labels == "data(value)" else "data(label)"
+
+    custom_styles = [
+        {
+            "selector": "node",
+            "style": {
+                "shape": "data(shape)",
+            },
+        },
+        {
+            "selector": "edge",
+            "style": {
+                "label": "data(label)",
+                "text-rotation": "autorotate",
+                "text-margin-y": -10,
+                "font-size": "10px",
+                "color": "#475569",
+            },
+        },
+        {
+            "selector": "node:parent",
+            "style": {
+                "background-opacity": 0.333,
+                "background-color": "#cbd5e1",
+                "border-color": "#94a3b8",
+                "border-width": 2,
+                "label": parent_label,
+                "font-size": "14px",
+                "font-weight": "bold",
+                "text-valign": "top",
+                "text-halign": "center",
+                "text-margin-y": -6,
+            },
+        },
+        {
+            "selector": "node:parent:selected",
+            "style": {
+                "background-opacity": 0.5,
+                "background-color": "#bae6fd",
+                "border-color": "#0284c7",
+                "border-width": 3,
+            },
+        },
+        {
+            "selector": "node:childless[!vop]",
+            "style": {
+                "display": "none",
+            },
+        },
+    ]
+
+    return label_style + COLOR_STYLES + selected_style + custom_styles
 
 
 @callback(
@@ -480,35 +553,34 @@ def toggle_modal(n1, n2, is_open):
     return not is_open
 
 
+TAB_KEYS = ["rep", "log", "ref", "reset"]
+
+
 @callback(
     Output("modal-tab-store", "data"),
     Output("modal-tab-rep", "active"),
     Output("modal-tab-log", "active"),
     Output("modal-tab-ref", "active"),
     Output("modal-tab-reset", "active"),
-    Output("modal-tab-plot", "active"),
     Input("modal-tab-rep", "n_clicks"),
     Input("modal-tab-log", "n_clicks"),
     Input("modal-tab-ref", "n_clicks"),
     Input("modal-tab-reset", "n_clicks"),
-    Input("modal-tab-plot", "n_clicks"),
     prevent_initial_call=True,
 )
-def switch_modal_tab(n_rep, n_log, n_ref, n_reset, n_plot):
+def switch_modal_tab(*_clicks):
     ctx = callback_context
     if not ctx.triggered:
-        return "rep", True, False, False, False, False
+        return "rep", True, False, False, False
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    if trigger_id == "modal-tab-log":
-        return "log", False, True, False, False, False
-    elif trigger_id == "modal-tab-ref":
-        return "ref", False, False, True, False, False
-    elif trigger_id == "modal-tab-reset":
-        return "reset", False, False, False, True, False
-    elif trigger_id == "modal-tab-plot":
-        return "plot", False, False, False, False, True
-    return "rep", True, False, False, False, False
+    tab = (
+        trigger_id.replace("modal-tab-", "")
+        if trigger_id.startswith("modal-tab-")
+        else "rep"
+    )
+    actives = [tab == key for key in TAB_KEYS]
+    return (tab, *actives)
 
 
 @callback(
@@ -516,19 +588,9 @@ def switch_modal_tab(n_rep, n_log, n_ref, n_reset, n_plot):
     Output("modal-content-log", "style"),
     Output("modal-content-ref", "style"),
     Output("modal-content-reset", "style"),
-    Output("modal-content-plot", "style"),
     Input("modal-tab-store", "data"),
 )
 def toggle_modal_content_visibility(active_tab):
-    styles = [{"display": "none"} for _ in range(5)]
-    if active_tab == "rep":
-        styles[0] = {"display": "block"}
-    elif active_tab == "log":
-        styles[1] = {"display": "block"}
-    elif active_tab == "ref":
-        styles[2] = {"display": "block"}
-    elif active_tab == "reset":
-        styles[3] = {"display": "block"}
-    elif active_tab == "plot":
-        styles[4] = {"display": "block"}
-    return styles[0], styles[1], styles[2], styles[3], styles[4]
+    return tuple(
+        {"display": "block" if active_tab == key else "none"} for key in TAB_KEYS
+    )

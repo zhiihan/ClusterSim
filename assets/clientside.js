@@ -1,6 +1,11 @@
 window.dash_clientside = window.dash_clientside || {};
 window.dash_clientside.clientside = {
     keydown_listener: function (dummy) {
+        if (window._keydown_listener_attached) {
+            return window.dash_clientside.no_update;
+        }
+        window._keydown_listener_attached = true;
+
         document.addEventListener('keydown', function (e) {
             // Do not capture keys if the user is typing in an input or textarea
             const active = document.activeElement;
@@ -82,6 +87,14 @@ window.dash_clientside.clientside = {
             // Check if W (LC)
             if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'w' || e.key === 'W')) {
                 const btn = document.getElementById('key-w-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
+            // Check if G (Group / Ungroup)
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+                const btn = document.getElementById('key-g-btn');
                 if (btn) {
                     e.preventDefault();
                     btn.click();
